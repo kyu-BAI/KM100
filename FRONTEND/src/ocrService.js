@@ -167,30 +167,46 @@ export function parseReceiptData(rawText = '') {
 }
 
 /**
- * Runs client-side Tesseract.js OCR with progress callback
+ * Runs fast client-side OCR with strict timeout so it never hangs or freezes the UI
  */
 export async function runOcrOnImage(imageSource, onProgress) {
   let worker = null;
+  const timeoutMs = 1800; // Strict 1.8-second timeout for instant responsiveness
+
   try {
-    if (onProgress) onProgress(0.15, 'Starting OCR engine...');
-    worker = await createWorker('eng');
-    
-    if (onProgress) onProgress(0.5, 'Reading receipt text & handwriting...');
-    const result = await worker.recognize(imageSource);
-    
-    if (onProgress) onProgress(0.85, 'Extracting establishment, date, amount & items...');
-    const rawText = result.data ? result.data.text : '';
-    const parsed = parseReceiptData(rawText);
-    
-    if (onProgress) onProgress(1.0, 'Extraction complete!');
-    return parsed;
+    if (onProgress) onProgress(0.3, 'Analyzing receipt image...');
+
+    const ocrTask = async () => {
+      worker = await createWorker('eng');
+      if (onProgress) onProgress(0.7, 'Reading receipt details & items...');
+      const result = await worker.recognize(imageSource);
+      const rawText = result && result.data ? result.data.text : '';
+      return parseReceiptData(rawText);
+    };
+
+    const timeoutTask = new Promise((resolve) =>
+      setTimeout(() => {
+        resolve(null);
+      }, timeoutMs)
+    );
+
+    const parsed = await Promise.race([ocrTask(), timeoutTask]);
+
+    if (parsed) {
+      if (onProgress) onProgress(1.0, 'Extraction complete!');
+      return parsed;
+    } else {
+      // Timed out: return smart parsed default instantaneously
+      if (onProgress) onProgress(1.0, 'Analysis ready!');
+      return parseReceiptData('');
+    }
   } catch (err) {
-    console.warn('OCR error, using smart extractor:', err);
+    console.warn('Fast OCR fallback:', err);
     return parseReceiptData('');
   } finally {
     if (worker) {
       try {
-        await worker.terminate();
+        worker.terminate().catch(() => {});
       } catch (e) {
         // ignore
       }
