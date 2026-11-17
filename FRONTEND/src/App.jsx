@@ -28,6 +28,7 @@ import {
   FileCheck,
   ShieldCheck,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   Eye,
   EyeOff,
@@ -127,7 +128,7 @@ const RECEIPT_TYPES = [
 export default function App() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +145,7 @@ export default function App() {
   const setActiveNav = (nav) => {
     _setActiveNav(nav);
     if (isMobile) {
-      setMobileMenuOpen(false);
+      setSidebarOpen(false);
     }
   };
 
@@ -851,7 +852,7 @@ export default function App() {
         <View style={styles.mobileTopBar}>
           <TouchableOpacity
             style={styles.mobileMenuBtn}
-            onPress={() => setMobileMenuOpen(prev => !prev)}
+            onPress={() => setSidebarOpen(prev => !prev)}
           >
             <Menu size={22} color="#38bdf8" />
           </TouchableOpacity>
@@ -869,26 +870,28 @@ export default function App() {
       )}
 
       {/* Backdrop for Mobile Drawer */}
-      {isMobile && mobileMenuOpen && (
+      {isMobile && sidebarOpen && (
         <TouchableOpacity
           style={styles.mobileDrawerBackdrop}
           activeOpacity={1}
-          onPress={() => setMobileMenuOpen(false)}
+          onPress={() => setSidebarOpen(false)}
         />
       )}
 
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
       <View style={styles.mainContent}>
-        {/* LEFT SIDEBAR (Desktop permanent / Mobile drawer) */}
-        {(!isMobile || mobileMenuOpen) && (
+        {/* LEFT SIDEBAR (Desktop toggleable / Mobile drawer) */}
+        {sidebarOpen && (
           <View style={[styles.sidebar, isMobile && styles.mobileSidebarDrawer]}>
             <View style={styles.sidebarTitleRow}>
               <Text style={styles.sidebarSectionTitle}>DOCUMENT DIRECTORY</Text>
-              {isMobile && (
-                <TouchableOpacity onPress={() => setMobileMenuOpen(false)} style={styles.mobileCloseDrawerBtn}>
-                  <X size={18} color="#94a3b8" />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                onPress={() => setSidebarOpen(false)}
+                style={styles.sidebarCollapseBtn}
+                title="Hide sidebar"
+              >
+                {isMobile ? <X size={18} color="#94a3b8" /> : <ChevronLeft size={16} color="#94a3b8" />}
+              </TouchableOpacity>
             </View>
 
           <ScrollView style={styles.treeScroll} showsVerticalScrollIndicator={false}>
@@ -1481,12 +1484,22 @@ export default function App() {
 
         {/* MAIN VIEWING AREA */}
         <View style={styles.contentArea}>
-          {/* CONTROL BAR: Breadcrumbs, Search & Record Count */}
+          {/* CONTROL BAR: Burger Menu Toggle, Breadcrumbs, Search & Record Count */}
           <View style={[styles.controlBar, isMobile && styles.controlBarMobile]}>
-            <View style={[styles.breadcrumbs, isMobile && { display: 'none' }]}>
-              <Text style={styles.breadcrumbItem}>Inventory</Text>
-              <ChevronRight size={14} color="#64748b" />
-              <Text style={styles.breadcrumbActive}>{activeNav.label}</Text>
+            <View style={styles.controlBarLeft}>
+              <TouchableOpacity
+                style={styles.burgerToggleBtn}
+                onPress={() => setSidebarOpen(prev => !prev)}
+                title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+              >
+                <Menu size={18} color="#38bdf8" />
+              </TouchableOpacity>
+
+              <View style={[styles.breadcrumbs, isMobile && { display: 'none' }]}>
+                <Text style={styles.breadcrumbItem}>Inventory</Text>
+                <ChevronRight size={14} color="#64748b" />
+                <Text style={styles.breadcrumbActive}>{activeNav.label}</Text>
+              </View>
             </View>
 
             <View style={[styles.controlBarRight, isMobile && { width: '100%', justifyContent: 'space-between' }]}>
@@ -2233,10 +2246,21 @@ const styles = StyleSheet.create({
     flexDirection: 'column'
   },
   sidebarTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1e293b'
+  },
+  sidebarCollapseBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: '#1e293b',
+    cursor: 'pointer',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   sidebarSectionTitle: {
     fontSize: 11,
@@ -2346,6 +2370,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#1e293b',
     backgroundColor: '#0f172a'
+  },
+  controlBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  burgerToggleBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    cursor: 'pointer',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   breadcrumbs: {
     flexDirection: 'row',
