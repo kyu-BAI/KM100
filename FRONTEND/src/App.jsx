@@ -837,66 +837,29 @@ export default function App() {
 
     let finished = false;
 
-    // Apply extracted or smart default receipt values immediately
+    // Apply whatever details were ACTUALLY extracted from the scanned image (NO hardcoded data)
     const applyOcrResult = (parsed) => {
-      const isSales = selectedReceiptType?.id?.includes('sales');
-      const isInsurance = selectedReceiptType?.id?.includes('insurance');
-      const isConsumable = selectedReceiptType?.id?.includes('consumable');
-      const isVoucher = selectedReceiptType?.id?.includes('voucher');
-
-      const defaultEst = isSales
-        ? 'PETC Emission Center'
-        : isInsurance
-        ? 'CTPL Insurance Provider'
-        : isConsumable
-        ? 'Cebu Testing & Office Supplies'
-        : isVoucher
-        ? 'PETC Operations'
-        : 'STEAKSHACK SIZZLING HOUSE';
-
-      const defaultDesc = isSales
-        ? 'Vehicle Emission Testing'
-        : isInsurance
-        ? 'PETC CTPL Insurance'
-        : isConsumable
-        ? 'Office & Testing Supplies'
-        : isVoucher
-        ? 'Cash Payment Voucher'
-        : 'Meals';
-
-      const defaultAmt = isSales
-        ? '450.00'
-        : isInsurance
-        ? '650.00'
-        : isConsumable
-        ? '1250.00'
-        : isVoucher
-        ? '500.00'
-        : '518.00';
-
-      const defaultOr = isSales
-        ? `OR-2026-${Math.floor(1000 + Math.random() * 9000)}`
-        : isInsurance
-        ? `INS-2026-${Math.floor(1000 + Math.random() * 9000)}`
-        : '3203';
-
-      setOcrEstablishment(parsed?.establishment || defaultEst);
+      setOcrEstablishment(parsed?.establishment || '');
       setOcrReceiptDate(parsed?.receiptDate || new Date().toISOString().split('T')[0]);
-      setOcrDescription(parsed?.description || defaultDesc);
-      setOcrAmount(parsed?.amount ? parsed.amount.toString() : defaultAmt);
-      setOcrOrNumber(parsed?.orNumber || defaultOr);
+      setOcrDescription(parsed?.description || (selectedReceiptType?.name ? selectedReceiptType.name : ''));
+      setOcrAmount(parsed?.amount && parsed.amount > 0 ? parsed.amount.toString() : '');
+      setOcrOrNumber(parsed?.orNumber || '');
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
-      showNotice('Receipt data ready! Verify details before saving.');
+      if (parsed?.establishment || (parsed?.amount && parsed.amount > 0)) {
+        showNotice('Receipt data extracted from image! Please review details.');
+      } else {
+        showNotice('Receipt captured! Review and confirm details before saving.');
+      }
     };
 
-    // Safety fallback: maximum 2 seconds wait time
+    // Safety fallback: maximum 9 seconds wait time for OCR recognition
     const safetyTimer = setTimeout(() => {
       if (!finished) {
         finished = true;
         applyOcrResult(null);
       }
-    }, 2000);
+    }, 9000);
 
     try {
       const parsed = await runOcrOnImage(dataUrl, (prog, msg) => {
@@ -910,7 +873,7 @@ export default function App() {
         applyOcrResult(parsed);
       }
     } catch (err) {
-      console.warn('OCR processing fallback:', err);
+      console.warn('OCR processing error:', err);
       if (!finished) {
         finished = true;
         clearTimeout(safetyTimer);
@@ -2614,7 +2577,7 @@ export default function App() {
                         )}
                         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                           <Text style={{ fontSize: 13, color: '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
-                            {ocrEstablishment || 'Store / Establishment'}
+                            {ocrEstablishment || selectedReceiptType.name}
                           </Text>
                           <Text style={{ fontSize: 11, color: '#94a3b8' }} numberOfLines={1}>
                             Category: <Text style={{ color: '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
@@ -2639,7 +2602,7 @@ export default function App() {
                             style={styles.ocrFieldInput}
                             value={ocrEstablishment}
                             onChangeText={setOcrEstablishment}
-                            placeholder="e.g. STEAKSHACK SIZZLING HOUSE"
+                            placeholder="e.g. Store or Business Name"
                             placeholderTextColor="#64748b"
                           />
                         </View>
@@ -2654,7 +2617,7 @@ export default function App() {
                             style={styles.ocrFieldInput}
                             value={ocrReceiptDate}
                             onChangeText={setOcrReceiptDate}
-                            placeholder="YYYY-MM-DD (e.g. 2026-11-11)"
+                            placeholder="YYYY-MM-DD"
                             placeholderTextColor="#64748b"
                           />
                         </View>
@@ -2669,7 +2632,7 @@ export default function App() {
                             style={styles.ocrFieldInput}
                             value={ocrDescription}
                             onChangeText={setOcrDescription}
-                            placeholder="e.g. Meals"
+                            placeholder="e.g. Service or Item Details"
                             placeholderTextColor="#64748b"
                           />
                         </View>
@@ -2684,7 +2647,7 @@ export default function App() {
                             style={[styles.ocrFieldInput, { color: '#34d399', fontWeight: '700' }]}
                             value={ocrAmount}
                             onChangeText={setOcrAmount}
-                            placeholder="e.g. 518.00"
+                            placeholder="0.00"
                             placeholderTextColor="#64748b"
                             keyboardType="numeric"
                           />
@@ -2700,7 +2663,7 @@ export default function App() {
                             style={styles.ocrFieldInput}
                             value={ocrOrNumber}
                             onChangeText={setOcrOrNumber}
-                            placeholder="e.g. 3203"
+                            placeholder="e.g. OR-2026-001"
                             placeholderTextColor="#64748b"
                           />
                         </View>
