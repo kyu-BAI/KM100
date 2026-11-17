@@ -7,7 +7,8 @@ import {
   TextInput,
   ScrollView,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  useWindowDimensions
 } from 'react-native';
 import {
   Folder,
@@ -20,6 +21,7 @@ import {
   Download,
   Trash2,
   X,
+  Menu,
   CheckCircle2,
   AlertTriangle,
   Package,
@@ -123,17 +125,28 @@ const RECEIPT_TYPES = [
 ];
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Unified single-source navigation state controlled 100% by left sidebar
-  const [activeNav, setActiveNav] = useState({
+  const [activeNav, _setActiveNav] = useState({
     type: 'all',
     year: null,
     month: null,
     subCategory: null,
     label: 'All Inventory Files'
   });
+
+  const setActiveNav = (nav) => {
+    _setActiveNav(nav);
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -661,7 +674,7 @@ export default function App() {
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <View style={styles.authContainer}>
+      <View style={[styles.authContainer, isMobile && { padding: 12 }]}>
         {notification && (
           <View style={[styles.toast, notification.type === 'error' ? styles.toastError : styles.toastSuccess]}>
             {notification.type === 'error' ? <AlertTriangle size={18} color="#fff" /> : <CheckCircle2 size={18} color="#fff" />}
@@ -669,7 +682,7 @@ export default function App() {
           </View>
         )}
 
-        <View style={styles.authCard}>
+        <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }]}>
           {/* Top Brand & Security Tag */}
           <View style={styles.authHeader}>
             <View style={styles.authShieldIconBox}>
@@ -833,13 +846,50 @@ export default function App() {
         </View>
       )}
 
+      {/* Mobile Top Bar */}
+      {isMobile && (
+        <View style={styles.mobileTopBar}>
+          <TouchableOpacity
+            style={styles.mobileMenuBtn}
+            onPress={() => setMobileMenuOpen(prev => !prev)}
+          >
+            <Menu size={22} color="#38bdf8" />
+          </TouchableOpacity>
+          <View style={styles.mobileTitleBlock}>
+            <Text style={styles.mobileAppTitle} numberOfLines={1}>PETC INVENTORY</Text>
+            <Text style={styles.mobileAppSub} numberOfLines={1}>{activeNav.label}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.mobileAddBtn}
+            onPress={openAddModal}
+          >
+            <PlusCircle size={22} color="#34d399" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Backdrop for Mobile Drawer */}
+      {isMobile && mobileMenuOpen && (
+        <TouchableOpacity
+          style={styles.mobileDrawerBackdrop}
+          activeOpacity={1}
+          onPress={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
       <View style={styles.mainContent}>
-        {/* LEFT SIDEBAR */}
-        <View style={styles.sidebar}>
-          <View style={styles.sidebarTitleRow}>
-            <Text style={styles.sidebarSectionTitle}>DOCUMENT DIRECTORY</Text>
-          </View>
+        {/* LEFT SIDEBAR (Desktop permanent / Mobile drawer) */}
+        {(!isMobile || mobileMenuOpen) && (
+          <View style={[styles.sidebar, isMobile && styles.mobileSidebarDrawer]}>
+            <View style={styles.sidebarTitleRow}>
+              <Text style={styles.sidebarSectionTitle}>DOCUMENT DIRECTORY</Text>
+              {isMobile && (
+                <TouchableOpacity onPress={() => setMobileMenuOpen(false)} style={styles.mobileCloseDrawerBtn}>
+                  <X size={18} color="#94a3b8" />
+                </TouchableOpacity>
+              )}
+            </View>
 
           <ScrollView style={styles.treeScroll} showsVerticalScrollIndicator={false}>
             {/* 1. All Files Node */}
@@ -1427,19 +1477,20 @@ export default function App() {
             </View>
           )}
         </View>
+      )}
 
         {/* MAIN VIEWING AREA */}
         <View style={styles.contentArea}>
           {/* CONTROL BAR: Breadcrumbs, Search & Record Count */}
-          <View style={styles.controlBar}>
-            <View style={styles.breadcrumbs}>
+          <View style={[styles.controlBar, isMobile && styles.controlBarMobile]}>
+            <View style={[styles.breadcrumbs, isMobile && { display: 'none' }]}>
               <Text style={styles.breadcrumbItem}>Inventory</Text>
               <ChevronRight size={14} color="#64748b" />
               <Text style={styles.breadcrumbActive}>{activeNav.label}</Text>
             </View>
 
-            <View style={styles.controlBarRight}>
-              <View style={styles.searchBox}>
+            <View style={[styles.controlBarRight, isMobile && { width: '100%', justifyContent: 'space-between' }]}>
+              <View style={[styles.searchBox, isMobile && { flex: 1 }]}>
                 <Search size={15} color="#94a3b8" />
                 <TextInput
                   style={styles.searchInput}
@@ -1475,10 +1526,80 @@ export default function App() {
               </Text>
               <Text style={styles.emptySubtitle}>
                 {items.length === 0
-                  ? 'Your inventory database is currently empty. Click "Add Document" in the left sidebar to add records.'
-                  : 'Select another category or year/month from the left sidebar to view documents.'}
+                  ? 'Your inventory database is currently empty. Tap "Add Document" to add records.'
+                  : 'Select another category or year/month to view documents.'}
               </Text>
             </View>
+          ) : isMobile ? (
+            /* MOBILE TOUCH-FRIENDLY DOCUMENT CARDS */
+            <ScrollView style={styles.mobileCardList} showsVerticalScrollIndicator={false}>
+              {filteredItems.map((item, idx) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.mobileCard}
+                  onPress={() => setViewItem(item)}
+                >
+                  <View style={styles.mobileCardHeader}>
+                    <View style={styles.mobileCardIcon}>
+                      {item.fileFormat === 'XLSX' ? (
+                        <FileSpreadsheet size={20} color="#34d399" />
+                      ) : item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? (
+                        <ImageIcon size={20} color="#38bdf8" />
+                      ) : (
+                        <FileText size={20} color="#38bdf8" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.mobileCardTitle} numberOfLines={1}>{item.fileName}</Text>
+                      <Text style={styles.mobileCardCategory} numberOfLines={1}>
+                        {item.category} • {item.entity}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.statusTag,
+                      item.status === 'Low Stock' ? styles.statusTagDanger :
+                      item.status === 'Completed' || item.status === 'Audited' || item.status === 'Paid & Reconciled' ? styles.statusTagSuccess :
+                      styles.statusTagInfo
+                    ]}>
+                      <Text style={styles.statusTagText}>{item.status}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.mobileCardMeta}>
+                    <View style={styles.mobileMetaItem}>
+                      <Text style={styles.mobileMetaLabel}>PERIOD</Text>
+                      <Text style={styles.mobileMetaVal}>{item.year} {item.month !== 'CURRENT' ? item.month : ''}</Text>
+                    </View>
+                    <View style={styles.mobileMetaItem}>
+                      <Text style={styles.mobileMetaLabel}>AMOUNT</Text>
+                      <Text style={[styles.mobileMetaVal, { color: '#38bdf8', fontWeight: '700' }]}>
+                        {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : 'N/A'}
+                      </Text>
+                    </View>
+                    <View style={styles.mobileMetaItem}>
+                      <Text style={styles.mobileMetaLabel}>FORMAT</Text>
+                      <Text style={styles.mobileMetaVal}>{item.fileFormat || 'PDF'}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.mobileCardActions}>
+                    <TouchableOpacity
+                      style={styles.mobileBtnView}
+                      onPress={() => setViewItem(item)}
+                    >
+                      <Eye size={14} color="#38bdf8" />
+                      <Text style={styles.mobileBtnViewText}>View Details</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.mobileBtnDelete}
+                      onPress={() => handleDeleteItem(item.id, item.fileName)}
+                    >
+                      <Trash2 size={14} color="#f87171" />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           ) : (
             /* TABLE LIST VIEW */
             <ScrollView horizontal style={styles.tableHorizontal}>
@@ -1556,7 +1677,7 @@ export default function App() {
       {/* ======================================================== */}
       <Modal visible={!!viewItem} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.viewerModalContainer}>
+          <View style={[styles.viewerModalContainer, isMobile && { width: '96%', maxHeight: '92%', borderRadius: 10 }]}>
             <View style={styles.viewerHeader}>
               <View style={styles.viewerHeaderLeft}>
                 <View style={styles.viewerBadge}>
@@ -1707,7 +1828,7 @@ export default function App() {
       {/* ======================================================== */}
       <Modal visible={showAddModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.formModalContainer}>
+          <View style={[styles.formModalContainer, isMobile && { width: '96%', maxHeight: '92%', borderRadius: 10 }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1745,7 +1866,7 @@ export default function App() {
             {/* STAGE 1: THE TWO OPTIONS (Insert OR Scan)             */}
             {/* ---------------------------------------------------- */}
             {addMode === 'options' && (
-              <View style={styles.optionsBody}>
+              <View style={[styles.optionsBody, isMobile && { padding: 14, gap: 12 }]}>
                 {/* Option 1: Insert Document */}
                 <TouchableOpacity
                   style={styles.optionCard}
@@ -1897,7 +2018,7 @@ export default function App() {
                       return (
                         <TouchableOpacity
                           key={rt.id}
-                          style={[styles.receiptTypeCard, isSelected && styles.receiptTypeCardActive]}
+                          style={[styles.receiptTypeCard, isSelected && styles.receiptTypeCardActive, isMobile && { width: '100%' }]}
                           onPress={() => setSelectedReceiptType(rt)}
                         >
                           <View style={styles.receiptTypeHeader}>
@@ -3314,5 +3435,165 @@ const styles = StyleSheet.create({
     color: '#f87171',
     fontSize: 11,
     fontWeight: '700'
+  },
+
+  // Mobile App Responsiveness Styles
+  mobileTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: '#0f172a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    zIndex: 100
+  },
+  mobileMenuBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#1e293b'
+  },
+  mobileTitleBlock: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 8
+  },
+  mobileAppTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#f8fafc',
+    letterSpacing: 0.5
+  },
+  mobileAppSub: {
+    fontSize: 11,
+    color: '#38bdf8',
+    fontWeight: '600'
+  },
+  mobileAddBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)'
+  },
+  mobileDrawerBackdrop: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    zIndex: 998
+  },
+  mobileSidebarDrawer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '85%',
+    maxWidth: 320,
+    zIndex: 999,
+    boxShadow: '10px 0 30px rgba(0, 0, 0, 0.8)'
+  },
+  mobileCloseDrawerBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: '#1e293b'
+  },
+  controlBarMobile: {
+    flexDirection: 'column',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10
+  },
+  mobileCardList: {
+    flex: 1,
+    padding: 12
+  },
+  mobileCard: {
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 14,
+    marginBottom: 10,
+    gap: 10
+  },
+  mobileCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  mobileCardIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  mobileCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#f8fafc'
+  },
+  mobileCardCategory: {
+    fontSize: 11,
+    color: '#94a3b8'
+  },
+  mobileCardMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#0b1120',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#1e293b'
+  },
+  mobileMetaItem: {
+    alignItems: 'center'
+  },
+  mobileMetaLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#64748b',
+    letterSpacing: 0.5,
+    marginBottom: 2
+  },
+  mobileMetaVal: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#e2e8f0'
+  },
+  mobileCardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 4
+  },
+  mobileBtnView: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    paddingVertical: 8,
+    borderRadius: 6
+  },
+  mobileBtnViewText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#38bdf8'
+  },
+  mobileBtnDelete: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)'
   }
 });
