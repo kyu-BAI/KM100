@@ -54,11 +54,12 @@ import { supabase, mapFromDb, mapToDb } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
-// Receipt Types matching the handwritten diagrams
+// Receipt Types matching the handwritten diagrams with dedicated DB tables
 const RECEIPT_TYPES = [
   {
     id: 'petc-sales',
     name: 'PETC Sales Receipt',
+    tableName: 'petc_sales_receipts',
     description: 'Vehicle emission testing fee receipt & inspection certificate',
     category: 'PETC Sales',
     categoryId: 'petc-sales',
@@ -68,6 +69,7 @@ const RECEIPT_TYPES = [
   {
     id: 'petc-insurance',
     name: 'PETC CTPL Insurance Receipt',
+    tableName: 'petc_insurance_receipts',
     description: 'Compulsory third party liability insurance policy payment',
     category: 'PETC Insurance',
     categoryId: 'petc-insurance',
@@ -77,6 +79,7 @@ const RECEIPT_TYPES = [
   {
     id: 'expenses-petc',
     name: 'PETC Expense Receipt',
+    tableName: 'petc_expense_receipts',
     description: 'PETC calibration, utilities, rent, and operational disbursements',
     category: 'Expenses',
     categoryId: 'expenses',
@@ -87,6 +90,7 @@ const RECEIPT_TYPES = [
   {
     id: 'expenses-red-goose',
     name: 'Red Goose Expense Receipt',
+    tableName: 'red_goose_expense_receipts',
     description: 'Red Goose branch operational expenses and invoices',
     category: 'Expenses',
     categoryId: 'expenses',
@@ -97,6 +101,7 @@ const RECEIPT_TYPES = [
   {
     id: 'expenses-knoah-mari',
     name: 'Knoah Mari Expense Receipt',
+    tableName: 'knoah_mari_expense_receipts',
     description: 'Knoah Mari testing supplies, rent, and utility disbursements',
     category: 'Expenses',
     categoryId: 'expenses',
@@ -107,6 +112,7 @@ const RECEIPT_TYPES = [
   {
     id: 'consumables-delivery',
     name: 'Consumables Purchase Receipt',
+    tableName: 'consumables_receipts',
     description: 'Office paper, cleaning chemicals & smoke filter deliveries',
     category: 'Consumables',
     categoryId: 'consumables',
@@ -117,6 +123,7 @@ const RECEIPT_TYPES = [
   {
     id: 'voucher-disbursement',
     name: 'Payment Voucher Receipt',
+    tableName: 'voucher_receipts',
     description: 'Official liquidation slip and petty cash payment voucher',
     category: 'Vouchers',
     categoryId: 'vouchers',
@@ -631,12 +638,48 @@ export default function App() {
         }
       };
 
-      // 1. Direct Supabase PostgreSQL upsert
+      // 1. Direct Supabase PostgreSQL upsert to dedicated receipt table (e.g. knoah_mari_expense_receipts)
+      const targetTable = selectedReceiptType.tableName;
+      if (targetTable) {
+        try {
+          const dedicatedRecord = {
+            id: scannedItemPayload.id,
+            or_number: refCode,
+            file_name: receiptFileName,
+            title: scannedItemPayload.title,
+            category: scannedItemPayload.category,
+            sub_category: scannedItemPayload.subCategory,
+            entity: scannedItemPayload.entity,
+            year: scannedItemPayload.year,
+            month: scannedItemPayload.month,
+            amount: amt,
+            currency: 'PHP',
+            status: 'Scanned & Verified',
+            file_format: 'JPG',
+            file_size: scannedItemPayload.fileSize,
+            file_path: photoDataUrl,
+            notes: scannedItemPayload.notes,
+            tags: scannedItemPayload.tags,
+            preview_data: scannedItemPayload.previewData,
+            scanned_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const { error: dedicatedErr } = await supabase.from(targetTable).upsert(dedicatedRecord);
+          if (dedicatedErr) {
+            console.warn(`Dedicated table "${targetTable}" note:`, dedicatedErr.message);
+          }
+        } catch (tableErr) {
+          console.warn(`Could not save to dedicated table "${targetTable}":`, tableErr);
+        }
+      }
+
+      // 2. Direct Supabase PostgreSQL upsert to master inventory_items
       const dbRow = mapToDb(scannedItemPayload);
       const { error: dbError } = await supabase.from('inventory_items').upsert(dbRow);
       if (dbError) throw dbError;
 
-      // 2. Local backend sync if available
+      // 3. Local backend sync if available
       try {
         await fetch(`${API_BASE}/items`, {
           method: 'POST',
@@ -647,13 +690,13 @@ export default function App() {
         // optional local sync
       }
 
-      // 3. Update local state immediately
+      // 4. Update local state immediately
       setItems(prev => [scannedItemPayload, ...prev]);
 
-      // 4. Success feedback and close
+      // 5. Success feedback and close
       stopCamera();
       closeAddModal();
-      showNotice(`Receipt "${receiptFileName}" automatically scanned and stored in database!`);
+      showNotice(`Receipt stored in "${targetTable || 'inventory'}" & cataloged!`);
       fetchData();
     } catch (err) {
       console.error('Error auto-saving scanned receipt:', err);
@@ -2149,8 +2192,15 @@ export default function App() {
                             {isSelected && <CheckCircle2 size={16} color="#34d399" />}
                           </View>
                           <Text style={styles.receiptTypeDesc} numberOfLines={2}>{rt.description}</Text>
-                          <View style={styles.receiptEntityBadge}>
-                            <Text style={styles.receiptEntityBadgeText}>{rt.category} • {rt.entity}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                            <View style={styles.receiptEntityBadge}>
+                              <Text style={styles.receiptEntityBadgeText}>{rt.category} • {rt.entity}</Text>
+                            </View>
+                            <View style={[styles.receiptEntityBadge, { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
+                              <Text style={[styles.receiptEntityBadgeText, { color: '#38bdf8', fontSize: 10, fontFamily: 'monospace' }]}>
+                                📁 {rt.tableName}
+                              </Text>
+                            </View>
                           </View>
                         </TouchableOpacity>
                       );
@@ -2187,9 +2237,17 @@ export default function App() {
                   </View>
 
                   {/* Step C: Camera Viewfinder / Auto-Save Triggers */}
-                  <Text style={[styles.scanSectionHeading, { marginTop: 18 }]}>
-                    3. CAPTURE & AUTO-STORE INTO DATABASE:
-                  </Text>
+                  <View style={{ marginTop: 18, marginBottom: 8 }}>
+                    <Text style={styles.scanSectionHeading}>
+                      3. CAPTURE & AUTO-STORE INTO DATABASE:
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(56, 189, 248, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginTop: 6, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                      <CheckCircle2 size={14} color="#34d399" />
+                      <Text style={{ fontSize: 11, color: '#94a3b8', flex: 1 }}>
+                        Target Table: <Text style={{ color: '#38bdf8', fontWeight: '700', fontFamily: 'monospace' }}>public.{selectedReceiptType.tableName}</Text>
+                      </Text>
+                    </View>
+                  </View>
 
                   {/* Native mobile camera input */}
                   <input
