@@ -898,19 +898,24 @@ export default function App() {
       const refCode = (ocrOrNumber || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
       const receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
 
+      const scanDateToday = new Date().toISOString().split('T')[0];
+      const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const currentMonthName = monthNames[new Date().getMonth()] || 'FEB';
+
       const scannedItemPayload = {
         id: `SCN-${Date.now()}`,
         fileName: receiptFileName,
         title: `${establishment} - ${description} (№ ${refCode})`,
         establishment,
         receiptDate,
+        scannedDate: scanDateToday,
         description,
         category: selectedReceiptType.category,
         categoryId: selectedReceiptType.categoryId,
         subCategory: selectedReceiptType.subCategory || 'Receipt Scan',
         entity: selectedReceiptType.entity,
-        year: activeNav.year || (receiptDate ? receiptDate.split('-')[0] : '2026'),
-        month: activeNav.month || (receiptDate && !isNaN(new Date(receiptDate).getMonth()) ? ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][new Date(receiptDate).getMonth()] : 'FEB'),
+        year: activeNav.year || scanDateToday.split('-')[0] || '2026',
+        month: activeNav.month || currentMonthName,
         amount: amt,
         currency: 'PHP',
         quantity: 1,
@@ -919,7 +924,7 @@ export default function App() {
         fileFormat: 'JPG',
         fileSize: `${Math.round(capturedReceiptPhoto.length * 0.75 / 1024)} KB`,
         filePath: capturedReceiptPhoto,
-        notes: `Establishment: ${establishment} | Date: ${receiptDate} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.`,
+        notes: `Establishment: ${establishment} | Scanned: ${scanDateToday} | Date: ${receiptDate} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.`,
         tags: ['Scanned Receipt', establishment, selectedReceiptType.name, selectedReceiptType.entity],
         previewData: {
           establishment,
@@ -2005,7 +2010,7 @@ export default function App() {
                     <View style={styles.mobileMetaItem}>
                       <Text style={styles.mobileMetaLabel}>PERIOD / DATE</Text>
                       <Text style={styles.mobileMetaVal}>
-                        {item.receiptDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : 'N/A')}
+                        {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || 'N/A')}
                       </Text>
                     </View>
                     <View style={styles.mobileMetaItem}>
@@ -2071,7 +2076,7 @@ export default function App() {
                       <Text style={[styles.td, { width: 150 }]} numberOfLines={1}>{item.category}</Text>
                       <Text style={[styles.td, { width: 120 }]} numberOfLines={1}>{item.entity}</Text>
                       <Text style={[styles.td, { width: 115 }]}>
-                        {item.receiptDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : '-')}
+                        {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || '-')}
                       </Text>
                       <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: '#38bdf8' }]}>
                         {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : '-'}
@@ -2180,9 +2185,15 @@ export default function App() {
                   </Text>
                 </View>
                 <View style={styles.viewerStatBox}>
-                  <Text style={styles.viewerStatLabel}>RECEIPT DATE</Text>
+                  <Text style={styles.viewerStatLabel}>DATE SCANNED</Text>
                   <Text style={styles.viewerStatValue}>
-                    {viewItem?.receiptDate || viewItem?.previewData?.receipt_date || viewItem?.createdAt || '-'}
+                    {viewItem?.scannedDate || viewItem?.createdAt || '-'}
+                  </Text>
+                </View>
+                <View style={styles.viewerStatBox}>
+                  <Text style={styles.viewerStatLabel}>RECEIPT DATE (ISSUED)</Text>
+                  <Text style={styles.viewerStatValue}>
+                    {viewItem?.receiptDate || viewItem?.previewData?.receipt_date || '-'}
                   </Text>
                 </View>
                 <View style={styles.viewerStatBox}>

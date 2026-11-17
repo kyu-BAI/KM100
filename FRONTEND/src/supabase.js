@@ -10,12 +10,18 @@ export function mapFromDb(row) {
   if (!row) return null;
   const rawCat = row.category || 'Expenses';
   const rawCatId = row.category_id || rawCat.toLowerCase().replace(/\s+/g, '-');
+  const scanDate = row.scanned_at 
+    ? new Date(row.scanned_at).toISOString().split('T')[0]
+    : (row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '');
+  const recDate = row.receipt_date || row.preview_data?.receipt_date || '';
+
   return {
     id: row.id,
     fileName: row.file_name,
     title: row.title || row.file_name,
     establishment: row.establishment || row.preview_data?.establishment || '',
-    receiptDate: row.receipt_date || row.preview_data?.receipt_date || (row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : ''),
+    receiptDate: recDate,
+    scannedDate: scanDate,
     description: row.description || row.preview_data?.description || '',
     category: rawCat,
     categoryId: rawCatId,
