@@ -47,7 +47,8 @@ import {
   UserPlus,
   LogOut,
   Key,
-  Shield
+  Shield,
+  Smartphone
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
 
@@ -182,10 +183,12 @@ export default function App() {
   // Scan Document State
   const [selectedReceiptType, setSelectedReceiptType] = useState(RECEIPT_TYPES[0]);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('environment'); // 'environment' (rear) | 'user' (front)
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedReceiptPhoto, setCapturedReceiptPhoto] = useState(null);
   const [scannedRefNo, setScannedRefNo] = useState('');
   const [scannedAmount, setScannedAmount] = useState('');
+  const [isSavingScan, setIsSavingScan] = useState(false);
   const videoRef = useRef(null);
 
   // Supabase Auth State (Admin accounts only)
@@ -411,6 +414,7 @@ export default function App() {
     setCapturedReceiptPhoto(null);
     setScannedRefNo(`OR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
     setScannedAmount('');
+    setIsSavingScan(false);
     stopCamera();
     setShowAddModal(true);
   };
@@ -528,20 +532,36 @@ export default function App() {
   };
 
   // --- Option 2: Scan Receipt Handlers ---
-  const startCamera = async () => {
+  const startCamera = async (facing = cameraFacing) => {
+    stopCamera();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
+        });
+      } catch (e1) {
+        // Fallback to any available camera without constraint
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('autoplay', 'true');
+        videoRef.current.setAttribute('muted', 'true');
+        await videoRef.current.play().catch(e => console.warn('Video play warning:', e));
       }
       setCameraStream(stream);
       setCameraActive(true);
     } catch (err) {
-      console.warn('Camera error:', err);
-      showNotice('Camera not accessible. You can upload a receipt photo instead.', 'error');
+      console.warn('Camera access error:', err);
+      showNotice('Camera not accessible. Please allow camera permissions or upload a receipt photo.', 'error');
     }
   };
 
@@ -553,39 +573,23 @@ export default function App() {
     setCameraActive(false);
   };
 
-  const captureCameraSnapshot = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth || 640;
-      canvas.height = videoRef.current.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      setCapturedReceiptPhoto(dataUrl);
-      stopCamera();
-    }
+  const flipCamera = () => {
+    const nextFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+    setCameraFacing(nextFacing);
+    startCamera(nextFacing);
   };
 
-  const handleReceiptPhotoSelect = (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        setCapturedReceiptPhoto(uploadEvent.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveScannedReceipt = async () => {
-    if (!capturedReceiptPhoto) {
+  // Automatically stores scanned receipt into Supabase PostgreSQL database
+  const autoSaveScannedReceipt = async (photoDataUrl, customRef, customAmt) => {
+    if (!photoDataUrl) {
       showNotice('Please capture or select a receipt photo first', 'error');
       return;
     }
 
+    setIsSavingScan(true);
     try {
-      const refCode = scannedRefNo.trim() || `OR-${Date.now()}`;
-      const amt = Number(scannedAmount) || 0;
+      const refCode = (customRef || scannedRefNo || '').trim() || `${selectedReceiptType.prefix}-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const amt = Number(customAmt !== undefined ? customAmt : scannedAmount) || 0;
       const receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
 
       const scannedItemPayload = {
@@ -604,10 +608,12 @@ export default function App() {
         unit: 'receipt',
         status: 'Scanned & Verified',
         fileFormat: 'JPG',
-        fileSize: '128.0 KB',
-        notes: `Scanned receipt: ${selectedReceiptType.name}. Reference No: ${refCode}. Captured via scanner on ${new Date().toLocaleDateString()}.`,
+        fileSize: `${Math.round(photoDataUrl.length * 0.75 / 1024)} KB`,
+        filePath: photoDataUrl,
+        notes: `Physical receipt scanned from ${isMobile ? 'mobile camera' : 'device camera'} on ${new Date().toLocaleDateString()}. Document type: ${selectedReceiptType.name}. Reference: ${refCode}.`,
         tags: ['Scanned Receipt', selectedReceiptType.name, selectedReceiptType.entity],
         previewData: {
+          image: photoDataUrl,
           columns: ['Receipt Property', 'Scanned Detail'],
           rows: [
             ['Receipt Classification', selectedReceiptType.name],
@@ -620,16 +626,17 @@ export default function App() {
           summary: {
             'Official Ref': refCode,
             'Total Amount': amt > 0 ? `PHP ${amt.toLocaleString()}` : 'N/A',
-            'Verification': 'Physical Receipt Image Attached'
+            'Database Sync': 'Stored in Supabase Cloud'
           }
         }
       };
 
-      // Save directly to Supabase PostgreSQL database
+      // 1. Direct Supabase PostgreSQL upsert
       const dbRow = mapToDb(scannedItemPayload);
-      await supabase.from('inventory_items').upsert(dbRow);
+      const { error: dbError } = await supabase.from('inventory_items').upsert(dbRow);
+      if (dbError) throw dbError;
 
-      // Also notify local backend if available
+      // 2. Local backend sync if available
       try {
         await fetch(`${API_BASE}/items`, {
           method: 'POST',
@@ -640,12 +647,45 @@ export default function App() {
         // optional local sync
       }
 
-      showNotice(`Scanned receipt "${receiptFileName}" saved to inventory!`);
+      // 3. Update local state immediately
+      setItems(prev => [scannedItemPayload, ...prev]);
+
+      // 4. Success feedback and close
+      stopCamera();
       closeAddModal();
+      showNotice(`Receipt "${receiptFileName}" automatically scanned and stored in database!`);
       fetchData();
     } catch (err) {
-      console.error(err);
-      showNotice('Failed to save scanned receipt', 'error');
+      console.error('Error auto-saving scanned receipt:', err);
+      showNotice('Failed to save scanned receipt to database: ' + (err.message || err), 'error');
+    } finally {
+      setIsSavingScan(false);
+    }
+  };
+
+  const captureCameraSnapshotAndAutoSave = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth || 1280;
+      canvas.height = videoRef.current.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setCapturedReceiptPhoto(dataUrl);
+      autoSaveScannedReceipt(dataUrl);
+    }
+  };
+
+  const handleReceiptPhotoSelect = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const dataUrl = uploadEvent.target.result;
+        setCapturedReceiptPhoto(dataUrl);
+        autoSaveScannedReceipt(dataUrl);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -1789,6 +1829,25 @@ export default function App() {
                 </View>
               )}
 
+              {/* Scanned Physical Receipt Image Attachment */}
+              {(viewItem?.filePath?.startsWith('data:image') || viewItem?.previewData?.image) && (
+                <View style={styles.viewerSection}>
+                  <View style={styles.previewHeaderRow}>
+                    <Text style={styles.viewerSectionTitle}>SCANNED PHYSICAL DOCUMENT PHOTO</Text>
+                    <Text style={[styles.previewBadge, { backgroundColor: 'rgba(52, 211, 153, 0.15)', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.3)' }]}>
+                      Verified Capture
+                    </Text>
+                  </View>
+                  <View style={styles.scannedImageViewerBox}>
+                    <img
+                      src={viewItem.filePath || viewItem.previewData?.image}
+                      alt="Scanned physical document"
+                      style={{ width: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, backgroundColor: '#0c1322' }}
+                    />
+                  </View>
+                </View>
+              )}
+
               {viewItem?.previewData && (
                 <View style={styles.viewerSection}>
                   <View style={styles.previewHeaderRow}>
@@ -2069,10 +2128,10 @@ export default function App() {
             {/* ---------------------------------------------------- */}
             {addMode === 'scan' && (
               <>
-                <ScrollView style={styles.modalBody}>
+                <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                   {/* Step A: Choose what receipt you are about to scan */}
                   <Text style={styles.scanSectionHeading}>
-                    1. CHOOSE WHAT RECEIPT YOU ARE ABOUT TO SCAN:
+                    1. CHOOSE RECEIPT CLASSIFICATION:
                   </Text>
                   <View style={styles.receiptTypeGrid}>
                     {RECEIPT_TYPES.map(rt => {
@@ -2098,113 +2157,137 @@ export default function App() {
                     })}
                   </View>
 
-                  {/* Step B: Capture Receipt */}
+                  {/* Step B: Metadata Pre-fill */}
                   <Text style={[styles.scanSectionHeading, { marginTop: 18 }]}>
-                    2. CAPTURE RECEIPT:
+                    2. RECEIPT AUDIT METADATA (AUTO-ASSIGNED):
+                  </Text>
+                  <View style={styles.scanMetaInputsCard}>
+                    <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
+                      <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>OR / Reference Code:</Text>
+                      <TextInput
+                        style={[styles.scannedInput, isMobile && { width: '100%' }]}
+                        value={scannedRefNo}
+                        onChangeText={setScannedRefNo}
+                        placeholder="e.g. OR-2026-9481"
+                        placeholderTextColor="#64748b"
+                      />
+                    </View>
+
+                    <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
+                      <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>Amount (PHP - Optional):</Text>
+                      <TextInput
+                        style={[styles.scannedInput, isMobile && { width: '100%' }]}
+                        value={scannedAmount}
+                        onChangeText={setScannedAmount}
+                        placeholder="e.g. 650.00"
+                        placeholderTextColor="#64748b"
+                        keyboardType="numeric"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Step C: Camera Viewfinder / Auto-Save Triggers */}
+                  <Text style={[styles.scanSectionHeading, { marginTop: 18 }]}>
+                    3. CAPTURE & AUTO-STORE INTO DATABASE:
                   </Text>
 
-                  {/* Hidden file input for uploading receipt photo if user prefers */}
+                  {/* Native mobile camera input */}
                   <input
                     type="file"
-                    id="receiptPhotoInput"
+                    id="mobileCameraInput"
                     accept="image/*"
                     capture="environment"
                     style={{ display: 'none' }}
                     onChange={handleReceiptPhotoSelect}
                   />
 
-                  {capturedReceiptPhoto ? (
-                    /* Captured Photo Preview */
-                    <View style={styles.capturedContainer}>
-                      <View style={styles.capturedImageWrapper}>
-                        <img
-                          src={capturedReceiptPhoto}
-                          alt="Scanned receipt preview"
-                          style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 8 }}
-                        />
-                      </View>
+                  {/* Standard file picker input */}
+                  <input
+                    type="file"
+                    id="receiptPhotoUploadInput"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleReceiptPhotoSelect}
+                  />
 
-                      <View style={styles.scannedFormBox}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                          <CheckCircle2 size={16} color="#34d399" />
-                          <Text style={styles.scannedSuccessText}>Receipt Image Captured Successfully</Text>
-                        </View>
-                        <Text style={styles.scannedReceiptCategoryText}>
-                          Selected Type: <Text style={{ color: '#38bdf8', fontWeight: '700' }}>{selectedReceiptType.name}</Text>
-                        </Text>
-
-                        <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
-                          <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>OR / Ref Number:</Text>
-                          <TextInput
-                            style={[styles.scannedInput, isMobile && { width: '100%' }]}
-                            value={scannedRefNo}
-                            onChangeText={setScannedRefNo}
-                            placeholder="e.g. OR-2026-9481"
-                            placeholderTextColor="#64748b"
-                          />
-                        </View>
-
-                        <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
-                          <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>Amount (PHP):</Text>
-                          <TextInput
-                            style={[styles.scannedInput, isMobile && { width: '100%' }]}
-                            value={scannedAmount}
-                            onChangeText={setScannedAmount}
-                            placeholder="e.g. 650.00"
-                            placeholderTextColor="#64748b"
-                            keyboardType="numeric"
-                          />
-                        </View>
-
-                        <TouchableOpacity
-                          style={styles.retakeBtn}
-                          onPress={() => setCapturedReceiptPhoto(null)}
-                        >
-                          <RefreshCw size={14} color="#94a3b8" />
-                          <Text style={styles.retakeBtnText}>Retake / Choose Another Photo</Text>
-                        </TouchableOpacity>
-                      </View>
+                  {isSavingScan ? (
+                    <View style={styles.scanSavingCard}>
+                      <ActivityIndicator size="large" color="#34d399" />
+                      <Text style={styles.scanSavingTitle}>Storing into Supabase Database...</Text>
+                      <Text style={styles.scanSavingSub}>Uploading image and recording audit verification in PostgreSQL</Text>
                     </View>
                   ) : cameraActive ? (
-                    /* Live Camera Viewfinder */
+                    /* Live Camera Viewfinder with Scanner Frame */
                     <View style={styles.cameraContainer}>
                       <video
                         ref={videoRef}
                         autoPlay
                         playsInline
-                        style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 8, backgroundColor: '#000' }}
+                        muted
+                        style={{ width: '100%', height: isMobile ? 320 : 360, objectFit: 'cover', borderRadius: 8, backgroundColor: '#000' }}
                       />
-                      <View style={styles.cameraOverlayFrame} />
+                      <View style={styles.cameraOverlayFrame}>
+                        <View style={styles.scannerCornerTL} />
+                        <View style={styles.scannerCornerTR} />
+                        <View style={styles.scannerCornerBL} />
+                        <View style={styles.scannerCornerBR} />
+                        <Text style={styles.scannerGuideText}>Center document inside frame</Text>
+                      </View>
+
                       <View style={styles.cameraActionRow}>
-                        <TouchableOpacity style={styles.btnCaptureShutter} onPress={captureCameraSnapshot}>
+                        <TouchableOpacity
+                          style={styles.btnCaptureShutter}
+                          onPress={captureCameraSnapshotAndAutoSave}
+                          disabled={isSavingScan}
+                        >
                           <Camera size={18} color="#fff" />
-                          <Text style={styles.btnCaptureShutterText}>Capture Receipt</Text>
+                          <Text style={styles.btnCaptureShutterText}>Capture & Auto-Save</Text>
                         </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnFlipCamera} onPress={flipCamera}>
+                          <RefreshCw size={14} color="#cbd5e1" />
+                          <Text style={styles.btnFlipCameraText}>Flip</Text>
+                        </TouchableOpacity>
+
                         <TouchableOpacity style={styles.btnCancelCamera} onPress={stopCamera}>
-                          <Text style={styles.btnCancelCameraText}>Cancel</Text>
+                          <Text style={styles.btnCancelCameraText}>Close</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   ) : (
-                    /* Initial Scan Options: Use Camera or Upload Photo */
-                    <View style={[styles.scanTriggerRow, isMobile && { flexDirection: 'column', gap: 10 }]}>
-                      <TouchableOpacity style={styles.scanOptionBtn} onPress={startCamera}>
+                    /* Scan Mode Options */
+                    <View style={[styles.scanTriggerGrid, isMobile && { flexDirection: 'column' }]}>
+                      {/* Option 1: Live In-Browser Viewfinder */}
+                      <TouchableOpacity style={styles.scanOptionBtn} onPress={() => startCamera('environment')}>
                         <View style={styles.scanOptionIconBox}>
                           <Camera size={26} color="#34d399" />
                         </View>
-                        <Text style={styles.scanOptionTitle}>Use Device Camera</Text>
-                        <Text style={styles.scanOptionSub}>Open camera to photograph physical receipt</Text>
+                        <Text style={styles.scanOptionTitle}>Open Live Camera Viewfinder</Text>
+                        <Text style={styles.scanOptionSub}>Use live device camera with alignment frame & instant shutter</Text>
                       </TouchableOpacity>
 
+                      {/* Option 2: Native Phone Camera App */}
                       <TouchableOpacity
-                        style={styles.scanOptionBtn}
-                        onPress={() => document.getElementById('receiptPhotoInput')?.click()}
+                        style={[styles.scanOptionBtn, styles.scanOptionBtnNative]}
+                        onPress={() => document.getElementById('mobileCameraInput')?.click()}
                       >
                         <View style={[styles.scanOptionIconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
-                          <UploadCloud size={26} color="#38bdf8" />
+                          <Smartphone size={26} color="#38bdf8" />
+                        </View>
+                        <Text style={styles.scanOptionTitle}>Take Photo with Phone Camera</Text>
+                        <Text style={styles.scanOptionSub}>Launch phone camera app with flash, zoom & automatic database save</Text>
+                      </TouchableOpacity>
+
+                      {/* Option 3: Upload Existing Photo */}
+                      <TouchableOpacity
+                        style={[styles.scanOptionBtn, styles.scanOptionBtnUpload]}
+                        onPress={() => document.getElementById('receiptPhotoUploadInput')?.click()}
+                      >
+                        <View style={[styles.scanOptionIconBox, { backgroundColor: 'rgba(148, 163, 184, 0.1)', borderColor: 'rgba(148, 163, 184, 0.3)' }]}>
+                          <UploadCloud size={26} color="#94a3b8" />
                         </View>
                         <Text style={styles.scanOptionTitle}>Upload Receipt Photo</Text>
-                        <Text style={styles.scanOptionSub}>Select an existing photo of the receipt</Text>
+                        <Text style={styles.scanOptionSub}>Select an existing receipt image from files or photo gallery</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -2219,15 +2302,6 @@ export default function App() {
                     }}
                   >
                     <Text style={styles.btnSecondaryText}>Back</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.btnPrimary, !capturedReceiptPhoto && { opacity: 0.5 }]}
-                    onPress={handleSaveScannedReceipt}
-                    disabled={!capturedReceiptPhoto}
-                  >
-                    <Check size={16} color="#fff" />
-                    <Text style={styles.btnPrimaryText}>Save Scanned Document</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -3145,6 +3219,20 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontWeight: '600'
   },
+  scanMetaInputsCard: {
+    backgroundColor: '#131d31',
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    gap: 10,
+    marginBottom: 16
+  },
+  scanTriggerGrid: {
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 6
+  },
   scanTriggerRow: {
     flexDirection: 'row',
     gap: 14,
@@ -3159,6 +3247,12 @@ const styles = StyleSheet.create({
     borderColor: '#1e293b',
     alignItems: 'center',
     gap: 8
+  },
+  scanOptionBtnNative: {
+    borderColor: 'rgba(56, 189, 248, 0.3)'
+  },
+  scanOptionBtnUpload: {
+    borderColor: 'rgba(148, 163, 184, 0.2)'
   },
   scanOptionIconBox: {
     width: 52,
@@ -3193,20 +3287,74 @@ const styles = StyleSheet.create({
   cameraOverlayFrame: {
     position: 'absolute',
     top: 20,
-    left: '15%',
-    right: '15%',
-    bottom: 50,
-    borderWidth: 2,
-    borderColor: '#34d399',
-    borderStyle: 'dashed',
+    left: '10%',
+    right: '10%',
+    bottom: 60,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     pointerEvents: 'none'
+  },
+  scannerCornerTL: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 3,
+    borderLeftWidth: 3,
+    borderColor: '#34d399'
+  },
+  scannerCornerTR: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 3,
+    borderRightWidth: 3,
+    borderColor: '#34d399'
+  },
+  scannerCornerBL: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 3,
+    borderLeftWidth: 3,
+    borderColor: '#34d399'
+  },
+  scannerCornerBR: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 3,
+    borderRightWidth: 3,
+    borderColor: '#34d399'
+  },
+  scannerGuideText: {
+    position: 'absolute',
+    bottom: 8,
+    color: '#34d399',
+    fontSize: 11,
+    fontWeight: '700',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    letterSpacing: 0.5
   },
   cameraActionRow: {
     position: 'absolute',
     bottom: 12,
     flexDirection: 'row',
-    gap: 12
+    alignItems: 'center',
+    gap: 10
   },
   btnCaptureShutter: {
     flexDirection: 'row',
@@ -3214,23 +3362,73 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#059669',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20
+    paddingVertical: 10,
+    borderRadius: 22,
+    boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)'
   },
   btnCaptureShutterText: {
     color: '#fff',
     fontSize: 13,
     fontWeight: '700'
   },
+  btnFlipCamera: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#334155'
+  },
+  btnFlipCameraText: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '600'
+  },
   btnCancelCamera: {
     backgroundColor: '#1e293b',
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#334155'
   },
   btnCancelCameraText: {
     color: '#cbd5e1',
     fontSize: 12
+  },
+  scanSavingCard: {
+    backgroundColor: '#131d31',
+    borderRadius: 10,
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#34d399'
+  },
+  scanSavingTitle: {
+    color: '#34d399',
+    fontSize: 15,
+    fontWeight: '700'
+  },
+  scanSavingSub: {
+    color: '#94a3b8',
+    fontSize: 12,
+    textAlign: 'center'
+  },
+  scannedImageViewerBox: {
+    backgroundColor: '#0c1322',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16
   },
   capturedContainer: {
     backgroundColor: '#131d31',
