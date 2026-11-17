@@ -909,8 +909,8 @@ export default function App() {
         categoryId: selectedReceiptType.categoryId,
         subCategory: selectedReceiptType.subCategory || 'Receipt Scan',
         entity: selectedReceiptType.entity,
-        year: activeNav.year || receiptDate.split('-')[0] || '2026',
-        month: activeNav.month || 'FEB',
+        year: activeNav.year || (receiptDate ? receiptDate.split('-')[0] : '2026'),
+        month: activeNav.month || (receiptDate && !isNaN(new Date(receiptDate).getMonth()) ? ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][new Date(receiptDate).getMonth()] : 'FEB'),
         amount: amt,
         currency: 'PHP',
         quantity: 1,
@@ -2003,8 +2003,10 @@ export default function App() {
 
                   <View style={styles.mobileCardMeta}>
                     <View style={styles.mobileMetaItem}>
-                      <Text style={styles.mobileMetaLabel}>PERIOD</Text>
-                      <Text style={styles.mobileMetaVal}>{item.year} {item.month !== 'CURRENT' ? item.month : ''}</Text>
+                      <Text style={styles.mobileMetaLabel}>PERIOD / DATE</Text>
+                      <Text style={styles.mobileMetaVal}>
+                        {item.receiptDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : 'N/A')}
+                      </Text>
                     </View>
                     <View style={styles.mobileMetaItem}>
                       <Text style={styles.mobileMetaLabel}>AMOUNT</Text>
@@ -2046,9 +2048,9 @@ export default function App() {
                     <Text style={[styles.th, { width: 280 }]}>FILE NAME</Text>
                     <Text style={[styles.th, { width: 150 }]}>CATEGORY</Text>
                     <Text style={[styles.th, { width: 120 }]}>ENTITY</Text>
-                    <Text style={[styles.th, { width: 100 }]}>PERIOD</Text>
-                    <Text style={[styles.th, { width: 130, textAlign: 'right' }]}>AMOUNT (PHP)</Text>
-                    <Text style={[styles.th, { width: 110 }]}>VOLUME</Text>
+                    <Text style={[styles.th, { width: 115 }]}>PERIOD / DATE</Text>
+                    <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }]}>AMOUNT (PHP)</Text>
+                    <Text style={[styles.th, { width: 100, paddingLeft: 12 }]}>VOLUME</Text>
                     <Text style={[styles.th, { width: 130 }]}>STATUS</Text>
                     <Text style={[styles.th, { width: 90, textAlign: 'center' }]}>ACTIONS</Text>
                   </View>
@@ -2068,12 +2070,14 @@ export default function App() {
                       </View>
                       <Text style={[styles.td, { width: 150 }]} numberOfLines={1}>{item.category}</Text>
                       <Text style={[styles.td, { width: 120 }]} numberOfLines={1}>{item.entity}</Text>
-                      <Text style={[styles.td, { width: 100 }]}>{item.year} {item.month !== 'CURRENT' ? item.month : ''}</Text>
-                      <Text style={[styles.td, { width: 130, textAlign: 'right', fontWeight: '600', color: '#38bdf8' }]}>
+                      <Text style={[styles.td, { width: 115 }]}>
+                        {item.receiptDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : '-')}
+                      </Text>
+                      <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: '#38bdf8' }]}>
                         {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : '-'}
                       </Text>
-                      <Text style={[styles.td, { width: 110 }]}>
-                        {item.quantity ? `${item.quantity} ${item.unit || ''}` : '-'}
+                      <Text style={[styles.td, { width: 100, paddingLeft: 12 }]}>
+                        {item.unit === 'receipt' || item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? '-' : (item.quantity ? `${item.quantity} ${item.unit || ''}` : '-')}
                       </Text>
                       <View style={{ width: 130 }}>
                         <View style={[
@@ -2178,7 +2182,7 @@ export default function App() {
                 <View style={styles.viewerStatBox}>
                   <Text style={styles.viewerStatLabel}>RECEIPT DATE</Text>
                   <Text style={styles.viewerStatValue}>
-                    {viewItem?.receiptDate || viewItem?.previewData?.receipt_date || viewItem?.createdAt || '2026-11-11'}
+                    {viewItem?.receiptDate || viewItem?.previewData?.receipt_date || viewItem?.createdAt || '-'}
                   </Text>
                 </View>
                 <View style={styles.viewerStatBox}>

@@ -15,7 +15,7 @@ export function mapFromDb(row) {
     fileName: row.file_name,
     title: row.title || row.file_name,
     establishment: row.establishment || row.preview_data?.establishment || '',
-    receiptDate: row.receipt_date || row.preview_data?.receipt_date || '',
+    receiptDate: row.receipt_date || row.preview_data?.receipt_date || (row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : ''),
     description: row.description || row.preview_data?.description || '',
     category: rawCat,
     categoryId: rawCatId,
