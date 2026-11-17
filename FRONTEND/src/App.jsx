@@ -53,7 +53,77 @@ import { supabase, mapFromDb, mapToDb } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
-
+// Receipt Types matching the handwritten diagrams
+const RECEIPT_TYPES = [
+  {
+    id: 'petc-sales',
+    name: 'PETC Sales Receipt',
+    description: 'Vehicle emission testing fee receipt & inspection certificate',
+    category: 'PETC Sales',
+    categoryId: 'petc-sales',
+    entity: 'PETC',
+    prefix: 'SALES'
+  },
+  {
+    id: 'petc-insurance',
+    name: 'PETC CTPL Insurance Receipt',
+    description: 'Compulsory third party liability insurance policy payment',
+    category: 'PETC Insurance',
+    categoryId: 'petc-insurance',
+    entity: 'PETC',
+    prefix: 'INS'
+  },
+  {
+    id: 'expenses-petc',
+    name: 'PETC Expense Receipt',
+    description: 'PETC calibration, utilities, rent, and operational disbursements',
+    category: 'Expenses',
+    categoryId: 'expenses',
+    subCategory: 'Expenses 2026 (PETC)',
+    entity: 'PETC',
+    prefix: 'EXP-PETC'
+  },
+  {
+    id: 'expenses-red-goose',
+    name: 'Red Goose Expense Receipt',
+    description: 'Red Goose branch operational expenses and invoices',
+    category: 'Expenses',
+    categoryId: 'expenses',
+    subCategory: 'Red Goose Expenses 2026',
+    entity: 'Red Goose',
+    prefix: 'EXP-RG'
+  },
+  {
+    id: 'expenses-knoah-mari',
+    name: 'Knoah Mari Expense Receipt',
+    description: 'Knoah Mari testing supplies, rent, and utility disbursements',
+    category: 'Expenses',
+    categoryId: 'expenses',
+    subCategory: 'Knoah Mari Expenses 2026',
+    entity: 'Knoah Mari',
+    prefix: 'EXP-KM'
+  },
+  {
+    id: 'consumables-delivery',
+    name: 'Consumables Purchase Receipt',
+    description: 'Office paper, cleaning chemicals & smoke filter deliveries',
+    category: 'Consumables',
+    categoryId: 'consumables',
+    subCategory: 'Office supply',
+    entity: 'General',
+    prefix: 'CNS'
+  },
+  {
+    id: 'voucher-disbursement',
+    name: 'Payment Voucher Receipt',
+    description: 'Official liquidation slip and petty cash payment voucher',
+    category: 'Vouchers',
+    categoryId: 'vouchers',
+    subCategory: 'PETC',
+    entity: 'PETC',
+    prefix: 'VCH'
+  }
+];
 
 export default function App() {
   const { width } = useWindowDimensions();
