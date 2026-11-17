@@ -26,3 +26,6 @@ Thumbs.db
 # Uploaded receipts / files (preserve structure)
 BACKEND/uploads/*
 !BACKEND/uploads/.gitkeep
+
+# OCR trained data
+*.traineddata

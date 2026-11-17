@@ -831,7 +831,7 @@ export default function App() {
   const handleProcessReceiptPhoto = async (dataUrl) => {
     setCapturedReceiptPhoto(dataUrl);
     setIsOcrProcessing(true);
-    setOcrStatusText('Analyzing receipt image...');
+    setOcrStatusText('Analyzing receipt with Gemini Vision AI...');
     setOcrProgress(0.25);
     stopCamera();
 
@@ -847,19 +847,19 @@ export default function App() {
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
       if (parsed?.establishment || (parsed?.amount && parsed.amount > 0)) {
-        showNotice('Receipt data extracted from image! Please review details.');
+        showNotice('Receipt data extracted with Gemini AI! Please review details.');
       } else {
         showNotice('Receipt captured! Review and confirm details before saving.');
       }
     };
 
-    // Safety fallback: maximum 9 seconds wait time for OCR recognition
+    // Safety fallback: maximum 12 seconds wait time for AI recognition
     const safetyTimer = setTimeout(() => {
       if (!finished) {
         finished = true;
         applyOcrResult(null);
       }
-    }, 9000);
+    }, 12000);
 
     try {
       const parsed = await runOcrOnImage(dataUrl, (prog, msg) => {
@@ -1618,9 +1618,7 @@ export default function App() {
                 <View style={styles.treeChildren}>
                   {[
                     { id: 'expenses-2026-petc', label: 'Expenses 2026 (PETC)' },
-                    { id: 'expenses-2027-petc', label: 'Expenses 2027 (PETC)' },
                     { id: 'red-goose-2026', label: 'Red Goose Expenses 2026' },
-        
                     { id: 'knoah-mari-2026', label: 'Knoah Mari Expenses 2026' },
                     
                   ].map(branch => (
@@ -2546,7 +2544,7 @@ export default function App() {
                     <View style={styles.ocrScanningCard}>
                       <ActivityIndicator size="large" color="#38bdf8" />
                       <View style={{ alignItems: 'center', gap: 4 }}>
-                        <Text style={styles.ocrScanningTitle}>Reading Receipt with OCR...</Text>
+                        <Text style={styles.ocrScanningTitle}>Reading Receipt with Gemini Vision AI...</Text>
                         <Text style={styles.ocrScanningSub}>{ocrStatusText || 'Extracting establishment, date, description & amount...'}</Text>
                       </View>
                       <View style={styles.ocrProgressBarBg}>
