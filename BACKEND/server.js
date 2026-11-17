@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,9 +23,91 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 // Enable CORS and JSON parsing
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use('/uploads', express.static(UPLOADS_DIR));
+
+// ----------------- SUPABASE CLIENT SETUP -----------------
+const supabaseUrl = process.env.SUPABASE_URL ? process.env.SUPABASE_URL.trim() : '';
+const supabaseKey = process.env.SUPABASE_KEY ? process.env.SUPABASE_KEY.trim() : '';
+
+let supabase = null;
+const isSupabaseConfigured = Boolean(
+  supabaseUrl &&
+  supabaseKey &&
+  !supabaseUrl.includes('your-project-ref') &&
+  supabaseUrl.startsWith('http')
+);
+
+if (isSupabaseConfigured) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log(`✓ Supabase client configured for: ${supabaseUrl}`);
+  } catch (err) {
+    console.error('Failed to initialize Supabase client:', err.message);
+  }
+} else {
+  console.log('ℹ Supabase not configured or missing SUPABASE_URL / SUPABASE_KEY in BACKEND/.env.');
+  console.log('ℹ Running with local JSON database fallback (data/inventory.json).');
+}
+
+// Map PostgreSQL snake_case row to frontend camelCase item
+function mapFromDb(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    fileName: row.file_name,
+    title: row.title || row.file_name,
+    category: row.category,
+    categoryId: row.category_id,
+    subCategory: row.sub_category,
+    subCategoryId: row.sub_category_id,
+    entity: row.entity,
+    year: row.year,
+    month: row.month,
+    amount: Number(row.amount) || 0,
+    currency: row.currency || 'PHP',
+    quantity: Number(row.quantity) || 0,
+    unit: row.unit || '',
+    status: row.status || 'Active',
+    fileFormat: row.file_format || 'PDF',
+    fileSize: row.file_size || '0 KB',
+    filePath: row.file_path || '',
+    notes: row.notes || '',
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    previewData: row.preview_data || null,
+    createdAt: row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '',
+    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString().split('T')[0] : ''
+  };
+}
+
+// Map frontend camelCase item to PostgreSQL snake_case row
+function mapToDb(item) {
+  return {
+    id: item.id,
+    file_name: item.fileName,
+    title: item.title || item.fileName,
+    category: item.category || '',
+    category_id: item.categoryId || '',
+    sub_category: item.subCategory || '',
+    sub_category_id: item.subCategoryId || '',
+    entity: item.entity || '',
+    year: item.year || '',
+    month: item.month || '',
+    amount: Number(item.amount) || 0,
+    currency: item.currency || 'PHP',
+    quantity: Number(item.quantity) || 0,
+    unit: item.unit || '',
+    status: item.status || 'Active',
+    file_format: item.fileFormat || 'PDF',
+    file_size: item.fileSize || '0 KB',
+    file_path: item.filePath || '',
+    notes: item.notes || '',
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    preview_data: item.previewData || null,
+    updated_at: new Date().toISOString()
+  };
+}
 
 // Multer config for file uploads
 const storage = multer.diskStorage({
@@ -98,7 +182,7 @@ const CATEGORY_TREE = [
   {
     id: 'vouchers',
     name: 'Vouchers',
-    type: 'voucher',
+    type: 'accounting',
     subcategories: [
       { id: 'vouchers-petc', name: 'PETC', entity: 'PETC' },
       { id: 'vouchers-stc', name: 'STC', entity: 'STC' },
@@ -124,10 +208,10 @@ const CATEGORY_TREE = [
   }
 ];
 
-// Helper to load inventory data
-function loadInventory() {
+// Helper to load inventory data from local JSON
+function loadLocalInventory() {
   if (!fs.existsSync(DB_FILE)) {
-    saveInventory([]);
+    saveLocalInventory([]);
     return [];
   }
   try {
@@ -135,17 +219,64 @@ function loadInventory() {
     return JSON.parse(raw);
   } catch (err) {
     console.error('Error reading db file:', err);
-    saveInventory([]);
+    saveLocalInventory([]);
     return [];
   }
 }
 
-// Helper to save inventory data
-function saveInventory(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+// Helper to save inventory data to local JSON
+function saveLocalInventory(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error saving local db file:', err);
+  }
 }
 
 // ----------------- API ROUTES -----------------
+
+// Status Endpoint to check Supabase connection
+app.get('/api/supabase-status', async (req, res) => {
+  if (!isSupabaseConfigured || !supabase) {
+    return res.json({
+      configured: false,
+      connected: false,
+      storage: 'local',
+      message: 'Supabase credentials not configured in BACKEND/.env. Using local JSON storage.'
+    });
+  }
+
+  try {
+    const { count, error } = await supabase
+      .from('inventory_items')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      return res.json({
+        configured: true,
+        connected: false,
+        storage: 'supabase',
+        error: error.message,
+        hint: 'Table public.inventory_items may not exist yet. Please run supabase_schema.sql in Supabase SQL Editor.'
+      });
+    }
+
+    return res.json({
+      configured: true,
+      connected: true,
+      storage: 'supabase',
+      projectUrl: supabaseUrl,
+      recordCount: count || 0,
+      message: 'Successfully connected to Supabase PostgreSQL database!'
+    });
+  } catch (err) {
+    return res.status(500).json({
+      configured: true,
+      connected: false,
+      error: err.message
+    });
+  }
+});
 
 // 1. Get Categories & Hierarchy
 app.get('/api/categories', (req, res) => {
@@ -153,12 +284,35 @@ app.get('/api/categories', (req, res) => {
 });
 
 // 2. Get Inventory Items with comprehensive filtering & search
-app.get('/api/items', (req, res) => {
+app.get('/api/items', async (req, res) => {
   const { category, categoryId, subCategory, subCategoryId, entity, year, month, search, status } = req.query;
-  let items = loadInventory();
+  let items = [];
 
+  // Try fetching from Supabase if configured
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        items = data.map(mapFromDb);
+      } else {
+        console.warn('Supabase query error, falling back to local storage:', error?.message);
+        items = loadLocalInventory();
+      }
+    } catch (err) {
+      console.warn('Supabase fetch exception, falling back to local storage:', err.message);
+      items = loadLocalInventory();
+    }
+  } else {
+    items = loadLocalInventory();
+  }
+
+  // Filter in memory for maximum search responsiveness
   if (category) {
-    items = items.filter(i => i.category.toLowerCase() === category.toLowerCase());
+    items = items.filter(i => i.category && i.category.toLowerCase() === category.toLowerCase());
   }
   if (categoryId) {
     items = items.filter(i => i.categoryId === categoryId);
@@ -184,8 +338,8 @@ app.get('/api/items', (req, res) => {
   if (search) {
     const q = search.toLowerCase();
     items = items.filter(i =>
-      i.fileName.toLowerCase().includes(q) ||
-      i.title.toLowerCase().includes(q) ||
+      (i.fileName && i.fileName.toLowerCase().includes(q)) ||
+      (i.title && i.title.toLowerCase().includes(q)) ||
       (i.notes && i.notes.toLowerCase().includes(q)) ||
       (i.entity && i.entity.toLowerCase().includes(q)) ||
       (i.subCategory && i.subCategory.toLowerCase().includes(q))
@@ -200,9 +354,27 @@ app.get('/api/items', (req, res) => {
 });
 
 // 3. Get Single Item detail
-app.get('/api/items/:id', (req, res) => {
-  const items = loadInventory();
-  const item = items.find(i => i.id === req.params.id);
+app.get('/api/items/:id', async (req, res) => {
+  const itemId = req.params.id;
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('id', itemId)
+        .single();
+
+      if (!error && data) {
+        return res.json({ success: true, item: mapFromDb(data) });
+      }
+    } catch (err) {
+      console.warn('Supabase get error:', err.message);
+    }
+  }
+
+  const localItems = loadLocalInventory();
+  const item = localItems.find(i => i.id === itemId);
   if (!item) {
     return res.status(404).json({ success: false, message: 'Item not found' });
   }
@@ -210,8 +382,7 @@ app.get('/api/items/:id', (req, res) => {
 });
 
 // 4. Create new Inventory Item
-app.post('/api/items', (req, res) => {
-  const items = loadInventory();
+app.post('/api/items', async (req, res) => {
   const body = req.body;
 
   const newItem = {
@@ -232,6 +403,7 @@ app.post('/api/items', (req, res) => {
     status: body.status || 'Active',
     fileFormat: (body.fileName && body.fileName.includes('.')) ? body.fileName.split('.').pop().toUpperCase() : 'PDF',
     fileSize: body.fileSize || '0 KB',
+    filePath: body.filePath || '',
     createdAt: new Date().toISOString().split('T')[0],
     updatedAt: new Date().toISOString().split('T')[0],
     notes: body.notes || '',
@@ -239,47 +411,109 @@ app.post('/api/items', (req, res) => {
     previewData: body.previewData || null
   };
 
-  items.unshift(newItem);
-  saveInventory(items);
+  // 1. Save to Supabase if connected
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const dbRow = mapToDb(newItem);
+      const { error } = await supabase
+        .from('inventory_items')
+        .upsert(dbRow);
+
+      if (error) {
+        console.error('Supabase insert error:', error.message);
+      } else {
+        console.log(`✓ Inserted item ${newItem.id} into Supabase`);
+      }
+    } catch (err) {
+      console.error('Supabase insert exception:', err.message);
+    }
+  }
+
+  // 2. Also keep local JSON updated as reliable cache/fallback
+  const localItems = loadLocalInventory();
+  localItems.unshift(newItem);
+  saveLocalInventory(localItems);
+
   res.status(201).json({ success: true, item: newItem });
 });
 
 // 5. Update existing item
-app.put('/api/items/:id', (req, res) => {
-  const items = loadInventory();
-  const index = items.findIndex(i => i.id === req.params.id);
-  if (index === -1) {
-    return res.status(404).json({ success: false, message: 'Item not found' });
-  }
+app.put('/api/items/:id', async (req, res) => {
+  const itemId = req.params.id;
+  const localItems = loadLocalInventory();
+  const index = localItems.findIndex(i => i.id === itemId);
 
   const updatedItem = {
-    ...items[index],
+    ...(index !== -1 ? localItems[index] : {}),
     ...req.body,
     updatedAt: new Date().toISOString().split('T')[0]
   };
 
-  items[index] = updatedItem;
-  saveInventory(items);
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const dbRow = mapToDb(updatedItem);
+      await supabase
+        .from('inventory_items')
+        .update(dbRow)
+        .eq('id', itemId);
+    } catch (err) {
+      console.error('Supabase update error:', err.message);
+    }
+  }
+
+  if (index !== -1) {
+    localItems[index] = updatedItem;
+    saveLocalInventory(localItems);
+  }
+
   res.json({ success: true, item: updatedItem });
 });
 
 // 6. Delete item
-app.delete('/api/items/:id', (req, res) => {
-  let items = loadInventory();
-  const initialLen = items.length;
-  items = items.filter(i => i.id !== req.params.id);
+app.delete('/api/items/:id', async (req, res) => {
+  const itemId = req.params.id;
 
-  if (items.length === initialLen) {
-    return res.status(404).json({ success: false, message: 'Item not found' });
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase
+        .from('inventory_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) {
+        console.error('Supabase delete error:', error.message);
+      }
+    } catch (err) {
+      console.error('Supabase delete exception:', err.message);
+    }
   }
 
-  saveInventory(items);
+  let localItems = loadLocalInventory();
+  const initialLen = localItems.length;
+  localItems = localItems.filter(i => i.id !== itemId);
+  saveLocalInventory(localItems);
+
   res.json({ success: true, message: 'Item deleted successfully' });
 });
 
 // 7. Overall Dashboard Statistics
-app.get('/api/stats', (req, res) => {
-  const items = loadInventory();
+app.get('/api/stats', async (req, res) => {
+  let items = [];
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase.from('inventory_items').select('*');
+      if (Array.isArray(data)) {
+        items = data.map(mapFromDb);
+      } else {
+        items = loadLocalInventory();
+      }
+    } catch {
+      items = loadLocalInventory();
+    }
+  } else {
+    items = loadLocalInventory();
+  }
 
   const totalFiles = items.length;
   const salesItems = items.filter(i => i.categoryId === 'petc-sales');
@@ -317,18 +551,48 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
-// File upload endpoint
-app.post('/api/upload', upload.single('file'), (req, res) => {
+// File upload endpoint (supports local + optional Supabase Storage bucket)
+app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
+
+  let publicUrl = `/uploads/${req.file.filename}`;
+
+  // If Supabase Storage is configured, also upload to 'inventory-files' bucket
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const storagePath = `uploads/${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from('inventory-files')
+        .upload(storagePath, fileBuffer, {
+          contentType: req.file.mimetype,
+          upsert: true
+        });
+
+      if (!uploadErr && uploadData) {
+        const { data: urlData } = supabase.storage
+          .from('inventory-files')
+          .getPublicUrl(storagePath);
+
+        if (urlData?.publicUrl) {
+          publicUrl = urlData.publicUrl;
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase storage upload skipped or failed, using local upload path:', err.message);
+    }
+  }
+
   res.json({
     success: true,
     file: {
       originalName: req.file.originalname,
       fileName: req.file.filename,
       size: `${(req.file.size / 1024).toFixed(1)} KB`,
-      path: req.file.path
+      path: publicUrl
     }
   });
 });
