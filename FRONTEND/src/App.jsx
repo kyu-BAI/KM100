@@ -28,6 +28,7 @@ import {
   ChevronRight,
   ChevronDown,
   Eye,
+  EyeOff,
   Printer,
   UploadCloud,
   Camera,
@@ -35,7 +36,15 @@ import {
   Check,
   RefreshCw,
   FileUp,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Lock,
+  Mail,
+  User,
+  LogIn,
+  UserPlus,
+  LogOut,
+  Key,
+  Shield
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -164,6 +173,107 @@ export default function App() {
   const [scannedAmount, setScannedAmount] = useState('');
   const videoRef = useRef(null);
 
+  // Supabase Auth State (Admin accounts only)
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('petc_admin_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [authFullName, setAuthFullName] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Auth Submit Handler
+  const handleAuthSubmit = async () => {
+    setAuthError('');
+    if (!authEmail.trim() || !authPassword) {
+      setAuthError('Please enter both your admin email and password.');
+      return;
+    }
+
+    if (authMode === 'register') {
+      if (authPassword.length < 6) {
+        setAuthError('Password must be at least 6 characters.');
+        return;
+      }
+      if (authPassword !== authConfirmPassword) {
+        setAuthError('Passwords do not match. Please re-enter.');
+        return;
+      }
+    }
+
+    setAuthLoading(true);
+    try {
+      const endpoint = authMode === 'register' ? `${API_BASE}/auth/register-admin` : `${API_BASE}/auth/login`;
+      const payload = authMode === 'register'
+        ? { email: authEmail.trim(), password: authPassword, fullName: authFullName.trim() }
+        : { email: authEmail.trim(), password: authPassword };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setAuthError(data.message || 'Authentication failed. Please check your credentials.');
+        return;
+      }
+
+      if (authMode === 'register' && !data.session && !data.user) {
+        showNotice(data.message || 'Admin account registered! Please sign in.');
+        setAuthMode('login');
+        setAuthPassword('');
+        setAuthConfirmPassword('');
+        return;
+      }
+
+      // Successful login or direct session creation
+      const user = data.user || {
+        email: authEmail.trim(),
+        fullName: authFullName || 'Administrator',
+        role: 'admin'
+      };
+      const token = data.session?.access_token || 'active-session';
+
+      localStorage.setItem('petc_admin_user', JSON.stringify(user));
+      localStorage.setItem('petc_admin_token', token);
+      setCurrentUser(user);
+      showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      setAuthError('Unable to connect to the backend server. Please verify the backend is running on port 5000.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Logout Handler
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+    } catch (err) {
+      // ignore
+    }
+    localStorage.removeItem('petc_admin_user');
+    localStorage.removeItem('petc_admin_token');
+    setCurrentUser(null);
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    showNotice('You have been signed out.');
+  };
+
   // Fetch data
   const fetchData = async () => {
     setLoading(true);
@@ -182,8 +292,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (currentUser) {
+      fetchData();
+    }
+  }, [currentUser]);
 
   const showNotice = (msg, type = 'success') => {
     setNotification({ text: msg, type });
@@ -479,6 +591,173 @@ export default function App() {
   };
 
   const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+  // ----------------------------------------------------
+  // LOGIN / CREATE ADMIN ACCOUNT VIEW (If not logged in)
+  // ----------------------------------------------------
+  if (!currentUser) {
+    return (
+      <View style={styles.authContainer}>
+        {notification && (
+          <View style={[styles.toast, notification.type === 'error' ? styles.toastError : styles.toastSuccess]}>
+            {notification.type === 'error' ? <AlertTriangle size={18} color="#fff" /> : <CheckCircle2 size={18} color="#fff" />}
+            <Text style={styles.toastText}>{notification.text}</Text>
+          </View>
+        )}
+
+        <View style={styles.authCard}>
+          {/* Top Brand & Security Tag */}
+          <View style={styles.authHeader}>
+            <View style={styles.authShieldIconBox}>
+              <ShieldCheck size={28} color="#34d399" />
+            </View>
+            <View style={styles.authBadgePill}>
+              <Text style={styles.authBadgePillText}>SUPABASE CLOUD AUTH</Text>
+            </View>
+            <Text style={styles.authTitle}>PETC Inventory System</Text>
+            <Text style={styles.authSubtitle}>
+              {authMode === 'login'
+                ? 'Sign in with your Administrator credentials to access files'
+                : 'Register a new Administrator account. All accounts have full admin privileges.'}
+            </Text>
+          </View>
+
+          {/* Mode Switch Tabs */}
+          <View style={styles.authTabs}>
+            <TouchableOpacity
+              style={[styles.authTab, authMode === 'login' && styles.authTabActive]}
+              onPress={() => {
+                setAuthMode('login');
+                setAuthError('');
+              }}
+            >
+              <LogIn size={15} color={authMode === 'login' ? '#38bdf8' : '#94a3b8'} />
+              <Text style={[styles.authTabText, authMode === 'login' && styles.authTabTextActive]}>Admin Sign In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.authTab, authMode === 'register' && styles.authTabActive]}
+              onPress={() => {
+                setAuthMode('register');
+                setAuthError('');
+              }}
+            >
+              <UserPlus size={15} color={authMode === 'register' ? '#38bdf8' : '#94a3b8'} />
+              <Text style={[styles.authTabText, authMode === 'register' && styles.authTabTextActive]}>Create Admin</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Error Message Banner */}
+          {authError ? (
+            <View style={styles.authErrorBox}>
+              <AlertTriangle size={16} color="#f87171" />
+              <Text style={styles.authErrorText}>{authError}</Text>
+            </View>
+          ) : null}
+
+          {/* Form */}
+          <View style={styles.authForm}>
+            {authMode === 'register' && (
+              <View style={styles.authFieldGroup}>
+                <Text style={styles.authLabel}>ADMIN FULL NAME</Text>
+                <View style={styles.authInputWrapper}>
+                  <User size={16} color="#64748b" style={styles.authInputIcon} />
+                  <TextInput
+                    style={styles.authInput}
+                    placeholder="e.g. Maria Santos"
+                    placeholderTextColor="#475569"
+                    value={authFullName}
+                    onChangeText={setAuthFullName}
+                  />
+                </View>
+              </View>
+            )}
+
+            <View style={styles.authFieldGroup}>
+              <Text style={styles.authLabel}>ADMIN EMAIL ADDRESS</Text>
+              <View style={styles.authInputWrapper}>
+                <Mail size={16} color="#64748b" style={styles.authInputIcon} />
+                <TextInput
+                  style={styles.authInput}
+                  placeholder="admin@petc.com"
+                  placeholderTextColor="#475569"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={authEmail}
+                  onChangeText={setAuthEmail}
+                />
+              </View>
+            </View>
+
+            <View style={styles.authFieldGroup}>
+              <Text style={styles.authLabel}>PASSWORD</Text>
+              <View style={styles.authInputWrapper}>
+                <Lock size={16} color="#64748b" style={styles.authInputIcon} />
+                <TextInput
+                  style={[styles.authInput, { paddingRight: 40 }]}
+                  placeholder={authMode === 'register' ? 'Min. 6 characters' : 'Enter your password'}
+                  placeholderTextColor="#475569"
+                  secureTextEntry={!showPassword}
+                  value={authPassword}
+                  onChangeText={setAuthPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(p => !p)}
+                  style={styles.authEyeBtn}
+                >
+                  {showPassword ? <EyeOff size={16} color="#94a3b8" /> : <Eye size={16} color="#94a3b8" />}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {authMode === 'register' && (
+              <View style={styles.authFieldGroup}>
+                <Text style={styles.authLabel}>CONFIRM PASSWORD</Text>
+                <View style={styles.authInputWrapper}>
+                  <Lock size={16} color="#64748b" style={styles.authInputIcon} />
+                  <TextInput
+                    style={[styles.authInput, { paddingRight: 40 }]}
+                    placeholder="Re-enter password to confirm"
+                    placeholderTextColor="#475569"
+                    secureTextEntry={!showPassword}
+                    value={authConfirmPassword}
+                    onChangeText={setAuthConfirmPassword}
+                  />
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.authSubmitBtn, authLoading && { opacity: 0.6 }]}
+              onPress={handleAuthSubmit}
+              disabled={authLoading}
+            >
+              {authLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Key size={17} color="#fff" />
+                  <Text style={styles.authSubmitBtnText}>
+                    {authMode === 'login' ? 'Sign In as Administrator' : 'Create Administrator Account'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Footnote */}
+          <View style={styles.authFooter}>
+            <View style={styles.adminSecurityNotice}>
+              <ShieldCheck size={14} color="#34d399" />
+              <Text style={styles.adminSecurityNoticeText}>
+                Restricted System • Only Administrator accounts can be created
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -1054,6 +1333,35 @@ export default function App() {
               )}
             </View>
           </ScrollView>
+
+          {/* Logged-in Admin Profile & Logout */}
+          {currentUser && (
+            <View style={styles.sidebarAdminBox}>
+              <View style={styles.sidebarAdminRow}>
+                <View style={styles.adminAvatarCircle}>
+                  <Text style={styles.adminAvatarInitials}>
+                    {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : 'A'}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
+                  <Text style={styles.adminNameText} numberOfLines={1}>
+                    {currentUser.fullName || 'Admin User'}
+                  </Text>
+                  <Text style={styles.adminEmailText} numberOfLines={1}>
+                    {currentUser.email}
+                  </Text>
+                </View>
+                <View style={styles.adminBadgePill}>
+                  <Text style={styles.adminBadgePillText}>ADMIN</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.sidebarLogoutBtn} onPress={handleLogout}>
+                <LogOut size={13} color="#f87171" />
+                <Text style={styles.sidebarLogoutBtnText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* MAIN VIEWING AREA */}
@@ -2691,5 +2999,256 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 12,
     fontWeight: '600'
+  },
+
+  // Auth Styles
+  authContainer: {
+    flex: 1,
+    minHeight: '100vh',
+    backgroundColor: '#0b1120',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20
+  },
+  authCard: {
+    width: 440,
+    maxWidth: '100%',
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 30,
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
+  },
+  authHeader: {
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  authShieldIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12
+  },
+  authBadgePill: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)'
+  },
+  authBadgePillText: {
+    color: '#38bdf8',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8
+  },
+  authTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#f8fafc',
+    marginBottom: 6,
+    textAlign: 'center'
+  },
+  authSubtitle: {
+    fontSize: 13,
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 18
+  },
+  authTabs: {
+    flexDirection: 'row',
+    backgroundColor: '#0b1120',
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#1e293b'
+  },
+  authTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 6
+  },
+  authTabActive: {
+    backgroundColor: '#1e293b'
+  },
+  authTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b'
+  },
+  authTabTextActive: {
+    color: '#38bdf8',
+    fontWeight: '700'
+  },
+  authErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16
+  },
+  authErrorText: {
+    color: '#f87171',
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1
+  },
+  authForm: {
+    gap: 14
+  },
+  authFieldGroup: {
+    gap: 6
+  },
+  authLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#94a3b8',
+    letterSpacing: 0.5
+  },
+  authInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0b1120',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingHorizontal: 12,
+    position: 'relative'
+  },
+  authInputIcon: {
+    marginRight: 8
+  },
+  authInput: {
+    flex: 1,
+    paddingVertical: 10,
+    color: '#f8fafc',
+    fontSize: 13,
+    outlineStyle: 'none'
+  },
+  authEyeBtn: {
+    position: 'absolute',
+    right: 12,
+    padding: 4
+  },
+  authSubmitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#0284c7',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 6,
+    cursor: 'pointer'
+  },
+  authSubmitBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  authFooter: {
+    marginTop: 20,
+    alignItems: 'center'
+  },
+  adminSecurityNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(52, 211, 153, 0.08)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.2)'
+  },
+  adminSecurityNoticeText: {
+    color: '#34d399',
+    fontSize: 11,
+    fontWeight: '600'
+  },
+
+  // Sidebar Admin User Styles
+  sidebarAdminBox: {
+    borderTopWidth: 1,
+    borderTopColor: '#1e293b',
+    padding: 12,
+    backgroundColor: '#0b1120',
+    gap: 8
+  },
+  sidebarAdminRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  adminAvatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  adminAvatarInitials: {
+    color: '#38bdf8',
+    fontSize: 13,
+    fontWeight: '800'
+  },
+  adminNameText: {
+    color: '#f8fafc',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  adminEmailText: {
+    color: '#64748b',
+    fontSize: 10
+  },
+  adminBadgePill: {
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.4)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4
+  },
+  adminBadgePillText: {
+    color: '#34d399',
+    fontSize: 9,
+    fontWeight: '800'
+  },
+  sidebarLogoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    cursor: 'pointer'
+  },
+  sidebarLogoutBtnText: {
+    color: '#f87171',
+    fontSize: 11,
+    fontWeight: '700'
   }
 });

@@ -1,8 +1,8 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -275,6 +275,149 @@ app.get('/api/supabase-status', async (req, res) => {
       connected: false,
       error: err.message
     });
+  }
+});
+
+// ----------------- AUTH ROUTES (SUPABASE AUTH) -----------------
+
+// Admin Registration
+app.post('/api/auth/register-admin', async (req, res) => {
+  const { email, password, fullName } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+  }
+
+  if (!supabase) {
+    return res.status(503).json({ success: false, message: 'Supabase authentication is not configured on the server' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: {
+          role: 'admin',
+          full_name: fullName || 'System Admin',
+          is_admin: true
+        }
+      }
+    });
+
+    if (error) {
+      return res.status(400).json({ success: false, message: error.message });
+    }
+
+    const user = data.user;
+    const session = data.session;
+
+    return res.status(201).json({
+      success: true,
+      message: session ? 'Admin account created and logged in!' : 'Admin account created! You can now log in.',
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        fullName: user.user_metadata?.full_name || fullName || 'System Admin',
+        role: 'admin'
+      } : null,
+      session
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    return res.status(500).json({ success: false, message: err.message || 'Server error during registration' });
+  }
+});
+
+// Admin Login
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
+  if (!supabase) {
+    return res.status(503).json({ success: false, message: 'Supabase authentication is not configured on the server' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
+    });
+
+    if (error) {
+      let msg = error.message;
+      if (error.code === 'email_not_confirmed' || error.message.toLowerCase().includes('not confirmed')) {
+        msg = 'Email is not confirmed yet. To allow instant logins without email verification, turn off "Confirm email" in Supabase Dashboard (Authentication > Providers > Email).';
+      }
+      return res.status(401).json({ success: false, message: msg });
+    }
+
+    const user = data.user;
+    const session = data.session;
+
+    return res.json({
+      success: true,
+      message: 'Admin authentication successful',
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.user_metadata?.full_name || 'System Admin',
+        role: user.user_metadata?.role || 'admin'
+      },
+      session
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ success: false, message: err.message || 'Server error during login' });
+  }
+});
+
+// Admin Logout
+app.post('/api/auth/logout', async (req, res) => {
+  if (supabase) {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // ignore
+    }
+  }
+  return res.json({ success: true, message: 'Logged out successfully' });
+});
+
+// Verify Current Session
+app.get('/api/auth/session', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'No auth token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!supabase) {
+    return res.status(503).json({ success: false, message: 'Supabase not configured' });
+  }
+
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data.user) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired session' });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        fullName: data.user.user_metadata?.full_name || 'System Admin',
+        role: data.user.user_metadata?.role || 'admin'
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
