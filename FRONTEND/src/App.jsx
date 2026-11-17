@@ -53,77 +53,7 @@ import { supabase, mapFromDb, mapToDb } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
-// Receipt Types matching the handwritten diagrams
-const RECEIPT_TYPES = [
-  {
-    id: 'petc-sales',
-    name: 'PETC Sales Receipt',
-    description: 'Vehicle emission testing fee receipt & inspection certificate',
-    category: 'PETC Sales',
-    categoryId: 'petc-sales',
-    entity: 'PETC',
-    prefix: 'SALES'
-  },
-  {
-    id: 'petc-insurance',
-    name: 'PETC CTPL Insurance Receipt',
-    description: 'Compulsory third party liability insurance policy payment',
-    category: 'PETC Insurance',
-    categoryId: 'petc-insurance',
-    entity: 'PETC',
-    prefix: 'INS'
-  },
-  {
-    id: 'expenses-petc',
-    name: 'PETC Expense Receipt',
-    description: 'PETC calibration, utilities, rent, and operational disbursements',
-    category: 'Expenses',
-    categoryId: 'expenses',
-    subCategory: 'Expenses 2026 (PETC)',
-    entity: 'PETC',
-    prefix: 'EXP-PETC'
-  },
-  {
-    id: 'expenses-red-goose',
-    name: 'Red Goose Expense Receipt',
-    description: 'Red Goose branch operational expenses and invoices',
-    category: 'Expenses',
-    categoryId: 'expenses',
-    subCategory: 'Red Goose Expenses 2026',
-    entity: 'Red Goose',
-    prefix: 'EXP-RG'
-  },
-  {
-    id: 'expenses-knoah-mari',
-    name: 'Knoah Mari Expense Receipt',
-    description: 'Knoah Mari testing supplies, rent, and utility disbursements',
-    category: 'Expenses',
-    categoryId: 'expenses',
-    subCategory: 'Knoah Mari Expenses 2026',
-    entity: 'Knoah Mari',
-    prefix: 'EXP-KM'
-  },
-  {
-    id: 'consumables-delivery',
-    name: 'Consumables Purchase Receipt',
-    description: 'Office paper, cleaning chemicals & smoke filter deliveries',
-    category: 'Consumables',
-    categoryId: 'consumables',
-    subCategory: 'Office supply',
-    entity: 'General',
-    prefix: 'CNS'
-  },
-  {
-    id: 'voucher-disbursement',
-    name: 'Payment Voucher Receipt',
-    description: 'Official liquidation slip and petty cash payment voucher',
-    category: 'Vouchers',
-    categoryId: 'vouchers',
-    subCategory: 'PETC',
-    entity: 'PETC',
-    prefix: 'VCH'
-  }
-];
+
 
 export default function App() {
   const { width } = useWindowDimensions();
@@ -220,7 +150,7 @@ export default function App() {
         return;
       }
       if (authPassword !== authConfirmPassword) {
-        setAuthError('Passwords do not match. Please re-enter.');
+        setAuthError('Passwords do not match. Please enter a valid admin password.');
         return;
       }
     }
@@ -1689,20 +1619,20 @@ export default function App() {
       {/* 1. DOCUMENT VIEWER MODAL                                 */}
       {/* ======================================================== */}
       <Modal visible={!!viewItem} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.viewerModalContainer, isMobile && { width: '96%', maxHeight: '92%', borderRadius: 10 }]}>
-            <View style={styles.viewerHeader}>
-              <View style={styles.viewerHeaderLeft}>
-                <View style={styles.viewerBadge}>
+        <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
+          <View style={[styles.viewerModalContainer, isMobile && styles.modalContainerMobile]}>
+            <View style={[styles.viewerHeader, isMobile && styles.modalHeaderMobile]}>
+              <View style={[styles.viewerHeaderLeft, isMobile && { gap: 10, flex: 1, minWidth: 0 }]}>
+                <View style={[styles.viewerBadge, isMobile && { width: 38, height: 38 }]}>
                   {viewItem?.fileFormat === 'XLSX' ? (
-                    <FileSpreadsheet size={26} color="#34d399" />
+                    <FileSpreadsheet size={isMobile ? 20 : 26} color="#34d399" />
                   ) : (
-                    <FileText size={26} color="#38bdf8" />
+                    <FileText size={isMobile ? 20 : 26} color="#38bdf8" />
                   )}
                 </View>
-                <View>
-                  <Text style={styles.viewerTitle}>{viewItem?.fileName}</Text>
-                  <Text style={styles.viewerSubtitle}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.viewerTitle, isMobile && { fontSize: 14 }]} numberOfLines={1}>{viewItem?.fileName}</Text>
+                  <Text style={[styles.viewerSubtitle, isMobile && { fontSize: 10 }]} numberOfLines={1}>
                     {viewItem?.category} • {viewItem?.subCategory} • Entity: {viewItem?.entity}
                   </Text>
                 </View>
@@ -1710,16 +1640,16 @@ export default function App() {
 
               <View style={styles.viewerHeaderActions}>
                 <TouchableOpacity
-                  style={styles.btnOutline}
+                  style={[styles.btnOutline, isMobile && { paddingHorizontal: 8, paddingVertical: 6 }]}
                   onPress={() => window.print()}
                   title="Print / Save PDF"
                 >
                   <Printer size={16} color="#cbd5e1" />
-                  <Text style={styles.btnOutlineText}>Print</Text>
+                  {!isMobile && <Text style={styles.btnOutlineText}>Print</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.btnOutline}
+                  style={[styles.btnOutline, isMobile && { paddingHorizontal: 8, paddingVertical: 6 }]}
                   onPress={() => {
                     const blob = new Blob([JSON.stringify(viewItem, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
@@ -1729,9 +1659,10 @@ export default function App() {
                     a.click();
                     showNotice('Document exported!');
                   }}
+                  title="Export Data"
                 >
                   <Download size={16} color="#cbd5e1" />
-                  <Text style={styles.btnOutlineText}>Export</Text>
+                  {!isMobile && <Text style={styles.btnOutlineText}>Export</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -1840,11 +1771,11 @@ export default function App() {
       {/* (Insert Document OR Scan Document)                       */}
       {/* ======================================================== */}
       <Modal visible={showAddModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.formModalContainer, isMobile && { width: '96%', maxHeight: '92%', borderRadius: 10 }]}>
+        <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
+          <View style={[styles.formModalContainer, isMobile && styles.modalContainerMobile]}>
             {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={[styles.modalHeader, isMobile && styles.modalHeaderMobile]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                 {addMode !== 'options' && (
                   <TouchableOpacity
                     onPress={() => {
@@ -1856,13 +1787,13 @@ export default function App() {
                     <ArrowLeft size={18} color="#38bdf8" />
                   </TouchableOpacity>
                 )}
-                <View>
-                  <Text style={styles.modalTitle}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.modalTitle, isMobile && { fontSize: 15 }]} numberOfLines={1}>
                     {addMode === 'options' && 'Add Document'}
                     {addMode === 'insert' && 'Insert Document from Device'}
                     {addMode === 'scan' && 'Scan Receipt Document'}
                   </Text>
-                  <Text style={styles.modalHeaderSub}>
+                  <Text style={[styles.modalHeaderSub, isMobile && { fontSize: 11 }]} numberOfLines={1}>
                     {addMode === 'options' && 'Choose one of the two options below to add records'}
                     {addMode === 'insert' && `Target Category: ${activeNav.label}`}
                     {addMode === 'scan' && 'Choose receipt type and capture with camera'}
@@ -1871,7 +1802,7 @@ export default function App() {
               </View>
 
               <TouchableOpacity onPress={closeAddModal} style={styles.modalCloseBtn}>
-                <X size={20} color="#94a3b8" />
+                <X size={18} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
@@ -1879,51 +1810,99 @@ export default function App() {
             {/* STAGE 1: THE TWO OPTIONS (Insert OR Scan)             */}
             {/* ---------------------------------------------------- */}
             {addMode === 'options' && (
-              <View style={[styles.optionsBody, isMobile && { padding: 14, gap: 12 }]}>
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={[styles.optionsBody, isMobile && styles.optionsBodyMobile]}
+                showsVerticalScrollIndicator={false}
+              >
                 {/* Option 1: Insert Document */}
                 <TouchableOpacity
-                  style={styles.optionCard}
+                  style={[styles.optionCard, isMobile && styles.optionCardMobile]}
                   onPress={() => setAddMode('insert')}
                 >
-                  <View style={styles.optionIconBox}>
-                    <UploadCloud size={32} color="#38bdf8" />
-                  </View>
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionTitle}>Insert Document</Text>
-                    <Text style={styles.optionSubtitle}>
-                      Insert an existing file from your device
-                    </Text>
-                    <Text style={styles.optionDescription}>
-                      Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images stored on your computer.
-                    </Text>
-                  </View>
-                  <View style={styles.optionActionBadge}>
-                    <Text style={styles.optionActionText}>Select File →</Text>
-                  </View>
+                  {isMobile ? (
+                    <>
+                      <View style={styles.optionCardHeaderMobile}>
+                        <View style={styles.optionIconBox}>
+                          <UploadCloud size={24} color="#38bdf8" />
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.optionTitle}>Insert Document</Text>
+                          <Text style={styles.optionSubtitle}>Existing file from device</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.optionDescription}>
+                        Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images.
+                      </Text>
+                      <View style={[styles.optionActionBadge, { width: '100%', alignItems: 'center' }]}>
+                        <Text style={styles.optionActionText}>Select File →</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.optionIconBox}>
+                        <UploadCloud size={32} color="#38bdf8" />
+                      </View>
+                      <View style={styles.optionContent}>
+                        <Text style={styles.optionTitle}>Insert Document</Text>
+                        <Text style={styles.optionSubtitle}>
+                          Insert an existing file from your device
+                        </Text>
+                        <Text style={styles.optionDescription}>
+                          Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images stored on your computer.
+                        </Text>
+                      </View>
+                      <View style={styles.optionActionBadge}>
+                        <Text style={styles.optionActionText}>Select File →</Text>
+                      </View>
+                    </>
+                  )}
                 </TouchableOpacity>
 
                 {/* Option 2: Scan Document */}
                 <TouchableOpacity
-                  style={[styles.optionCard, styles.optionCardScan]}
+                  style={[styles.optionCard, styles.optionCardScan, isMobile && styles.optionCardMobile]}
                   onPress={() => setAddMode('scan')}
                 >
-                  <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
-                    <Camera size={32} color="#34d399" />
-                  </View>
-                  <View style={styles.optionContent}>
-                    <Text style={styles.optionTitle}>Scan Document</Text>
-                    <Text style={styles.optionSubtitle}>
-                      Scan a physical receipt or voucher
-                    </Text>
-                    <Text style={styles.optionDescription}>
-                      Choose which receipt type you want to scan (Emission Sales, CTPL Insurance, Expenses, Consumables, or Vouchers) and capture it via camera.
-                    </Text>
-                  </View>
-                  <View style={[styles.optionActionBadge, styles.optionActionBadgeScan]}>
-                    <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
-                  </View>
+                  {isMobile ? (
+                    <>
+                      <View style={styles.optionCardHeaderMobile}>
+                        <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
+                          <Camera size={24} color="#34d399" />
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.optionTitle}>Scan Document</Text>
+                          <Text style={[styles.optionSubtitle, { color: '#34d399' }]}>Camera receipt scanner</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.optionDescription}>
+                        Capture physical receipts or vouchers (Emission, CTPL, Expenses, Consumables) via camera.
+                      </Text>
+                      <View style={[styles.optionActionBadge, styles.optionActionBadgeScan, { width: '100%', alignItems: 'center' }]}>
+                        <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
+                        <Camera size={32} color="#34d399" />
+                      </View>
+                      <View style={styles.optionContent}>
+                        <Text style={styles.optionTitle}>Scan Document</Text>
+                        <Text style={styles.optionSubtitle}>
+                          Scan a physical receipt or voucher
+                        </Text>
+                        <Text style={styles.optionDescription}>
+                          Choose which receipt type you want to scan (Emission Sales, CTPL Insurance, Expenses, Consumables, or Vouchers) and capture it via camera.
+                        </Text>
+                      </View>
+                      <View style={[styles.optionActionBadge, styles.optionActionBadgeScan]}>
+                        <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
+                      </View>
+                    </>
+                  )}
                 </TouchableOpacity>
-              </View>
+              </ScrollView>
             )}
 
             {/* ---------------------------------------------------- */}
@@ -2084,10 +2063,10 @@ export default function App() {
                           Selected Type: <Text style={{ color: '#38bdf8', fontWeight: '700' }}>{selectedReceiptType.name}</Text>
                         </Text>
 
-                        <View style={styles.scannedFieldRow}>
-                          <Text style={styles.scannedFieldLabel}>OR / Ref Number:</Text>
+                        <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
+                          <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>OR / Ref Number:</Text>
                           <TextInput
-                            style={styles.scannedInput}
+                            style={[styles.scannedInput, isMobile && { width: '100%' }]}
                             value={scannedRefNo}
                             onChangeText={setScannedRefNo}
                             placeholder="e.g. OR-2026-9481"
@@ -2095,10 +2074,10 @@ export default function App() {
                           />
                         </View>
 
-                        <View style={styles.scannedFieldRow}>
-                          <Text style={styles.scannedFieldLabel}>Amount (PHP):</Text>
+                        <View style={[styles.scannedFieldRow, isMobile && { flexDirection: 'column', alignItems: 'flex-start', gap: 4 }]}>
+                          <Text style={[styles.scannedFieldLabel, isMobile && { width: '100%' }]}>Amount (PHP):</Text>
                           <TextInput
-                            style={styles.scannedInput}
+                            style={[styles.scannedInput, isMobile && { width: '100%' }]}
                             value={scannedAmount}
                             onChangeText={setScannedAmount}
                             placeholder="e.g. 650.00"
@@ -2138,7 +2117,7 @@ export default function App() {
                     </View>
                   ) : (
                     /* Initial Scan Options: Use Camera or Upload Photo */
-                    <View style={styles.scanTriggerRow}>
+                    <View style={[styles.scanTriggerRow, isMobile && { flexDirection: 'column', gap: 10 }]}>
                       <TouchableOpacity style={styles.scanOptionBtn} onPress={startCamera}>
                         <View style={styles.scanOptionIconBox}>
                           <Camera size={26} color="#34d399" />
@@ -2598,6 +2577,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24
   },
+  modalOverlayMobile: {
+    padding: 8
+  },
+  modalContainerMobile: {
+    width: '100%',
+    maxWidth: '100%',
+    maxHeight: '96%',
+    borderRadius: 12
+  },
+  modalHeaderMobile: {
+    paddingHorizontal: 14,
+    paddingVertical: 12
+  },
   viewerModalContainer: {
     width: '90%',
     maxWidth: 960,
@@ -2846,6 +2838,10 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16
   },
+  optionsBodyMobile: {
+    padding: 12,
+    gap: 12
+  },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2855,6 +2851,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1e293b',
     gap: 18
+  },
+  optionCardMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    padding: 14,
+    gap: 12
+  },
+  optionCardHeaderMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
   },
   optionCardScan: {
     borderColor: '#1e293b'
