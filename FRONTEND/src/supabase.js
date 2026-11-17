@@ -1,13 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vgiqeackhpxhmyozlcux.supabase.co';
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_kDWsZKe-UHiM_uaDTygtCg_72YO3_cP';
+const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_URL) || 'https://vgiqeackhpxhmyozlcux.supabase.co';
+const SUPABASE_KEY = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SUPABASE_KEY) || 'sb_publishable_kDWsZKe-UHiM_uaDTygtCg_72YO3_cP';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Database mappers matching public.inventory_items table
+// Database mappers matching public.inventory_items and dedicated receipt tables
 export function mapFromDb(row) {
   if (!row) return null;
+  const rawCat = row.category || 'Expenses';
+  const rawCatId = row.category_id || rawCat.toLowerCase().replace(/\s+/g, '-');
   return {
     id: row.id,
     fileName: row.file_name,
@@ -15,19 +17,19 @@ export function mapFromDb(row) {
     establishment: row.establishment || row.preview_data?.establishment || '',
     receiptDate: row.receipt_date || row.preview_data?.receipt_date || '',
     description: row.description || row.preview_data?.description || '',
-    category: row.category,
-    categoryId: row.category_id,
-    subCategory: row.sub_category,
-    subCategoryId: row.sub_category_id,
-    entity: row.entity,
-    year: row.year,
-    month: row.month,
+    category: rawCat,
+    categoryId: rawCatId,
+    subCategory: row.sub_category || (row.entity ? `${row.entity} ${rawCat}` : rawCat),
+    subCategoryId: row.sub_category_id || '',
+    entity: row.entity || '',
+    year: row.year ? String(row.year) : '',
+    month: row.month ? String(row.month).toUpperCase() : '',
     amount: Number(row.amount) || 0,
     currency: row.currency || 'PHP',
-    quantity: Number(row.quantity) || 0,
-    unit: row.unit || '',
+    quantity: Number(row.quantity) || 1,
+    unit: row.unit || 'receipt',
     status: row.status || 'Active',
-    fileFormat: row.file_format || 'PDF',
+    fileFormat: row.file_format || 'JPG',
     fileSize: row.file_size || '0 KB',
     filePath: row.file_path || '',
     notes: row.notes || '',

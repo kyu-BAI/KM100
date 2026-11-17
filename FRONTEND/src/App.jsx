@@ -346,45 +346,128 @@ export default function App() {
     showNotice('You have been signed out.');
   };
 
-  // Fetch data directly from Supabase (with fallback to local backend)
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const ALL_RECEIPT_TABLES = [
+    'inventory_items',
+    'knoah_mari_expense_receipts',
+    'red_goose_expense_receipts',
+    'petc_sales_receipts',
+    'petc_insurance_receipts',
+    'petc_expense_receipts',
+    'consumables_receipts',
+    'voucher_receipts'
+  ];
 
-      if (!error && Array.isArray(data)) {
-        setItems(data.map(mapFromDb));
+  // Fetch data directly from Supabase across ALL tables in parallel
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      // Query master inventory and all 7 dedicated receipt tables concurrently
+      const queries = ALL_RECEIPT_TABLES.map(table =>
+        supabase
+          .from(table)
+          .select('*')
+          .order('created_at', { ascending: false })
+      );
+
+      const responses = await Promise.allSettled(queries);
+      const itemMap = new Map();
+
+      responses.forEach((res, index) => {
+        const tableName = ALL_RECEIPT_TABLES[index];
+        if (res.status === 'fulfilled' && res.value && !res.value.error && Array.isArray(res.value.data)) {
+          res.value.data.forEach(rawRow => {
+            const mapped = mapFromDb(rawRow);
+            if (!mapped || !mapped.id) return;
+
+            if (!itemMap.has(mapped.id)) {
+              itemMap.set(mapped.id, { ...mapped, sourceTable: tableName });
+            } else {
+              // Merge so dedicated table OCR data augments the master record
+              const existing = itemMap.get(mapped.id);
+              itemMap.set(mapped.id, {
+                ...existing,
+                ...mapped,
+                establishment: mapped.establishment || existing.establishment || '',
+                receiptDate: mapped.receiptDate || existing.receiptDate || '',
+                description: mapped.description || existing.description || '',
+                amount: mapped.amount > 0 ? mapped.amount : existing.amount,
+                sourceTable: tableName
+              });
+            }
+          });
+        }
+      });
+
+      if (itemMap.size > 0) {
+        const mergedItems = Array.from(itemMap.values()).sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA;
+        });
+        setItems(mergedItems);
       } else {
-        // Fallback to local server API
-        const res = await fetch(`${API_BASE}/items`);
-        const localData = await res.json();
-        if (localData.success) {
-          setItems(localData.items);
+        // Fallback to local server API if Supabase returned 0 rows
+        try {
+          const res = await fetch(`${API_BASE}/items`);
+          const localData = await res.json();
+          if (localData.success && Array.isArray(localData.items)) {
+            setItems(localData.items);
+          }
+        } catch {
+          // silent fallback
         }
       }
     } catch (err) {
-      console.warn('Direct fetch fallback:', err);
-      try {
-        const res = await fetch(`${API_BASE}/items`);
-        const localData = await res.json();
-        if (localData.success) {
-          setItems(localData.items);
-        }
-      } catch {
-        showNotice('Failed to load inventory records', 'error');
-      }
+      console.warn('Realtime fetch fallback:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (currentUser) {
-      fetchData();
-    }
+    if (!currentUser) return;
+
+    // Initial load
+    fetchData();
+
+    // 1. Supabase Realtime WebSocket subscription across all receipt tables
+    const channel = supabase
+      .channel('realtime:all-receipt-tables')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_items' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'knoah_mari_expense_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'red_goose_expense_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'petc_sales_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'petc_insurance_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'petc_expense_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'consumables_receipts' }, () => {
+        fetchData(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'voucher_receipts' }, () => {
+        fetchData(true);
+      })
+      .subscribe();
+
+    // 2. Active background polling heartbeat every 4 seconds for reliable real-time display
+    const heartbeat = setInterval(() => {
+      fetchData(true);
+    }, 4000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(heartbeat);
+    };
   }, [currentUser]);
 
   const showNotice = (msg, type = 'success') => {
@@ -402,30 +485,110 @@ export default function App() {
   // Filter items strictly based on the left sidebar navigation
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      if (activeNav.type !== 'all' && item.categoryId !== activeNav.type) {
-        return false;
+      // 1. Category Filtering
+      const activeType = (activeNav.type || '').toLowerCase();
+      if (activeType && activeType !== 'all') {
+        const itemCatId = (item.categoryId || '').toLowerCase();
+        const itemCat = (item.category || '').toLowerCase();
+        const matchesCategory =
+          itemCatId === activeType ||
+          itemCat === activeType ||
+          itemCat.replace(/\s+/g, '-') === activeType ||
+          (activeType === 'expenses' && itemCat.includes('expense')) ||
+          (activeType === 'petc-sales' && (itemCat.includes('sale') || itemCat.includes('emission'))) ||
+          (activeType === 'petc-insurance' && (itemCat.includes('insurance') || itemCat.includes('ctpl'))) ||
+          (activeType === 'consumables' && itemCat.includes('consumable')) ||
+          (activeType === 'vouchers' && itemCat.includes('voucher'));
+
+        if (!matchesCategory) return false;
       }
-      if (activeNav.year && item.year !== activeNav.year) {
-        return false;
+
+      // 2. Year Filtering
+      if (activeNav.year) {
+        const itemYear = String(item.year || '');
+        if (itemYear && itemYear !== String(activeNav.year)) {
+          return false;
+        }
       }
-      if (activeNav.month && item.month !== activeNav.month) {
-        return false;
+
+      // 3. Month Filtering
+      if (activeNav.month) {
+        const itemMonth = (item.month || '').toUpperCase();
+        const navMonth = String(activeNav.month).toUpperCase();
+        if (itemMonth && itemMonth !== navMonth) {
+          return false;
+        }
       }
+
+      // 4. SubCategory & Branch Filtering (e.g. 'knoah-mari-2026', 'red-goose-2026')
       if (activeNav.subCategory) {
-        if (item.subCategoryId && item.subCategoryId !== activeNav.subCategory) return false;
-        if (item.subCategory && item.subCategory.toLowerCase() !== activeNav.subCategory.toLowerCase()) return false;
+        const target = activeNav.subCategory.toLowerCase();
+        const itemSub = (item.subCategory || '').toLowerCase();
+        const itemSubId = (item.subCategoryId || '').toLowerCase();
+        const itemEntity = (item.entity || '').toLowerCase();
+        const itemTitle = (item.title || '').toLowerCase();
+        const itemYear = String(item.year || '').toLowerCase();
+
+        // Exact slug match or direct inclusion
+        const exactMatch =
+          itemSubId === target ||
+          itemSub === target ||
+          itemSub.replace(/\s+/g, '-') === target ||
+          itemSub.replace(/\s+/g, '-').includes(target);
+
+        let matchesSub = exactMatch;
+        if (!matchesSub) {
+          const isKnoah = target.includes('knoah');
+          const isRedGoose = target.includes('red-goose') || target.includes('redgoose');
+          const isPetc = target.includes('petc');
+          const has2026 = target.includes('2026');
+          const has2027 = target.includes('2027');
+
+          if (isKnoah) {
+            matchesSub =
+              (itemEntity.includes('knoah') || itemSub.includes('knoah') || itemTitle.includes('knoah')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else if (isRedGoose) {
+            matchesSub =
+              (itemEntity.includes('red') || itemSub.includes('red') || itemTitle.includes('red')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else if (isPetc) {
+            matchesSub =
+              (itemEntity.includes('petc') || itemSub.includes('petc') || itemTitle.includes('petc')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else {
+            const tokens = target.split(/[-_ ]+/).filter(Boolean);
+            matchesSub = tokens.every(
+              token =>
+                itemSub.includes(token) ||
+                itemSubId.includes(token) ||
+                itemEntity.includes(token) ||
+                itemTitle.includes(token)
+            );
+          }
+        }
+
+        if (!matchesSub) return false;
       }
+
+      // 5. Search Query
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         const inName = item.fileName?.toLowerCase().includes(q);
         const inTitle = item.title?.toLowerCase().includes(q);
+        const inEst = item.establishment?.toLowerCase().includes(q);
+        const inDesc = item.description?.toLowerCase().includes(q);
         const inNotes = item.notes?.toLowerCase().includes(q);
         const inEntity = item.entity?.toLowerCase().includes(q);
         const inSub = item.subCategory?.toLowerCase().includes(q);
-        if (!inName && !inTitle && !inNotes && !inEntity && !inSub) {
+        if (!inName && !inTitle && !inEst && !inDesc && !inNotes && !inEntity && !inSub) {
           return false;
         }
       }
+
       return true;
     });
   }, [items, activeNav, searchQuery]);
@@ -2141,43 +2304,21 @@ export default function App() {
                   style={[styles.optionCard, isMobile && styles.optionCardMobile]}
                   onPress={() => setAddMode('insert')}
                 >
-                  {isMobile ? (
-                    <>
-                      <View style={styles.optionCardHeaderMobile}>
-                        <View style={styles.optionIconBox}>
-                          <UploadCloud size={24} color="#38bdf8" />
-                        </View>
-                        <View style={{ flex: 1, minWidth: 0 }}>
-                          <Text style={styles.optionTitle}>Insert Document</Text>
-                          <Text style={styles.optionSubtitle}>Existing file from device</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.optionDescription}>
-                        Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images.
-                      </Text>
-                      <View style={[styles.optionActionBadge, { width: '100%', alignItems: 'center' }]}>
-                        <Text style={styles.optionActionText}>Select File →</Text>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.optionIconBox}>
-                        <UploadCloud size={32} color="#38bdf8" />
-                      </View>
-                      <View style={styles.optionContent}>
-                        <Text style={styles.optionTitle}>Insert Document</Text>
-                        <Text style={styles.optionSubtitle}>
-                          Insert an existing file from your device
-                        </Text>
-                        <Text style={styles.optionDescription}>
-                          Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images stored on your computer.
-                        </Text>
-                      </View>
-                      <View style={styles.optionActionBadge}>
-                        <Text style={styles.optionActionText}>Select File →</Text>
-                      </View>
-                    </>
-                  )}
+                  <View style={styles.optionCardTopRow}>
+                    <View style={styles.optionIconBox}>
+                      <UploadCloud size={24} color="#38bdf8" />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.optionTitle}>Insert Document</Text>
+                      <Text style={styles.optionSubtitle}>Select file from device</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.optionDescription}>
+                    Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images stored on your device.
+                  </Text>
+                  <View style={[styles.optionActionBadge, isMobile && { width: '100%', alignItems: 'center' }]}>
+                    <Text style={styles.optionActionText}>Select File →</Text>
+                  </View>
                 </TouchableOpacity>
 
                 {/* Option 2: Scan Document */}
@@ -2185,43 +2326,21 @@ export default function App() {
                   style={[styles.optionCard, styles.optionCardScan, isMobile && styles.optionCardMobile]}
                   onPress={() => setAddMode('scan')}
                 >
-                  {isMobile ? (
-                    <>
-                      <View style={styles.optionCardHeaderMobile}>
-                        <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
-                          <Camera size={24} color="#34d399" />
-                        </View>
-                        <View style={{ flex: 1, minWidth: 0 }}>
-                          <Text style={styles.optionTitle}>Scan Document</Text>
-                          <Text style={[styles.optionSubtitle, { color: '#34d399' }]}>Camera receipt scanner</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.optionDescription}>
-                        Capture physical receipts or vouchers (Emission, CTPL, Expenses, Consumables) via camera.
-                      </Text>
-                      <View style={[styles.optionActionBadge, styles.optionActionBadgeScan, { width: '100%', alignItems: 'center' }]}>
-                        <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
-                        <Camera size={32} color="#34d399" />
-                      </View>
-                      <View style={styles.optionContent}>
-                        <Text style={styles.optionTitle}>Scan Document</Text>
-                        <Text style={styles.optionSubtitle}>
-                          Scan a physical receipt or voucher
-                        </Text>
-                        <Text style={styles.optionDescription}>
-                          Choose which receipt type you want to scan (Emission Sales, CTPL Insurance, Expenses, Consumables, or Vouchers) and capture it via camera.
-                        </Text>
-                      </View>
-                      <View style={[styles.optionActionBadge, styles.optionActionBadgeScan]}>
-                        <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
-                      </View>
-                    </>
-                  )}
+                  <View style={styles.optionCardTopRow}>
+                    <View style={[styles.optionIconBox, styles.optionIconBoxScan]}>
+                      <Camera size={24} color="#34d399" />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={styles.optionTitle}>Scan Document</Text>
+                      <Text style={[styles.optionSubtitle, { color: '#34d399' }]}>Camera receipt scanner</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.optionDescription}>
+                    Capture physical receipts or vouchers (Emission Sales, CTPL Insurance, Expenses, Consumables) via camera with real-time OCR extraction.
+                  </Text>
+                  <View style={[styles.optionActionBadge, styles.optionActionBadgeScan, isMobile && { width: '100%', alignItems: 'center' }]}>
+                    <Text style={[styles.optionActionText, { color: '#34d399' }]}>Scan Receipt →</Text>
+                  </View>
                 </TouchableOpacity>
               </ScrollView>
             )}
@@ -3318,19 +3437,22 @@ const styles = StyleSheet.create({
     gap: 12
   },
   optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     backgroundColor: '#131d31',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 20,
     borderWidth: 1,
     borderColor: '#1e293b',
-    gap: 18
+    gap: 12
   },
   optionCardMobile: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
     padding: 14,
+    gap: 10
+  },
+  optionCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12
   },
   optionCardHeaderMobile: {
@@ -3342,9 +3464,9 @@ const styles = StyleSheet.create({
     borderColor: '#1e293b'
   },
   optionIconBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
+    width: 46,
+    height: 46,
+    borderRadius: 10,
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
@@ -3365,20 +3487,20 @@ const styles = StyleSheet.create({
     marginBottom: 2
   },
   optionSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#38bdf8',
-    marginBottom: 4
+    color: '#38bdf8'
   },
   optionDescription: {
     fontSize: 12,
     color: '#94a3b8',
-    lineHeight: 17
+    lineHeight: 18
   },
   optionActionBadge: {
+    alignSelf: 'flex-start',
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)'
