@@ -46,6 +46,7 @@ import {
   Key,
   Shield
 } from 'lucide-react';
+import { supabase, mapFromDb, mapToDb } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -212,47 +213,78 @@ export default function App() {
 
     setAuthLoading(true);
     try {
-      const endpoint = authMode === 'register' ? `${API_BASE}/auth/register-admin` : `${API_BASE}/auth/login`;
-      const payload = authMode === 'register'
-        ? { email: authEmail.trim(), password: authPassword, fullName: authFullName.trim() }
-        : { email: authEmail.trim(), password: authPassword };
+      if (authMode === 'register') {
+        // Direct Supabase Auth for Admin Registration
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword,
+          options: {
+            data: {
+              role: 'admin',
+              full_name: authFullName.trim() || 'System Admin',
+              is_admin: true
+            }
+          }
+        });
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
+        if (error) {
+          let msg = error.message;
+          if (msg.includes('rate limit')) {
+            msg = 'Email rate limit reached. In Supabase Dashboard: Go to Authentication > Providers > Email and toggle OFF "Confirm email" to register instantly.';
+          }
+          setAuthError(msg);
+          return;
+        }
 
-      if (!data.success) {
-        setAuthError(data.message || 'Authentication failed. Please check your credentials.');
-        return;
+        if (data.session && data.user) {
+          const user = {
+            id: data.user.id,
+            email: data.user.email,
+            fullName: data.user.user_metadata?.full_name || authFullName || 'Administrator',
+            role: 'admin'
+          };
+          localStorage.setItem('petc_admin_user', JSON.stringify(user));
+          localStorage.setItem('petc_admin_token', data.session.access_token);
+          setCurrentUser(user);
+          showNotice(`Admin account created! Welcome, ${user.fullName}`);
+          fetchData();
+        } else {
+          showNotice('Admin account registered! Please sign in.');
+          setAuthMode('login');
+          setAuthPassword('');
+          setAuthConfirmPassword('');
+        }
+      } else {
+        // Direct Supabase Auth for Admin Sign-In
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword
+        });
+
+        if (error) {
+          let msg = error.message;
+          if (error.code === 'email_not_confirmed' || msg.toLowerCase().includes('not confirmed')) {
+            msg = 'Email is not confirmed yet. In Supabase Dashboard: Go to Authentication > Providers > Email and toggle OFF "Confirm email" for instant access.';
+          }
+          setAuthError(msg);
+          return;
+        }
+
+        const user = {
+          id: data.user.id,
+          email: data.user.email,
+          fullName: data.user.user_metadata?.full_name || 'Administrator',
+          role: 'admin'
+        };
+        localStorage.setItem('petc_admin_user', JSON.stringify(user));
+        localStorage.setItem('petc_admin_token', data.session.access_token);
+        setCurrentUser(user);
+        showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
+        fetchData();
       }
-
-      if (authMode === 'register' && !data.session && !data.user) {
-        showNotice(data.message || 'Admin account registered! Please sign in.');
-        setAuthMode('login');
-        setAuthPassword('');
-        setAuthConfirmPassword('');
-        return;
-      }
-
-      // Successful login or direct session creation
-      const user = data.user || {
-        email: authEmail.trim(),
-        fullName: authFullName || 'Administrator',
-        role: 'admin'
-      };
-      const token = data.session?.access_token || 'active-session';
-
-      localStorage.setItem('petc_admin_user', JSON.stringify(user));
-      localStorage.setItem('petc_admin_token', token);
-      setCurrentUser(user);
-      showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
-      fetchData();
     } catch (err) {
       console.error(err);
-      setAuthError('Unable to connect to the backend server. Please verify the backend is running on port 5000.');
+      setAuthError(err.message || 'Authentication error. Please check your credentials.');
     } finally {
       setAuthLoading(false);
     }
@@ -261,7 +293,7 @@ export default function App() {
   // Logout Handler
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+      await supabase.auth.signOut();
     } catch (err) {
       // ignore
     }
@@ -274,18 +306,36 @@ export default function App() {
     showNotice('You have been signed out.');
   };
 
-  // Fetch data
+  // Fetch data directly from Supabase (with fallback to local backend)
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/items`);
-      const data = await res.json();
-      if (data.success) {
-        setItems(data.items);
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        setItems(data.map(mapFromDb));
+      } else {
+        // Fallback to local server API
+        const res = await fetch(`${API_BASE}/items`);
+        const localData = await res.json();
+        if (localData.success) {
+          setItems(localData.items);
+        }
       }
     } catch (err) {
-      console.error('Failed to load API data:', err);
-      showNotice('Connection to backend failed. Please ensure the server is active.', 'error');
+      console.warn('Direct fetch fallback:', err);
+      try {
+        const res = await fetch(`${API_BASE}/items`);
+        const localData = await res.json();
+        if (localData.success) {
+          setItems(localData.items);
+        }
+      } catch {
+        showNotice('Failed to load inventory records', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -437,18 +487,24 @@ export default function App() {
         tags: [targetCategory, targetEntity, fileExt]
       };
 
-      const saveRes = await fetch(`${API_BASE}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItemPayload)
-      });
-      const saveData = await saveRes.json();
+      // Save directly to Supabase PostgreSQL database
+      const dbRow = mapToDb(newItemPayload);
+      await supabase.from('inventory_items').upsert(dbRow);
 
-      if (saveData.success) {
-        showNotice(`File "${insertedFile.name}" inserted and cataloged!`);
-        closeAddModal();
-        fetchData();
+      // Also notify local backend if available
+      try {
+        await fetch(`${API_BASE}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItemPayload)
+        });
+      } catch (e) {
+        // local backend optional
       }
+
+      showNotice(`File "${insertedFile.name}" inserted and cataloged!`);
+      closeAddModal();
+      fetchData();
     } catch (err) {
       console.error(err);
       showNotice('Failed to upload and save document', 'error');
@@ -555,18 +611,24 @@ export default function App() {
         }
       };
 
-      const saveRes = await fetch(`${API_BASE}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(scannedItemPayload)
-      });
-      const saveData = await saveRes.json();
+      // Save directly to Supabase PostgreSQL database
+      const dbRow = mapToDb(scannedItemPayload);
+      await supabase.from('inventory_items').upsert(dbRow);
 
-      if (saveData.success) {
-        showNotice(`Scanned receipt "${receiptFileName}" saved to inventory!`);
-        closeAddModal();
-        fetchData();
+      // Also notify local backend if available
+      try {
+        await fetch(`${API_BASE}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(scannedItemPayload)
+        });
+      } catch (e) {
+        // optional local sync
       }
+
+      showNotice(`Scanned receipt "${receiptFileName}" saved to inventory!`);
+      closeAddModal();
+      fetchData();
     } catch (err) {
       console.error(err);
       showNotice('Failed to save scanned receipt', 'error');
@@ -577,13 +639,15 @@ export default function App() {
   const handleDeleteItem = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/items/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        showNotice(`Deleted "${name}"`);
-        if (viewItem?.id === id) setViewItem(null);
-        fetchData();
+      await supabase.from('inventory_items').delete().eq('id', id);
+      try {
+        await fetch(`${API_BASE}/items/${id}`, { method: 'DELETE' });
+      } catch (e) {
+        // optional local sync
       }
+      showNotice(`Deleted "${name}"`);
+      if (viewItem?.id === id) setViewItem(null);
+      fetchData();
     } catch (err) {
       console.error(err);
       showNotice('Failed to delete item', 'error');
