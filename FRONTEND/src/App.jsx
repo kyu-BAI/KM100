@@ -128,7 +128,7 @@ const RECEIPT_TYPES = [
 export default function App() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -869,17 +869,17 @@ export default function App() {
         </View>
       )}
 
-      {/* Backdrop for Mobile Drawer */}
-      {isMobile && sidebarOpen && (
-        <TouchableOpacity
-          style={styles.mobileDrawerBackdrop}
-          activeOpacity={1}
-          onPress={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
       <View style={styles.mainContent}>
+        {/* Backdrop for Mobile Drawer */}
+        {isMobile && sidebarOpen && (
+          <TouchableOpacity
+            style={styles.mobileDrawerBackdrop}
+            activeOpacity={1}
+            onPress={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* LEFT SIDEBAR (Desktop toggleable / Mobile drawer) */}
         {sidebarOpen && (
           <View style={[styles.sidebar, isMobile && styles.mobileSidebarDrawer]}>
@@ -1488,7 +1488,7 @@ export default function App() {
           <View style={[styles.controlBar, isMobile && styles.controlBarMobile]}>
             <View style={styles.controlBarLeft}>
               <TouchableOpacity
-                style={styles.burgerToggleBtn}
+                style={[styles.burgerToggleBtn, isMobile && { display: 'none' }]}
                 onPress={() => setSidebarOpen(prev => !prev)}
                 title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
               >
@@ -2234,7 +2234,8 @@ const styles = StyleSheet.create({
   mainContent: {
     flex: 1,
     flexDirection: 'row',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    position: 'relative'
   },
 
   // Sidebar Tree
@@ -3520,7 +3521,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     zIndex: 998
   },
   mobileSidebarDrawer: {
@@ -3530,6 +3531,10 @@ const styles = StyleSheet.create({
     left: 0,
     width: '85%',
     maxWidth: 320,
+    height: '100%',
+    backgroundColor: '#0f172a',
+    borderRightWidth: 1,
+    borderRightColor: '#1e293b',
     zIndex: 999,
     boxShadow: '10px 0 30px rgba(0, 0, 0, 0.8)'
   },
