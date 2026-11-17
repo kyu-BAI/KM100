@@ -740,7 +740,11 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Inventory Backend Server running on http://localhost:${PORT}`);
-});
+// Start server (only when run directly or locally, not as a Vercel serverless function)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Inventory Backend Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
