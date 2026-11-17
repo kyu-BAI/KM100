@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS public.petc_sales_receipts (
     file_name text NOT NULL,
     title text,
     category text DEFAULT 'PETC Sales',
+    sub_category text DEFAULT '',
     entity text DEFAULT 'PETC',
     year text DEFAULT '2026',
     month text,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.petc_sales_receipts (
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()
 );
+ALTER TABLE public.petc_sales_receipts ADD COLUMN IF NOT EXISTS sub_category text DEFAULT '';
 
 -- 2. PETC CTPL Insurance Receipts
 CREATE TABLE IF NOT EXISTS public.petc_insurance_receipts (
@@ -36,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.petc_insurance_receipts (
     file_name text NOT NULL,
     title text,
     category text DEFAULT 'PETC Insurance',
+    sub_category text DEFAULT '',
     entity text DEFAULT 'PETC',
     year text DEFAULT '2026',
     month text,
@@ -52,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.petc_insurance_receipts (
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()
 );
+ALTER TABLE public.petc_insurance_receipts ADD COLUMN IF NOT EXISTS sub_category text DEFAULT '';
 
 -- 3. PETC Operational Expense Receipts
 CREATE TABLE IF NOT EXISTS public.petc_expense_receipts (

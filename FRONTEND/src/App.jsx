@@ -586,6 +586,46 @@ export default function App() {
     startCamera(nextFacing);
   };
 
+  // Helper to downscale and compress mobile camera photos to ~150KB for fast Supabase storage
+  const compressReceiptImage = (fileOrDataUrl, maxDim = 1280, quality = 0.75) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => {
+        resolve(typeof fileOrDataUrl === 'string' ? fileOrDataUrl : null);
+      };
+
+      if (typeof fileOrDataUrl === 'string') {
+        img.src = fileOrDataUrl;
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(fileOrDataUrl);
+      }
+    });
+  };
+
   // Automatically stores scanned receipt into Supabase PostgreSQL database
   const autoSaveScannedReceipt = async (photoDataUrl, customRef, customAmt) => {
     if (!photoDataUrl) {
@@ -620,11 +660,11 @@ export default function App() {
         notes: `Physical receipt scanned from ${isMobile ? 'mobile camera' : 'device camera'} on ${new Date().toLocaleDateString()}. Document type: ${selectedReceiptType.name}. Reference: ${refCode}.`,
         tags: ['Scanned Receipt', selectedReceiptType.name, selectedReceiptType.entity],
         previewData: {
-          image: photoDataUrl,
           columns: ['Receipt Property', 'Scanned Detail'],
           rows: [
             ['Receipt Classification', selectedReceiptType.name],
             ['Reference / OR No.', refCode],
+            ['Target Database Table', `public.${selectedReceiptType.tableName || 'inventory_items'}`],
             ['Category Destination', selectedReceiptType.category],
             ['Assigned Entity', selectedReceiptType.entity],
             ['Total Amount', amt > 0 ? `PHP ${amt.toLocaleString()}` : 'Unspecified'],
@@ -633,7 +673,7 @@ export default function App() {
           summary: {
             'Official Ref': refCode,
             'Total Amount': amt > 0 ? `PHP ${amt.toLocaleString()}` : 'N/A',
-            'Database Sync': 'Stored in Supabase Cloud'
+            'Database Sync': `Stored in public.${selectedReceiptType.tableName || 'inventory_items'}`
           }
         }
       };
@@ -641,36 +681,47 @@ export default function App() {
       // 1. Direct Supabase PostgreSQL upsert to dedicated receipt table (e.g. knoah_mari_expense_receipts)
       const targetTable = selectedReceiptType.tableName;
       if (targetTable) {
-        try {
-          const dedicatedRecord = {
-            id: scannedItemPayload.id,
-            or_number: refCode,
-            file_name: receiptFileName,
-            title: scannedItemPayload.title,
-            category: scannedItemPayload.category,
-            sub_category: scannedItemPayload.subCategory,
-            entity: scannedItemPayload.entity,
-            year: scannedItemPayload.year,
-            month: scannedItemPayload.month,
-            amount: amt,
-            currency: 'PHP',
-            status: 'Scanned & Verified',
-            file_format: 'JPG',
-            file_size: scannedItemPayload.fileSize,
-            file_path: photoDataUrl,
-            notes: scannedItemPayload.notes,
-            tags: scannedItemPayload.tags,
-            preview_data: scannedItemPayload.previewData,
-            scanned_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          const { error: dedicatedErr } = await supabase.from(targetTable).upsert(dedicatedRecord);
-          if (dedicatedErr) {
-            console.warn(`Dedicated table "${targetTable}" note:`, dedicatedErr.message);
-          }
-        } catch (tableErr) {
-          console.warn(`Could not save to dedicated table "${targetTable}":`, tableErr);
+        const dedicatedRecord = {
+          id: scannedItemPayload.id,
+          or_number: refCode,
+          file_name: receiptFileName,
+          title: scannedItemPayload.title,
+          category: scannedItemPayload.category,
+          entity: scannedItemPayload.entity,
+          year: scannedItemPayload.year,
+          month: scannedItemPayload.month,
+          amount: amt,
+          currency: 'PHP',
+          status: 'Scanned & Verified',
+          file_format: 'JPG',
+          file_size: scannedItemPayload.fileSize,
+          file_path: photoDataUrl,
+          notes: scannedItemPayload.notes,
+          tags: scannedItemPayload.tags,
+          preview_data: {
+            columns: scannedItemPayload.previewData.columns,
+            rows: scannedItemPayload.previewData.rows,
+            summary: scannedItemPayload.previewData.summary
+          },
+          scanned_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (targetTable.includes('expense') || targetTable.includes('consumables') || targetTable.includes('voucher')) {
+          dedicatedRecord.sub_category = scannedItemPayload.subCategory;
+        }
+
+        let { error: dedicatedErr } = await supabase.from(targetTable).upsert(dedicatedRecord);
+        if (dedicatedErr && dedicatedErr.code === 'PGRST204') {
+          delete dedicatedRecord.sub_category;
+          const retryRes = await supabase.from(targetTable).upsert(dedicatedRecord);
+          dedicatedErr = retryRes.error;
+        }
+
+        if (dedicatedErr) {
+          console.error(`Dedicated table "${targetTable}" error:`, dedicatedErr);
+          throw new Error(`Failed saving to dedicated table "${targetTable}": ${dedicatedErr.message}`);
         }
       }
 
@@ -706,29 +757,48 @@ export default function App() {
     }
   };
 
-  const captureCameraSnapshotAndAutoSave = () => {
+  const captureCameraSnapshotAndAutoSave = async () => {
     if (videoRef.current) {
+      const maxDim = 1280;
+      let w = videoRef.current.videoWidth || 1280;
+      let h = videoRef.current.videoHeight || 720;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth || 1280;
-      canvas.height = videoRef.current.videoHeight || 720;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      ctx.drawImage(videoRef.current, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
       setCapturedReceiptPhoto(dataUrl);
-      autoSaveScannedReceipt(dataUrl);
+      await autoSaveScannedReceipt(dataUrl);
     }
   };
 
-  const handleReceiptPhotoSelect = (e) => {
+  const handleReceiptPhotoSelect = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const dataUrl = uploadEvent.target.result;
-        setCapturedReceiptPhoto(dataUrl);
-        autoSaveScannedReceipt(dataUrl);
-      };
-      reader.readAsDataURL(file);
+      setIsSavingScan(true);
+      try {
+        const compressedDataUrl = await compressReceiptImage(file, 1280, 0.75);
+        if (compressedDataUrl) {
+          setCapturedReceiptPhoto(compressedDataUrl);
+          await autoSaveScannedReceipt(compressedDataUrl);
+        } else {
+          showNotice('Failed to process receipt image file', 'error');
+        }
+      } catch (err) {
+        showNotice('Failed to process image: ' + err.message, 'error');
+      } finally {
+        setIsSavingScan(false);
+      }
     }
   };
 
