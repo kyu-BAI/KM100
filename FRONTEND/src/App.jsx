@@ -1018,7 +1018,13 @@ export default function App() {
           dedicatedRecord.sub_category = scannedItemPayload.subCategory;
         }
 
-        let { error: dedicatedErr } = await supabase.from(targetTable).upsert(dedicatedRecord);
+        // Add 7s race timeout so save never hangs indefinitely
+        const savePromise = supabase.from(targetTable).upsert(dedicatedRecord);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Network connection timeout. Please verify your connection.')), 7000)
+        );
+
+        let { error: dedicatedErr } = await Promise.race([savePromise, timeoutPromise]);
         if (dedicatedErr && dedicatedErr.code === 'PGRST204') {
           delete dedicatedRecord.establishment;
           delete dedicatedRecord.receipt_date;
@@ -1034,35 +1040,25 @@ export default function App() {
         }
       }
 
-      // 2. Mirror into master inventory_items
+      // 2. Asynchronously mirror into master inventory_items without blocking the UI
       try {
         let dbRow = mapToDb(scannedItemPayload);
-        let { error: dbError } = await supabase.from('inventory_items').upsert(dbRow);
-        if (dbError && dbError.code === 'PGRST204') {
-          delete dbRow.establishment;
-          delete dbRow.receipt_date;
-          delete dbRow.description;
-          await supabase.from('inventory_items').upsert(dbRow);
-        }
+        supabase.from('inventory_items').upsert(dbRow).then(res => {
+          if (res.error && res.error.code === 'PGRST204') {
+            delete dbRow.establishment;
+            delete dbRow.receipt_date;
+            delete dbRow.description;
+            supabase.from('inventory_items').upsert(dbRow);
+          }
+        }).catch(() => {});
       } catch (mirrorErr) {
         console.warn('Master inventory mirror skipped:', mirrorErr);
       }
 
-      // 3. Local backend sync if available
-      try {
-        await fetch(`${API_BASE}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(scannedItemPayload)
-        });
-      } catch (e) {
-        // optional local sync
-      }
-
-      // 4. Update local state immediately
+      // 3. Update local state immediately
       setItems(prev => [scannedItemPayload, ...prev.filter(i => i.id !== scannedItemPayload.id)]);
 
-      // 5. Success feedback and close
+      // 4. Success feedback and close modal IMMEDIATELY
       stopCamera();
       closeAddModal();
       showNotice(`Receipt from "${establishment}" (PHP ${amt.toLocaleString()}) saved to "${targetTable}"!`);
@@ -1077,9 +1073,9 @@ export default function App() {
 
   const captureCameraSnapshotAndAutoSave = async () => {
     if (videoRef.current) {
-      const maxDim = 1280;
-      let w = videoRef.current.videoWidth || 1280;
-      let h = videoRef.current.videoHeight || 720;
+      const maxDim = 900;
+      let w = videoRef.current.videoWidth || 900;
+      let h = videoRef.current.videoHeight || 675;
       if (w > maxDim || h > maxDim) {
         if (w > h) {
           h = Math.round((h * maxDim) / w);
@@ -1094,7 +1090,7 @@ export default function App() {
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoRef.current, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
       await handleProcessReceiptPhoto(dataUrl);
     }
   };
@@ -1103,7 +1099,7 @@ export default function App() {
     const file = e.target.files && e.target.files[0];
     if (file) {
       try {
-        const compressedDataUrl = await compressReceiptImage(file, 1280, 0.75);
+        const compressedDataUrl = await compressReceiptImage(file, 900, 0.65);
         if (compressedDataUrl) {
           await handleProcessReceiptPhoto(compressedDataUrl);
         } else {
@@ -1661,9 +1657,9 @@ export default function App() {
                     { id: 'expenses-2026-petc', label: 'Expenses 2026 (PETC)' },
                     { id: 'expenses-2027-petc', label: 'Expenses 2027 (PETC)' },
                     { id: 'red-goose-2026', label: 'Red Goose Expenses 2026' },
-                    { id: 'red-goose-2027', label: 'Red Goose Expenses 2027' },
+        
                     { id: 'knoah-mari-2026', label: 'Knoah Mari Expenses 2026' },
-                    { id: 'knoah-mari-2027', label: 'Knoah Mari Expenses 2027' }
+                    
                   ].map(branch => (
                     <TouchableOpacity
                       key={branch.id}
