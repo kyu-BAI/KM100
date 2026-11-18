@@ -3486,16 +3486,16 @@ export default function App() {
               ))}
             </ScrollView>
           ) : (
-            /* TABLE LIST VIEW */
-            <ScrollView horizontal style={styles.tableHorizontal}>
-              <ScrollView style={styles.tableVertical}>
+            /* TABLE LIST VIEW - FULL WIDTH WITH PROPER RESPONSIVE SCROLLING */
+            <ScrollView style={styles.tableVertical} showsVerticalScrollIndicator={true}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ minWidth: '100%' }}>
                 <View style={styles.table}>
                   <View style={[styles.tableRowHeader, isLight && styles.tableRowHeaderLight]}>
-                    <Text style={[styles.th, { width: 45 }, isLight && styles.thLight]}>#</Text>
-                    <Text style={[styles.th, { width: 280 }, isLight && styles.thLight]}>FILE NAME</Text>
-                    <Text style={[styles.th, { width: 150 }, isLight && styles.thLight]}>CATEGORY</Text>
-                    <Text style={[styles.th, { width: 120 }, isLight && styles.thLight]}>ENTITY</Text>
-                    <Text style={[styles.th, { width: 115 }, isLight && styles.thLight]}>PERIOD / DATE</Text>
+                    <Text style={[styles.th, { width: 45, textAlign: 'center' }, isLight && styles.thLight]}>#</Text>
+                    <Text style={[styles.th, { flex: 2.2, minWidth: 220 }, isLight && styles.thLight]}>FILE NAME</Text>
+                    <Text style={[styles.th, { flex: 1.2, minWidth: 140 }, isLight && styles.thLight]}>CATEGORY</Text>
+                    <Text style={[styles.th, { flex: 1, minWidth: 110 }, isLight && styles.thLight]}>ENTITY</Text>
+                    <Text style={[styles.th, { width: 120 }, isLight && styles.thLight]}>PERIOD / DATE</Text>
                     <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }, isLight && styles.thLight]}>AMOUNT (PHP)</Text>
                     <Text style={[styles.th, { width: 130 }, isLight && styles.thLight]}>STATUS</Text>
                     <Text style={[styles.th, { width: 125, textAlign: 'center' }, isLight && styles.thLight]}>ACTIONS</Text>
@@ -3511,16 +3511,16 @@ export default function App() {
                       ]}
                       onPress={() => setViewItem(item)}
                     >
-                      <Text style={[styles.td, { width: 45, color: '#64748b' }]}>{idx + 1}</Text>
-                      <View style={{ width: 280, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={[styles.td, { width: 45, textAlign: 'center', color: '#64748b' }]}>{idx + 1}</Text>
+                      <View style={{ flex: 2.2, minWidth: 220, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 }}>
                         {item.fileFormat === 'XLSX' ? <FileSpreadsheet size={16} color="#34d399" /> : <FileText size={16} color={isLight ? '#0284c7' : '#38bdf8'} />}
-                        <Text style={[styles.td, { fontWeight: '600', color: isLight ? '#0f172a' : '#f8fafc' }]} numberOfLines={1}>
+                        <Text style={[styles.td, { fontWeight: '600', color: isLight ? '#0f172a' : '#f8fafc', flex: 1 }]} numberOfLines={1}>
                           {item.fileName}
                         </Text>
                       </View>
-                      <Text style={[styles.td, { width: 150 }, isLight && styles.tdLight]} numberOfLines={1}>{item.category}</Text>
-                      <Text style={[styles.td, { width: 120 }, isLight && styles.tdLight]} numberOfLines={1}>{item.entity}</Text>
-                      <Text style={[styles.td, { width: 115 }, isLight && styles.tdLight]}>
+                      <Text style={[styles.td, { flex: 1.2, minWidth: 140, paddingRight: 8 }, isLight && styles.tdLight]} numberOfLines={1}>{item.category}</Text>
+                      <Text style={[styles.td, { flex: 1, minWidth: 110, paddingRight: 8 }, isLight && styles.tdLight]} numberOfLines={1}>{item.entity}</Text>
+                      <Text style={[styles.td, { width: 120 }, isLight && styles.tdLight]}>
                         {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || '-')}
                       </Text>
                       <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: isLight ? '#0284c7' : '#38bdf8' }]}>
@@ -5406,10 +5406,13 @@ function createStyles(isLight) {
       width: '100%'
     },
     table: {
-      minWidth: 1000,
-      padding: 16
+      width: '100%',
+      minWidth: 980,
+      paddingHorizontal: 20,
+      paddingVertical: 14
     },
     tableRowHeader: {
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: isLight ? '#e2e8f0' : '#0c1322',
@@ -5426,6 +5429,7 @@ function createStyles(isLight) {
       letterSpacing: 0.5
     },
     tableRow: {
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 10,
