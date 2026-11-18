@@ -2044,24 +2044,33 @@ export default function App() {
               </View>
             </View>
 
-            <View style={[styles.controlBarRight, isMobile && { width: '100%', justifyContent: 'space-between' }]}>
-              <View style={[styles.searchBox, isMobile && { flex: 1 }]}>
-                <Search size={15} color="#94a3b8" />
+            <View style={[
+              styles.controlBarRight,
+              isMobile && { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 10 }
+            ]}>
+              <View style={[styles.searchBox, isMobile && { width: '100%' }]}>
+                <Search size={16} color="#94a3b8" />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search file name"
+                  placeholder="Search file name, notes..."
                   placeholderTextColor="#64748b"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <X size={14} color="#94a3b8" />
+                    <X size={15} color="#94a3b8" />
                   </TouchableOpacity>
                 )}
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: isMobile ? 'space-between' : 'flex-end',
+                gap: 8,
+                flexWrap: 'wrap'
+              }}>
                 {activeNav.type === 'all' && (
                   <TouchableOpacity
                     style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive]}
@@ -3188,17 +3197,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1e293b',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    width: 240,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 40,
+    width: 260,
     borderWidth: 1,
     borderColor: '#334155',
-    gap: 8
+    gap: 10
   },
   searchInput: {
     flex: 1,
     color: '#f8fafc',
-    fontSize: 12,
+    fontSize: 13,
+    paddingVertical: 0,
     outlineStyle: 'none'
   },
   countBadge: {
