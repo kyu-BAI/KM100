@@ -3686,52 +3686,55 @@ function createStyles(isLight) {
   },
   previewBadge: {
     fontSize: 11,
-    color: '#34d399',
-    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+    color: isLight ? '#059669' : '#34d399',
+    backgroundColor: isLight ? '#ecfdf5' : 'rgba(52, 211, 153, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.3)'
+    borderColor: isLight ? '#a7f3d0' : 'rgba(52, 211, 153, 0.3)'
   },
   previewTableContainer: {
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#ffffff' : '#131d31',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isLight ? '#e2e8f0' : '#1e293b',
     overflow: 'hidden'
   },
   previewTableRowHeader: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
     paddingVertical: 10,
-    paddingHorizontal: 14
+    paddingHorizontal: 14,
+    borderBottomWidth: isLight ? 1 : 0,
+    borderBottomColor: isLight ? '#e2e8f0' : 'transparent'
   },
   previewTh: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94a3b8'
+    color: isLight ? '#475569' : '#94a3b8'
   },
   previewTableRow: {
     flexDirection: 'row',
     paddingVertical: 9,
     paddingHorizontal: 14,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b'
+    borderTopColor: isLight ? '#e2e8f0' : '#1e293b',
+    backgroundColor: isLight ? '#ffffff' : 'transparent'
   },
   previewTableRowAlt: {
-    backgroundColor: 'rgba(30, 41, 59, 0.5)'
+    backgroundColor: isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.5)'
   },
   previewTd: {
     fontSize: 12,
-    color: '#cbd5e1'
+    color: isLight ? '#1e293b' : '#cbd5e1'
   },
   previewSummaryBox: {
-    backgroundColor: '#0c1322',
+    backgroundColor: isLight ? '#f8fafc' : '#0c1322',
     padding: 12,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isLight ? '#e2e8f0' : '#1e293b',
     marginTop: 10
   },
   previewSummaryTitle: {
@@ -3752,12 +3755,12 @@ function createStyles(isLight) {
   },
   summaryItemKey: {
     fontSize: 12,
-    color: '#94a3b8'
+    color: isLight ? '#64748b' : '#94a3b8'
   },
   summaryItemVal: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#38bdf8'
+    color: isLight ? '#0284c7' : '#38bdf8'
   },
 
   // ADD DOCUMENT MODAL STYLES (TWO OPTIONS)
