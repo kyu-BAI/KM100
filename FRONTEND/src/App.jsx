@@ -2975,7 +2975,7 @@ export default function App() {
                           <img
                             src={capturedReceiptPhoto}
                             alt="Rejected Upload"
-                            style={[styles.ocrThumb, { borderColor: '#ef4444', borderWidth: 2 }]}
+                            style={{ width: 60, height: 75, borderRadius: 6, objectFit: 'cover', border: '2px solid #ef4444' }}
                           />
                         )}
                         <View style={{ flex: 1, gap: 4 }}>
