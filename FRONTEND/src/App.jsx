@@ -897,9 +897,7 @@ export default function App() {
           'Date Scanned / Recorded': item.scannedDate || item.createdAt || '-',
           'Amount (PHP)': amt,
           'Invoice / OR No.': invoiceNo || '-',
-          'Audit Status': item.status || 'Active',
-          'File Format': item.fileFormat || 'JPG',
-          'Database Source': item.sourceTable || 'inventory_items'
+          'Audit Status': item.status || 'Active'
         };
       });
 
@@ -917,9 +915,7 @@ export default function App() {
         'Date Scanned / Recorded': 'TOTAL SUM (PHP):',
         'Amount (PHP)': totalAmount,
         'Invoice / OR No.': '',
-        'Audit Status': '',
-        'File Format': '',
-        'Database Source': ''
+        'Audit Status': ''
       });
 
       // 3. Create Excel worksheet with auto-sized column widths
@@ -938,8 +934,6 @@ export default function App() {
         { wch: 18 },  // Amount (PHP)
         { wch: 22 },  // Invoice / OR No.
         { wch: 15 },  // Audit Status
-        { wch: 12 },  // File Format
-        { wch: 25 },  // Database Source
       ];
 
       // 4. Create workbook and add worksheet (Excel sheet names limit: 31 chars, no special chars)
