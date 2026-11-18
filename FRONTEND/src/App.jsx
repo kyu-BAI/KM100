@@ -2114,7 +2114,7 @@ export default function App() {
                 <Search size={16} color={isLight ? '#64748b' : '#94a3b8'} />
                 <TextInput
                   style={[styles.searchInput, isLight && styles.searchInputLight]}
-                  placeholder="Search file name, notes..."
+                  placeholder="Search file name"
                   placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -2295,7 +2295,6 @@ export default function App() {
                     <Text style={[styles.th, { width: 120 }, isLight && styles.thLight]}>ENTITY</Text>
                     <Text style={[styles.th, { width: 115 }, isLight && styles.thLight]}>PERIOD / DATE</Text>
                     <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }, isLight && styles.thLight]}>AMOUNT (PHP)</Text>
-                    <Text style={[styles.th, { width: 100, paddingLeft: 12 }, isLight && styles.thLight]}>VOLUME</Text>
                     <Text style={[styles.th, { width: 130 }, isLight && styles.thLight]}>STATUS</Text>
                     <Text style={[styles.th, { width: 90, textAlign: 'center' }, isLight && styles.thLight]}>ACTIONS</Text>
                   </View>
@@ -2324,9 +2323,6 @@ export default function App() {
                       </Text>
                       <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: isLight ? '#0284c7' : '#38bdf8' }]}>
                         {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : '-'}
-                      </Text>
-                      <Text style={[styles.td, { width: 100, paddingLeft: 12 }, isLight && styles.tdLight]}>
-                        {item.unit === 'receipt' || item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? '-' : (item.quantity ? `${item.quantity} ${item.unit || ''}` : '-')}
                       </Text>
                       <View style={{ width: 130 }}>
                         <View style={[
@@ -2498,7 +2494,7 @@ export default function App() {
                     <img
                       src={viewItem.filePath || viewItem.previewData?.image}
                       alt="Scanned physical document"
-                      style={{ width: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, backgroundColor: '#0c1322' }}
+                      style={{ width: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, backgroundColor: isLight ? '#f8fafc' : '#0c1322' }}
                     />
                   </View>
                 </View>
@@ -3543,11 +3539,11 @@ function createStyles(isLight) {
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1e293b'
+    borderColor: isLight ? '#cbd5e1' : '#334155',
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
   },
   btnOutlineText: {
-    color: '#cbd5e1',
+    color: isLight ? '#334155' : '#cbd5e1',
     fontSize: 12,
     fontWeight: '600'
   },
@@ -3577,10 +3573,10 @@ function createStyles(isLight) {
     width: '90%',
     maxWidth: 960,
     maxHeight: '90%',
-    backgroundColor: '#0f172a',
+    backgroundColor: isLight ? '#ffffff' : '#0f172a',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isLight ? '#cbd5e1' : '#334155',
     flexDirection: 'column',
     overflow: 'hidden'
   },
@@ -3590,9 +3586,9 @@ function createStyles(isLight) {
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#ffffff' : '#131d31',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b'
+    borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
   },
   viewerHeaderLeft: {
     flexDirection: 'row',
@@ -3603,21 +3599,21 @@ function createStyles(isLight) {
     width: 48,
     height: 48,
     borderRadius: 10,
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)'
+    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
   },
   viewerTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: isLight ? '#0f172a' : '#f8fafc',
     fontFamily: 'JetBrains Mono, monospace'
   },
   viewerSubtitle: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: isLight ? '#64748b' : '#94a3b8',
     marginTop: 2
   },
   viewerHeaderActions: {
@@ -3628,10 +3624,11 @@ function createStyles(isLight) {
   modalCloseBtn: {
     padding: 6,
     borderRadius: 6,
-    backgroundColor: '#1e293b'
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
   },
   viewerBody: {
-    padding: 24
+    padding: 24,
+    backgroundColor: isLight ? '#ffffff' : '#0f172a'
   },
   viewerStatsGrid: {
     flexDirection: 'row',
@@ -3642,22 +3639,22 @@ function createStyles(isLight) {
   viewerStatBox: {
     flex: 1,
     minWidth: 130,
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#1e293b'
+    borderColor: isLight ? '#e2e8f0' : '#1e293b'
   },
   viewerStatLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#64748b',
+    color: isLight ? '#64748b' : '#64748b',
     marginBottom: 4
   },
   viewerStatValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#f8fafc'
+    color: isLight ? '#0f172a' : '#f8fafc'
   },
   viewerSection: {
     marginBottom: 20
@@ -3665,20 +3662,20 @@ function createStyles(isLight) {
   viewerSectionTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: isLight ? '#475569' : '#94a3b8',
     letterSpacing: 0.5,
     marginBottom: 10
   },
   notesBox: {
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
     borderRadius: 8,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#1e293b'
+    borderColor: isLight ? '#e2e8f0' : '#1e293b'
   },
   notesText: {
     fontSize: 13,
-    color: '#cbd5e1',
+    color: isLight ? '#334155' : '#cbd5e1',
     lineHeight: 20
   },
   previewHeaderRow: {
@@ -3768,10 +3765,10 @@ function createStyles(isLight) {
     width: '90%',
     maxWidth: 680,
     maxHeight: '90%',
-    backgroundColor: '#0f172a',
+    backgroundColor: isLight ? '#ffffff' : '#0f172a',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isLight ? '#cbd5e1' : '#334155',
     flexDirection: 'column',
     overflow: 'hidden'
   },
@@ -3781,28 +3778,31 @@ function createStyles(isLight) {
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#ffffff' : '#131d31',
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b'
+    borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
   },
   backModalBtn: {
     padding: 6,
     borderRadius: 6,
-    backgroundColor: '#1e293b',
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+    borderWidth: isLight ? 1 : 0,
+    borderColor: isLight ? '#cbd5e1' : 'transparent',
     marginRight: 6
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f8fafc'
+    color: isLight ? '#0f172a' : '#f8fafc'
   },
   modalHeaderSub: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: isLight ? '#64748b' : '#94a3b8',
     marginTop: 2
   },
   modalBody: {
-    padding: 20
+    padding: 20,
+    backgroundColor: isLight ? '#ffffff' : '#0f172a'
   },
   modalFooter: {
     flexDirection: 'row',
@@ -3811,9 +3811,9 @@ function createStyles(isLight) {
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b'
+    borderTopColor: isLight ? '#e2e8f0' : '#1e293b'
   },
 
   // Options Screen (The Two Cards)
@@ -3828,11 +3828,11 @@ function createStyles(isLight) {
   optionCard: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
     borderRadius: 14,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isLight ? '#e2e8f0' : '#1e293b',
     gap: 12
   },
   optionCardMobile: {
@@ -3872,17 +3872,17 @@ function createStyles(isLight) {
   optionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: isLight ? '#0f172a' : '#f8fafc',
     marginBottom: 2
   },
   optionSubtitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#38bdf8'
+    color: isLight ? '#0284c7' : '#38bdf8'
   },
   optionDescription: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: isLight ? '#475569' : '#94a3b8',
     lineHeight: 18
   },
   optionActionBadge: {
@@ -4406,24 +4406,24 @@ function createStyles(isLight) {
     fontWeight: '600'
   },
   scannedImageViewerBox: {
-    backgroundColor: '#0c1322',
+    backgroundColor: isLight ? '#f8fafc' : '#0c1322',
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: isLight ? '#e2e8f0' : '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16
   },
   capturedContainer: {
-    backgroundColor: '#131d31',
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
     borderRadius: 10,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#1e293b'
+    borderColor: isLight ? '#e2e8f0' : '#1e293b'
   },
   capturedImageWrapper: {
-    backgroundColor: '#0c1322',
+    backgroundColor: isLight ? '#f1f5f9' : '#0c1322',
     borderRadius: 8,
     overflow: 'hidden',
     alignItems: 'center',
@@ -5106,6 +5106,11 @@ function createStyles(isLight) {
     borderColor: '#cbd5e1'
   },
   modalHeaderLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#e2e8f0'
+  },
+  viewerHeaderLight: {
+    backgroundColor: '#ffffff',
     borderBottomColor: '#e2e8f0'
   },
   modalTitleLight: {
