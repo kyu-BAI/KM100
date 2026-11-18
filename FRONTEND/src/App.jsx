@@ -923,8 +923,8 @@ export default function App() {
 
       // 1. Prepare raw matrix with Title and Subtitle Block
       const aoa = [
-        ['KM100 DOCUMENT INVENTORY SYSTEM - ' + folderLabel.toUpperCase()],
-        ['DEPARTMENT / FOLDER: ' + folderLabel + '   |   EXPORT DATE: ' + dateStr + ' ' + timeStr + '   |   TOTAL DOCUMENTS: ' + folderItems.length + '   |   AUDIT STATUS: VERIFIED RECORDS'],
+        ['KM100 SKILLS & TRAINING CENTER, INC. - ' + folderLabel.toUpperCase() + ' AUDIT REPORT'],
+        ['COMPANY: KM100 SKILLS AND TRAINING CENTER, INC.   |   FOLDER: ' + folderLabel + '   |   EXPORT DATE: ' + dateStr + ' ' + timeStr + '   |   AUDIT STATUS: OFFICIAL VERIFIED INVENTORY'],
         [], // Spacer row
         ['No.', 'File Name', 'Document Title', 'Establishment / Store', 'Category', 'Sub-Category', 'Entity / Branch', 'Receipt Date', 'Date Scanned / Recorded', 'Amount (PHP)', 'Invoice / OR No.', 'Audit Status']
       ];
@@ -1890,17 +1890,30 @@ export default function App() {
         <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }, isLight && styles.authCardLight]}>
           {/* Top Brand & Security Tag */}
           <View style={styles.authHeader}>
-            <View style={{ alignItems: 'center', marginBottom: 10 }}>
-              <Image
-                source={{ uri: '/km100-logo.png' }}
-                style={{ width: 64, height: 64, borderRadius: 32 }}
-                resizeMode="contain"
-              />
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <View style={{
+                width: 76,
+                height: 76,
+                borderRadius: 38,
+                backgroundColor: '#ffffff',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(249, 115, 22, 0.28)',
+                borderWidth: 2.5,
+                borderColor: '#f97316',
+                padding: 3
+              }}>
+                <Image
+                  source={{ uri: '/km100-logo.png' }}
+                  style={{ width: '100%', height: '100%', borderRadius: 34 }}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
             <View style={styles.authBadgePill}>
-              <Text style={styles.authBadgePillText}>SUPABASE CLOUD AUTH</Text>
+              <Text style={styles.authBadgePillText}>OFFICIAL ENTERPRISE PORTAL</Text>
             </View>
-            <Text style={[styles.authTitle, isLight && styles.authTitleLight]}>PETC Inventory System</Text>
+            <Text style={[styles.authTitle, isLight && styles.authTitleLight]}>KM100 Skills & Training Center</Text>
             <Text style={[styles.authSubtitle, isLight && styles.authSubtitleLight]}>
               {authMode === 'login'
                 ? 'Sign in with your Administrator credentials to access files'
@@ -2081,22 +2094,37 @@ export default function App() {
           </TouchableOpacity>
 
           <View style={styles.brandContainer}>
-            <Image
-              source={{ uri: '/km100-logo.png' }}
-              style={{ width: isSmallMobile ? 24 : 28, height: isSmallMobile ? 24 : 28, borderRadius: 14 }}
-              resizeMode="contain"
-            />
-            <View style={styles.brandBadge}>
-              <Text style={styles.brandBadgeText}>KM100</Text>
+            <View style={{
+              width: isSmallMobile ? 30 : 36,
+              height: isSmallMobile ? 30 : 36,
+              borderRadius: isSmallMobile ? 15 : 18,
+              backgroundColor: '#ffffff',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: '#f97316',
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)'
+            }}>
+              <Image
+                source={{ uri: '/km100-logo.png' }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
             </View>
             {!isSmallMobile && (
-              <View>
-                <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
-                  RECEIPT & INVENTORY
-                </Text>
+              <View style={{ gap: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                    KM100
+                  </Text>
+                  <View style={styles.brandBadge}>
+                    <Text style={styles.brandBadgeText}>INVENTORY</Text>
+                  </View>
+                </View>
                 {isDesktop && (
                   <Text style={[styles.brandSub, isLight && styles.brandSubLight]}>
-                    Emission Testing & Branch Records
+                    Skills & Training Center, Inc. • Emission Testing Portal
                   </Text>
                 )}
               </View>
@@ -2213,15 +2241,45 @@ export default function App() {
             isLight && styles.sidebarLight,
             isDrawerMode && isLight && styles.mobileSidebarDrawerLight
           ]}>
+            {/* Top Company Branding Banner in Sidebar */}
+            <View style={[styles.sidebarCompanyHeader, isLight && styles.sidebarCompanyHeaderLight]}>
+              <View style={styles.sidebarLogoBox}>
+                <Image
+                  source={{ uri: '/km100-logo.png' }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                <Text style={[styles.sidebarCompanyName, isLight && styles.sidebarCompanyNameLight]} numberOfLines={1}>
+                  KM100 SKILLS & TRAINING
+                </Text>
+                <Text style={[styles.sidebarCompanySub, isLight && styles.sidebarCompanySubLight]} numberOfLines={1}>
+                  Center, Inc. • Enterprise Portal
+                </Text>
+              </View>
+              {isDrawerMode && (
+                <TouchableOpacity
+                  onPress={() => setSidebarOpen(false)}
+                  style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
+                  title="Close sidebar navigation"
+                >
+                  <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
+                </TouchableOpacity>
+              )}
+            </View>
+
             <View style={[styles.sidebarTitleRow, isLight && styles.sidebarTitleRowLight]}>
               <Text style={[styles.sidebarSectionTitle, isLight && styles.sidebarSectionTitleLight]}>DOCUMENT DIRECTORY</Text>
-              <TouchableOpacity
-                onPress={() => setSidebarOpen(false)}
-                style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
-                title="Hide sidebar"
-              >
-                {isDrawerMode ? <X size={18} color={isLight ? '#475569' : '#94a3b8'} /> : <ChevronLeft size={16} color={isLight ? '#475569' : '#94a3b8'} />}
-              </TouchableOpacity>
+              {!isDrawerMode && (
+                <TouchableOpacity
+                  onPress={() => setSidebarOpen(false)}
+                  style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
+                  title="Hide sidebar"
+                >
+                  <ChevronLeft size={16} color={isLight ? '#475569' : '#94a3b8'} />
+                </TouchableOpacity>
+              )}
             </View>
 
             <ScrollView style={styles.treeScroll} showsVerticalScrollIndicator={false}>
@@ -3724,7 +3782,7 @@ export default function App() {
             {/* Modal Header */}
             <View style={[styles.modalHeader, isMobile && styles.modalHeaderMobile, isLight && styles.modalHeaderLight]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                {addMode !== 'options' && (
+                {addMode !== 'options' ? (
                   <TouchableOpacity
                     onPress={() => {
                       stopCamera();
@@ -3734,6 +3792,24 @@ export default function App() {
                   >
                     <ArrowLeft size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
                   </TouchableOpacity>
+                ) : (
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: '#ffffff',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: '#f97316',
+                    overflow: 'hidden'
+                  }}>
+                    <Image
+                      source={{ uri: '/km100-logo.png' }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="contain"
+                    />
+                  </View>
                 )}
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[styles.modalTitle, isMobile && { fontSize: 15 }, isLight && styles.modalTitleLight]} numberOfLines={1}>
@@ -4970,6 +5046,49 @@ function createStyles(isLight) {
     borderRightWidth: 1,
     borderRightColor: '#1e293b',
     flexDirection: 'column'
+  },
+  sidebarCompanyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    backgroundColor: '#0c1322'
+  },
+  sidebarCompanyHeaderLight: {
+    backgroundColor: '#f8fafc',
+    borderBottomColor: '#e2e8f0'
+  },
+  sidebarLogoBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#f97316',
+    overflow: 'hidden',
+    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)'
+  },
+  sidebarCompanyName: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#f8fafc',
+    letterSpacing: 0.3
+  },
+  sidebarCompanyNameLight: {
+    color: '#0f172a'
+  },
+  sidebarCompanySub: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#64748b'
+  },
+  sidebarCompanySubLight: {
+    color: '#94a3b8'
   },
   sidebarTitleRow: {
     flexDirection: 'row',
