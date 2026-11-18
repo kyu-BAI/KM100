@@ -58,6 +58,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
+import * as XLSX from 'xlsx';
 import { runOcrOnImage } from './ocrService';
 import { loadCachedItems, saveCachedItems, getCacheSyncTime, clearCachedItems } from './cacheService';
 
@@ -752,6 +753,217 @@ export default function App() {
       return true;
     });
   }, [items, activeNav, searchQuery, showAllFiles]);
+
+  // Helper to extract items matching any specific folder navigation node
+  const getItemsForFolder = (navTarget) => {
+    const nav = navTarget || activeNav;
+    if (nav.type === 'all') {
+      return items;
+    }
+
+    return items.filter(item => {
+      // 1. Category Filtering
+      const activeType = (nav.type || '').toLowerCase();
+      if (activeType && activeType !== 'all') {
+        const itemCatId = (item.categoryId || '').toLowerCase();
+        const itemCat = (item.category || '').toLowerCase();
+        const matchesCategory =
+          itemCatId === activeType ||
+          itemCat === activeType ||
+          itemCat.replace(/\s+/g, '-') === activeType ||
+          (activeType === 'expenses' && itemCat.includes('expense')) ||
+          (activeType === 'petc-sales' && (itemCat.includes('sale') || itemCat.includes('emission'))) ||
+          (activeType === 'petc-income' && (itemCat.includes('income') || itemCat.includes('revenue') || itemCat.includes('collection'))) ||
+          (activeType === 'petc-insurance' && (itemCat.includes('insurance') || itemCat.includes('ctpl'))) ||
+          (activeType === 'consumables' && itemCat.includes('consumable')) ||
+          (activeType === 'vouchers' && itemCat.includes('voucher'));
+
+        if (!matchesCategory) return false;
+      }
+
+      // 2. Year Filtering
+      if (nav.year) {
+        const itemYear = String(item.year || '');
+        if (itemYear && itemYear !== String(nav.year)) {
+          return false;
+        }
+      }
+
+      // 3. Month Filtering
+      if (nav.month) {
+        const itemMonth = (item.month || '').toUpperCase();
+        const navMonth = String(nav.month).toUpperCase();
+        if (itemMonth && itemMonth !== navMonth) {
+          return false;
+        }
+      }
+
+      // 4. SubCategory & Branch Filtering
+      if (nav.subCategory) {
+        const target = nav.subCategory.toLowerCase();
+        const itemSub = (item.subCategory || '').toLowerCase();
+        const itemSubId = (item.subCategoryId || '').toLowerCase();
+        const itemEntity = (item.entity || '').toLowerCase();
+        const itemTitle = (item.title || '').toLowerCase();
+        const itemYear = String(item.year || '').toLowerCase();
+
+        const exactMatch =
+          itemSubId === target ||
+          itemSub === target ||
+          itemSub.replace(/\s+/g, '-') === target ||
+          itemSub.replace(/\s+/g, '-').includes(target);
+
+        let matchesSub = exactMatch;
+        if (!matchesSub) {
+          const isKnoah = target.includes('knoah');
+          const isRedGoose = target.includes('red-goose') || target.includes('redgoose');
+          const isPetc = target.includes('petc');
+          const has2026 = target.includes('2026');
+          const has2027 = target.includes('2027');
+
+          if (isKnoah) {
+            matchesSub =
+              (itemEntity.includes('knoah') || itemSub.includes('knoah') || itemTitle.includes('knoah')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else if (isRedGoose) {
+            matchesSub =
+              (itemEntity.includes('red') || itemSub.includes('red') || itemTitle.includes('red')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else if (isPetc) {
+            matchesSub =
+              (itemEntity.includes('petc') || itemSub.includes('petc') || itemTitle.includes('petc')) &&
+              (!has2026 || itemYear === '2026' || itemSub.includes('2026') || itemTitle.includes('2026')) &&
+              (!has2027 || itemYear === '2027' || itemSub.includes('2027') || itemTitle.includes('2027'));
+          } else {
+            const tokens = target.split(/[-_ ]+/).filter(Boolean);
+            matchesSub = tokens.every(
+              token =>
+                itemSub.includes(token) ||
+                itemSubId.includes(token) ||
+                itemEntity.includes(token) ||
+                itemTitle.includes(token)
+            );
+          }
+        }
+        if (!matchesSub) return false;
+      }
+
+      return true;
+    });
+  };
+
+  // Export any selected folder's records into a clean, organized Excel (.xlsx) file
+  const exportFolderToExcel = (targetNav) => {
+    const nav = targetNav || activeNav;
+    const folderLabel = nav.label || 'Inventory Folder';
+    const folderItems = getItemsForFolder(nav);
+
+    if (!folderItems || folderItems.length === 0) {
+      showNotice(`No records found in "${folderLabel}" to export.`, 'error');
+      return;
+    }
+
+    try {
+      // 1. Structure each record neatly into tabular columns
+      const exportRows = folderItems.map((item, index) => {
+        const amt = parseFloat(item.amount) || 0;
+        return {
+          'No.': index + 1,
+          'File Name': item.fileName || '-',
+          'Document Title': item.title || item.description || '-',
+          'Establishment / Store': item.establishment || item.previewData?.establishment || '-',
+          'Category': item.category || '-',
+          'Sub-Category': item.subCategory || '-',
+          'Entity / Branch': item.entity || '-',
+          'Period (Year)': item.year || '-',
+          'Month': item.month || '-',
+          'Receipt Date': item.receiptDate || item.previewData?.receipt_date || '-',
+          'Date Scanned / Recorded': item.scannedDate || item.createdAt || '-',
+          'Amount (PHP)': amt,
+          'Official Ref / Invoice No.': item.orNumber || item.refNo || item.previewData?.invoice_number || item.previewData?.reference_no || '-',
+          'Audit Status': item.status || 'Active',
+          'File Format': item.fileFormat || 'JPG',
+          'Database Source': item.sourceTable || 'inventory_items'
+        };
+      });
+
+      // 2. Add an organized summary total row at the bottom
+      const totalAmount = folderItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+      exportRows.push({
+        'No.': '',
+        'File Name': 'TOTAL SUMMARY',
+        'Document Title': `${folderItems.length} Records in ${folderLabel}`,
+        'Establishment / Store': '',
+        'Category': '',
+        'Sub-Category': '',
+        'Entity / Branch': '',
+        'Period (Year)': '',
+        'Month': '',
+        'Receipt Date': '',
+        'Date Scanned / Recorded': 'TOTAL SUM (PHP):',
+        'Amount (PHP)': totalAmount,
+        'Official Ref / Invoice No.': '',
+        'Audit Status': '',
+        'File Format': '',
+        'Database Source': ''
+      });
+
+      // 3. Create Excel worksheet with auto-sized column widths
+      const ws = XLSX.utils.json_to_sheet(exportRows);
+
+      ws['!cols'] = [
+        { wch: 6 },   // No.
+        { wch: 32 },  // File Name
+        { wch: 36 },  // Document Title
+        { wch: 26 },  // Establishment / Store
+        { wch: 18 },  // Category
+        { wch: 24 },  // Sub-Category
+        { wch: 16 },  // Entity / Branch
+        { wch: 14 },  // Period (Year)
+        { wch: 10 },  // Month
+        { wch: 14 },  // Receipt Date
+        { wch: 22 },  // Date Scanned / Recorded
+        { wch: 18 },  // Amount (PHP)
+        { wch: 26 },  // Official Ref / Invoice No.
+        { wch: 15 },  // Audit Status
+        { wch: 12 },  // File Format
+        { wch: 25 },  // Database Source
+      ];
+
+      // 4. Create workbook and add worksheet (Excel sheet names limit: 31 chars, no special chars)
+      const wb = XLSX.utils.book_new();
+      const safeSheetName = folderLabel.replace(/[\\/?*:[\]]/g, '').slice(0, 31) || 'Inventory';
+      XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+
+      // 5. Clean download file name and initiate instant browser download
+      const cleanLabel = folderLabel.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
+      const todayDate = new Date().toISOString().split('T')[0];
+      const downloadFileName = `${cleanLabel}_${todayDate}.xlsx`;
+
+      try {
+        XLSX.writeFile(wb, downloadFileName);
+      } catch (writeErr) {
+        // Fallback for browsers or sandboxes requiring Blob URL trigger
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      showNotice(`Exported ${folderItems.length} records to "${downloadFileName}"!`);
+    } catch (err) {
+      console.error('Failed to export folder to Excel:', err);
+      showNotice('Export failed: ' + (err.message || err), 'error');
+    }
+  };
 
   // Open & Close Add Document Modal
   const openAddModal = () => {
@@ -1722,14 +1934,31 @@ export default function App() {
                   </Text>
                 </TouchableOpacity>
 
-                {/* Interactive Toggle Switch Button */}
-                <TouchableOpacity
-                  style={[styles.sidebarToggleSwitch, showAllFiles && styles.sidebarToggleSwitchActive]}
-                  onPress={handleToggleShowAll}
-                  accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
-                >
-                  <View style={[styles.sidebarToggleThumb, showAllFiles && styles.sidebarToggleThumbActive]} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {/* Export All Records to Excel */}
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
+                      type: 'all',
+                      year: null,
+                      month: null,
+                      subCategory: null,
+                      label: 'All Inventory Files'
+                    })}
+                    title="Export All Records to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
+                  </TouchableOpacity>
+
+                  {/* Interactive Toggle Switch Button */}
+                  <TouchableOpacity
+                    style={[styles.sidebarToggleSwitch, showAllFiles && styles.sidebarToggleSwitchActive]}
+                    onPress={handleToggleShowAll}
+                    accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                  >
+                    <View style={[styles.sidebarToggleThumb, showAllFiles && styles.sidebarToggleThumbActive]} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Actions in Sidebar */}
@@ -1745,50 +1974,92 @@ export default function App() {
 
               {/* 2. PETC SALES */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'petc-sales' && !activeNav.year && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'petc-sales' && !activeNav.year && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'petc-sales',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'PETC Sales'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('petc-sales')} style={styles.iconToggle}>
+                      {expandedNodes['petc-sales'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <Folder size={17} color="#34d399" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-sales' && styles.treeTextActive]} numberOfLines={1}>
+                      PETC SALES
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'petc-sales',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'PETC Sales'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('petc-sales')} style={styles.iconToggle}>
-                    {expandedNodes['petc-sales'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export PETC Sales to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <Folder size={17} color="#34d399" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-sales' && styles.treeTextActive]}>
-                    PETC SALES
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['petc-sales'] && (
                   <View style={styles.treeChildren}>
                     {/* 2026 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-sales' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-sales' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-sales',
+                            year: '2026',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Sales > 2026'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-sales-2026')} style={styles.iconToggle}>
+                          {expandedNodes['petc-sales-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#38bdf8" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2026' && styles.treeTextActive]} numberOfLines={1}>
+                          2026
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-sales',
                           year: '2026',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Sales > 2026'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-sales-2026')} style={styles.iconToggle}>
-                        {expandedNodes['petc-sales-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Sales 2026'
+                        })}
+                        title="Export 2026 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#38bdf8" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2026' && styles.treeTextActive]}>
-                        2026
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-sales-2026'] && (
                       <View style={styles.monthPillRow}>
@@ -1815,26 +2086,47 @@ export default function App() {
                     )}
 
                     {/* 2027 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-sales' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-sales' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-sales',
+                            year: '2027',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Sales > 2027'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-sales-2027')} style={styles.iconToggle}>
+                          {expandedNodes['petc-sales-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#38bdf8" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2027' && styles.treeTextActive]} numberOfLines={1}>
+                          2027
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-sales',
                           year: '2027',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Sales > 2027'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-sales-2027')} style={styles.iconToggle}>
-                        {expandedNodes['petc-sales-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Sales 2027'
+                        })}
+                        title="Export 2027 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#38bdf8" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2027' && styles.treeTextActive]}>
-                        2027
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-sales-2027'] && (
                       <View style={styles.monthPillRow}>
@@ -1865,50 +2157,92 @@ export default function App() {
 
               {/* 3. PETC INCOME */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'petc-income' && !activeNav.year && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'petc-income' && !activeNav.year && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'petc-income',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'PETC Income'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('petc-income')} style={styles.iconToggle}>
+                      {expandedNodes['petc-income'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <Folder size={17} color="#60a5fa" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-income' && styles.treeTextActive]} numberOfLines={1}>
+                      PETC INCOME
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'petc-income',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'PETC Income'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('petc-income')} style={styles.iconToggle}>
-                    {expandedNodes['petc-income'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export PETC Income to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <Folder size={17} color="#60a5fa" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-income' && styles.treeTextActive]}>
-                    PETC INCOME
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['petc-income'] && (
                   <View style={styles.treeChildren}>
                     {/* 2026 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-income' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-income' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-income',
+                            year: '2026',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Income > 2026'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-income-2026')} style={styles.iconToggle}>
+                          {expandedNodes['petc-income-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#60a5fa" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-income' && activeNav.year === '2026' && styles.treeTextActive]} numberOfLines={1}>
+                          2026
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-income',
                           year: '2026',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Income > 2026'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-income-2026')} style={styles.iconToggle}>
-                        {expandedNodes['petc-income-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Income 2026'
+                        })}
+                        title="Export 2026 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#60a5fa" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-income' && activeNav.year === '2026' && styles.treeTextActive]}>
-                        2026
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-income-2026'] && (
                       <View style={styles.monthPillRow}>
@@ -1935,26 +2269,47 @@ export default function App() {
                     )}
 
                     {/* 2027 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-income' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-income' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-income',
+                            year: '2027',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Income > 2027'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-income-2027')} style={styles.iconToggle}>
+                          {expandedNodes['petc-income-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#60a5fa" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-income' && activeNav.year === '2027' && styles.treeTextActive]} numberOfLines={1}>
+                          2027
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-income',
                           year: '2027',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Income > 2027'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-income-2027')} style={styles.iconToggle}>
-                        {expandedNodes['petc-income-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Income 2027'
+                        })}
+                        title="Export 2027 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#60a5fa" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-income' && activeNav.year === '2027' && styles.treeTextActive]}>
-                        2027
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-income-2027'] && (
                       <View style={styles.monthPillRow}>
@@ -1985,26 +2340,47 @@ export default function App() {
 
               {/* 4. EXPENSES */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'expenses' && !activeNav.subCategory && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'expenses' && !activeNav.subCategory && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'expenses',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'Expenses'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('expenses')} style={styles.iconToggle}>
+                      {expandedNodes['expenses'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <Folder size={17} color="#f87171" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'expenses' && styles.treeTextActive]} numberOfLines={1}>
+                      EXPENSES
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'expenses',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'Expenses'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('expenses')} style={styles.iconToggle}>
-                    {expandedNodes['expenses'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export Expenses to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <Folder size={17} color="#f87171" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'expenses' && styles.treeTextActive]}>
-                    EXPENSES
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['expenses'] && (
                   <View style={styles.treeChildren}>
@@ -2014,24 +2390,41 @@ export default function App() {
                       { id: 'knoah-mari-2026', label: 'Knoah Mari Expenses 2026' },
 
                     ].map(branch => (
-                      <TouchableOpacity
+                      <View
                         key={branch.id}
-                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive]}
-                        onPress={() => {
-                          setActiveNav({
+                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive, { justifyContent: 'space-between' }]}
+                      >
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                          onPress={() => {
+                            setActiveNav({
+                              type: 'expenses',
+                              year: null,
+                              month: null,
+                              subCategory: branch.id,
+                              label: `Expenses > ${branch.label}`
+                            });
+                          }}
+                        >
+                          <ChevronRight size={12} color="#94a3b8" />
+                          <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]} numberOfLines={1}>
+                            {branch.label}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.treeFolderExportBtn}
+                          onPress={() => exportFolderToExcel({
                             type: 'expenses',
                             year: null,
                             month: null,
                             subCategory: branch.id,
-                            label: `Expenses > ${branch.label}`
-                          });
-                        }}
-                      >
-                        <ChevronRight size={12} color="#94a3b8" />
-                        <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]}>
-                          {branch.label}
-                        </Text>
-                      </TouchableOpacity>
+                            label: branch.label
+                          })}
+                          title={`Export ${branch.label} to Excel (.xlsx)`}
+                        >
+                          <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 )}
@@ -2039,26 +2432,47 @@ export default function App() {
 
               {/* 5. CONSUMABLES */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'consumables' && !activeNav.subCategory && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'consumables' && !activeNav.subCategory && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'consumables',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'Consumables'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('consumables')} style={styles.iconToggle}>
+                      {expandedNodes['consumables'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <Package size={17} color="#fbbf24" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'consumables' && styles.treeTextActive]} numberOfLines={1}>
+                      CONSUMABLES
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'consumables',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'Consumables'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('consumables')} style={styles.iconToggle}>
-                    {expandedNodes['consumables'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export Consumables to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <Package size={17} color="#fbbf24" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'consumables' && styles.treeTextActive]}>
-                    CONSUMABLES
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['consumables'] && (
                   <View style={styles.treeChildren}>
@@ -2068,24 +2482,41 @@ export default function App() {
                       { id: 'red-goose-consumables', label: 'Red Goose' },
                       { id: 'knoah-mari-consumables', label: 'Knoah Mari' }
                     ].map(branch => (
-                      <TouchableOpacity
+                      <View
                         key={branch.id}
-                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive]}
-                        onPress={() => {
-                          setActiveNav({
+                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive, { justifyContent: 'space-between' }]}
+                      >
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                          onPress={() => {
+                            setActiveNav({
+                              type: 'consumables',
+                              year: null,
+                              month: null,
+                              subCategory: branch.id,
+                              label: `Consumables > ${branch.label}`
+                            });
+                          }}
+                        >
+                          <ChevronRight size={12} color="#94a3b8" />
+                          <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]} numberOfLines={1}>
+                            {branch.label}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.treeFolderExportBtn}
+                          onPress={() => exportFolderToExcel({
                             type: 'consumables',
                             year: null,
                             month: null,
                             subCategory: branch.id,
-                            label: `Consumables > ${branch.label}`
-                          });
-                        }}
-                      >
-                        <ChevronRight size={12} color="#94a3b8" />
-                        <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]}>
-                          {branch.label}
-                        </Text>
-                      </TouchableOpacity>
+                            label: branch.label
+                          })}
+                          title={`Export ${branch.label} to Excel (.xlsx)`}
+                        >
+                          <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 )}
@@ -2093,26 +2524,47 @@ export default function App() {
 
               {/* 6. VOUCHERS */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'vouchers' && !activeNav.subCategory && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'vouchers' && !activeNav.subCategory && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'vouchers',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'Vouchers'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('vouchers')} style={styles.iconToggle}>
+                      {expandedNodes['vouchers'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <FileCheck size={17} color="#a78bfa" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'vouchers' && styles.treeTextActive]} numberOfLines={1}>
+                      VOUCHERS
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'vouchers',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'Vouchers'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('vouchers')} style={styles.iconToggle}>
-                    {expandedNodes['vouchers'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export Vouchers to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <FileCheck size={17} color="#a78bfa" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'vouchers' && styles.treeTextActive]}>
-                    VOUCHERS
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['vouchers'] && (
                   <View style={styles.treeChildren}>
@@ -2122,24 +2574,41 @@ export default function App() {
                       { id: 'vouchers-knoah-mari', label: 'Knoah Mari' },
                       { id: 'vouchers-red-goose', label: 'Red Goose' }
                     ].map(branch => (
-                      <TouchableOpacity
+                      <View
                         key={branch.id}
-                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive]}
-                        onPress={() => {
-                          setActiveNav({
+                        style={[styles.treeSubItem, activeNav.subCategory === branch.id && styles.treeItemActive, { justifyContent: 'space-between' }]}
+                      >
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                          onPress={() => {
+                            setActiveNav({
+                              type: 'vouchers',
+                              year: null,
+                              month: null,
+                              subCategory: branch.id,
+                              label: `Vouchers > ${branch.label}`
+                            });
+                          }}
+                        >
+                          <ChevronRight size={12} color="#94a3b8" />
+                          <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]} numberOfLines={1}>
+                            {branch.label}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.treeFolderExportBtn}
+                          onPress={() => exportFolderToExcel({
                             type: 'vouchers',
                             year: null,
                             month: null,
                             subCategory: branch.id,
-                            label: `Vouchers > ${branch.label}`
-                          });
-                        }}
-                      >
-                        <ChevronRight size={12} color="#94a3b8" />
-                        <Text style={[styles.treeSubText, activeNav.subCategory === branch.id && styles.treeTextActive]}>
-                          {branch.label}
-                        </Text>
-                      </TouchableOpacity>
+                            label: branch.label
+                          })}
+                          title={`Export ${branch.label} to Excel (.xlsx)`}
+                        >
+                          <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
+                        </TouchableOpacity>
+                      </View>
                     ))}
                   </View>
                 )}
@@ -2147,50 +2616,92 @@ export default function App() {
 
               {/* 7. PETC INSURANCE */}
               <View style={styles.categoryBlock}>
-                <TouchableOpacity
-                  style={[styles.treeItem, activeNav.type === 'petc-insurance' && !activeNav.year && styles.treeItemActive]}
-                  onPress={() => {
-                    setActiveNav({
+                <View
+                  style={[
+                    styles.treeItem,
+                    activeNav.type === 'petc-insurance' && !activeNav.year && styles.treeItemActive,
+                    { justifyContent: 'space-between' }
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                    onPress={() => {
+                      setActiveNav({
+                        type: 'petc-insurance',
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: 'PETC Insurance'
+                      });
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => toggleNode('petc-insurance')} style={styles.iconToggle}>
+                      {expandedNodes['petc-insurance'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    </TouchableOpacity>
+                    <ShieldCheck size={17} color="#2dd4bf" />
+                    <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-insurance' && styles.treeTextActive]} numberOfLines={1}>
+                      PETC INSURANCE
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.treeFolderExportBtn}
+                    onPress={() => exportFolderToExcel({
                       type: 'petc-insurance',
                       year: null,
                       month: null,
                       subCategory: null,
                       label: 'PETC Insurance'
-                    });
-                  }}
-                >
-                  <TouchableOpacity onPress={() => toggleNode('petc-insurance')} style={styles.iconToggle}>
-                    {expandedNodes['petc-insurance'] ? <ChevronDown size={15} color="#94a3b8" /> : <ChevronRight size={15} color="#94a3b8" />}
+                    })}
+                    title="Export PETC Insurance to Excel (.xlsx)"
+                  >
+                    <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
-                  <ShieldCheck size={17} color="#2dd4bf" />
-                  <Text style={[styles.treeCategoryTitle, activeNav.type === 'petc-insurance' && styles.treeTextActive]}>
-                    PETC INSURANCE
-                  </Text>
-                </TouchableOpacity>
+                </View>
 
                 {expandedNodes['petc-insurance'] && (
                   <View style={styles.treeChildren}>
                     {/* 2026 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-insurance' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-insurance' && activeNav.year === '2026' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-insurance',
+                            year: '2026',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Insurance > 2026'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-insurance-2026')} style={styles.iconToggle}>
+                          {expandedNodes['petc-insurance-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#2dd4bf" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-insurance' && activeNav.year === '2026' && styles.treeTextActive]} numberOfLines={1}>
+                          2026
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-insurance',
                           year: '2026',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Insurance > 2026'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-insurance-2026')} style={styles.iconToggle}>
-                        {expandedNodes['petc-insurance-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Insurance 2026'
+                        })}
+                        title="Export 2026 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#2dd4bf" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-insurance' && activeNav.year === '2026' && styles.treeTextActive]}>
-                        2026
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-insurance-2026'] && (
                       <View style={styles.monthPillRow}>
@@ -2217,26 +2728,47 @@ export default function App() {
                     )}
 
                     {/* 2027 */}
-                    <TouchableOpacity
-                      style={[styles.treeSubItem, activeNav.type === 'petc-insurance' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive]}
-                      onPress={() => {
-                        setActiveNav({
+                    <View
+                      style={[
+                        styles.treeSubItem,
+                        activeNav.type === 'petc-insurance' && activeNav.year === '2027' && !activeNav.month && styles.treeItemActive,
+                        { justifyContent: 'space-between' }
+                      ]}
+                    >
+                      <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}
+                        onPress={() => {
+                          setActiveNav({
+                            type: 'petc-insurance',
+                            year: '2027',
+                            month: null,
+                            subCategory: null,
+                            label: 'PETC Insurance > 2027'
+                          });
+                        }}
+                      >
+                        <TouchableOpacity onPress={() => toggleNode('petc-insurance-2027')} style={styles.iconToggle}>
+                          {expandedNodes['petc-insurance-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                        </TouchableOpacity>
+                        <Calendar size={14} color="#2dd4bf" />
+                        <Text style={[styles.treeSubText, activeNav.type === 'petc-insurance' && activeNav.year === '2027' && styles.treeTextActive]} numberOfLines={1}>
+                          2027
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.treeFolderExportBtn}
+                        onPress={() => exportFolderToExcel({
                           type: 'petc-insurance',
                           year: '2027',
                           month: null,
                           subCategory: null,
-                          label: 'PETC Insurance > 2027'
-                        });
-                      }}
-                    >
-                      <TouchableOpacity onPress={() => toggleNode('petc-insurance-2027')} style={styles.iconToggle}>
-                        {expandedNodes['petc-insurance-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
+                          label: 'PETC Insurance 2027'
+                        })}
+                        title="Export 2027 to Excel (.xlsx)"
+                      >
+                        <FileSpreadsheet size={11} color={isLight ? '#059669' : '#34d399'} />
                       </TouchableOpacity>
-                      <Calendar size={14} color="#2dd4bf" />
-                      <Text style={[styles.treeSubText, activeNav.type === 'petc-insurance' && activeNav.year === '2027' && styles.treeTextActive]}>
-                        2027
-                      </Text>
-                    </TouchableOpacity>
+                    </View>
 
                     {expandedNodes['petc-insurance-2027'] && (
                       <View style={styles.monthPillRow}>
@@ -2356,6 +2888,18 @@ export default function App() {
                   </Text>
                 </TouchableOpacity>
 
+                {/* Export Current Folder to Excel (.xlsx) */}
+                <TouchableOpacity
+                  style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
+                  onPress={() => exportFolderToExcel(activeNav)}
+                  title={`Export "${activeNav.label}" into organized Excel file`}
+                >
+                  <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
+                  <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
+                    Export Excel
+                  </Text>
+                </TouchableOpacity>
+
                 {activeNav.type === 'all' && (
                   <TouchableOpacity
                     style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive, isLight && styles.allFilesToggleBtnLight, showAllFiles && isLight && styles.allFilesToggleBtnActiveLight]}
@@ -2391,7 +2935,7 @@ export default function App() {
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#38bdf8" />
-              <Text style={styles.loadingText}>Loading inventory records...</Text>
+              <Text style={styles.loadingText}>Loading inventory records</Text>
             </View>
           ) : filteredItems.length === 0 ? (
             activeNav.type === 'all' && !showAllFiles ? (
@@ -3753,6 +4297,41 @@ function createStyles(isLight) {
   },
   allFilesToggleBtnTextActive: {
     color: '#38bdf8'
+  },
+  exportExcelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: isLight ? '#a7f3d0' : 'rgba(52, 211, 153, 0.35)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    cursor: 'pointer'
+  },
+  exportExcelBtnLight: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0'
+  },
+  exportExcelBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: isLight ? '#059669' : '#34d399'
+  },
+  exportExcelBtnTextLight: {
+    color: '#059669'
+  },
+  treeFolderExportBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 5,
+    borderRadius: 4,
+    backgroundColor: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: isLight ? '#a7f3d0' : 'rgba(52, 211, 153, 0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer'
   },
   sidebarToggleSwitch: {
     width: 32,
