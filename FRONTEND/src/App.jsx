@@ -52,7 +52,9 @@ import {
   Building2,
   DollarSign,
   Sparkles,
-  Receipt
+  Receipt,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
 import { runOcrOnImage } from './ocrService';
@@ -184,6 +186,39 @@ export default function App() {
       return next;
     });
   };
+
+  // Theme State: 'dark' (default) | 'light'
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('petc_theme');
+      return saved === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+  const isLight = theme === 'light';
+
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('petc_theme', next);
+      } catch { }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (isLight) {
+        document.documentElement.classList.add('light-theme');
+        document.body.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+        document.body.classList.remove('light-theme');
+      }
+    }
+  }, [isLight]);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -1205,7 +1240,19 @@ export default function App() {
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <View style={[styles.authContainer, isMobile && { padding: 12 }]}>
+      <View style={[styles.authContainer, isMobile && { padding: 12 }, isLight && styles.containerLight]}>
+        {/* Quick Theme Toggle on Auth Screen */}
+        <TouchableOpacity
+          style={[{ position: 'absolute', top: 16, right: 16, zIndex: 10 }, styles.themeToggleBtn, isLight && styles.themeToggleBtnLight]}
+          onPress={toggleTheme}
+          accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {isLight ? <Moon size={14} color="#6366f1" /> : <Sun size={14} color="#f59e0b" />}
+          <Text style={[styles.themeToggleBtnText, isLight && styles.themeToggleBtnTextLight]}>
+            {isLight ? 'Dark Mode' : 'Light Mode'}
+          </Text>
+        </TouchableOpacity>
+
         {notification && (
           <View style={[styles.toast, notification.type === 'error' ? styles.toastError : styles.toastSuccess]}>
             {notification.type === 'error' ? <AlertTriangle size={18} color="#fff" /> : <CheckCircle2 size={18} color="#fff" />}
@@ -1213,7 +1260,7 @@ export default function App() {
           </View>
         )}
 
-        <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }]}>
+        <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }, isLight && styles.authCardLight]}>
           {/* Top Brand & Security Tag */}
           <View style={styles.authHeader}>
             <View style={styles.authShieldIconBox}>
@@ -1222,8 +1269,8 @@ export default function App() {
             <View style={styles.authBadgePill}>
               <Text style={styles.authBadgePillText}>SUPABASE CLOUD AUTH</Text>
             </View>
-            <Text style={styles.authTitle}>PETC Inventory System</Text>
-            <Text style={styles.authSubtitle}>
+            <Text style={[styles.authTitle, isLight && styles.authTitleLight]}>PETC Inventory System</Text>
+            <Text style={[styles.authSubtitle, isLight && styles.authSubtitleLight]}>
               {authMode === 'login'
                 ? 'Sign in with your Administrator credentials to access files'
                 : 'Register a new Administrator account. All accounts have full admin privileges.'}
@@ -1368,7 +1415,7 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isLight && styles.containerLight]}>
       {/* Notification Toast */}
       {notification && (
         <View style={[styles.toast, notification.type === 'error' ? styles.toastError : styles.toastSuccess]}>
@@ -1379,28 +1426,37 @@ export default function App() {
 
       {/* Mobile Top Bar */}
       {isMobile && (
-        <View style={styles.mobileTopBar}>
+        <View style={[styles.mobileTopBar, isLight && styles.mobileTopBarLight]}>
           <TouchableOpacity
             style={styles.mobileMenuBtn}
             onPress={() => setSidebarOpen(prev => !prev)}
           >
-            <Menu size={22} color="#38bdf8" />
+            <Menu size={22} color={isLight ? '#0284c7' : '#38bdf8'} />
           </TouchableOpacity>
           <View style={styles.mobileTitleBlock}>
-            <Text style={styles.mobileAppTitle} numberOfLines={1}>PETC INVENTORY</Text>
-            <Text style={styles.mobileAppSub} numberOfLines={1}>{activeNav.label}</Text>
+            <Text style={[styles.mobileAppTitle, isLight && styles.mobileAppTitleLight]} numberOfLines={1}>PETC INVENTORY</Text>
+            <Text style={[styles.mobileAppSub, isLight && styles.mobileAppSubLight]} numberOfLines={1}>{activeNav.label}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.mobileAddBtn}
-            onPress={openAddModal}
-          >
-            <PlusCircle size={22} color="#34d399" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              style={[styles.mobileThemeBtn, isLight && styles.mobileThemeBtnLight]}
+              onPress={toggleTheme}
+              accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+            >
+              {isLight ? <Moon size={18} color="#6366f1" /> : <Sun size={18} color="#f59e0b" />}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.mobileAddBtn}
+              onPress={openAddModal}
+            >
+              <PlusCircle size={22} color="#34d399" />
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
-      <View style={styles.mainContent}>
+      <View style={[styles.mainContent, isLight && styles.mainContentLight]}>
         {/* Backdrop for Mobile Drawer */}
         {isMobile && sidebarOpen && (
           <TouchableOpacity
@@ -1412,15 +1468,20 @@ export default function App() {
 
         {/* LEFT SIDEBAR (Desktop toggleable / Mobile drawer) */}
         {sidebarOpen && (
-          <View style={[styles.sidebar, isMobile && styles.mobileSidebarDrawer]}>
-            <View style={styles.sidebarTitleRow}>
-              <Text style={styles.sidebarSectionTitle}>DOCUMENT DIRECTORY</Text>
+          <View style={[
+            styles.sidebar,
+            isMobile && styles.mobileSidebarDrawer,
+            isLight && styles.sidebarLight,
+            isMobile && isLight && styles.mobileSidebarDrawerLight
+          ]}>
+            <View style={[styles.sidebarTitleRow, isLight && styles.sidebarTitleRowLight]}>
+              <Text style={[styles.sidebarSectionTitle, isLight && styles.sidebarSectionTitleLight]}>DOCUMENT DIRECTORY</Text>
               <TouchableOpacity
                 onPress={() => setSidebarOpen(false)}
-                style={styles.sidebarCollapseBtn}
+                style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
                 title="Hide sidebar"
               >
-                {isMobile ? <X size={18} color="#94a3b8" /> : <ChevronLeft size={16} color="#94a3b8" />}
+                {isMobile ? <X size={18} color={isLight ? '#475569' : '#94a3b8'} /> : <ChevronLeft size={16} color={isLight ? '#475569' : '#94a3b8'} />}
               </TouchableOpacity>
             </View>
 
@@ -2025,22 +2086,22 @@ export default function App() {
         )}
 
         {/* MAIN VIEWING AREA */}
-        <View style={styles.contentArea}>
+        <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
           {/* CONTROL BAR: Burger Menu Toggle, Breadcrumbs, Search & Record Count */}
-          <View style={[styles.controlBar, isMobile && styles.controlBarMobile]}>
+          <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
             <View style={styles.controlBarLeft}>
               <TouchableOpacity
                 style={[styles.burgerToggleBtn, isMobile && { display: 'none' }]}
                 onPress={() => setSidebarOpen(prev => !prev)}
                 title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
               >
-                <Menu size={18} color="#38bdf8" />
+                <Menu size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
               </TouchableOpacity>
 
               <View style={[styles.breadcrumbs, isMobile && { display: 'none' }]}>
-                <Text style={styles.breadcrumbItem}>Inventory</Text>
-                <ChevronRight size={14} color="#64748b" />
-                <Text style={styles.breadcrumbActive}>{activeNav.label}</Text>
+                <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Inventory</Text>
+                <ChevronRight size={14} color={isLight ? '#94a3b8' : '#64748b'} />
+                <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]}>{activeNav.label}</Text>
               </View>
             </View>
 
@@ -2048,18 +2109,18 @@ export default function App() {
               styles.controlBarRight,
               isMobile && { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 10 }
             ]}>
-              <View style={[styles.searchBox, isMobile && { width: '100%' }]}>
-                <Search size={16} color="#94a3b8" />
+              <View style={[styles.searchBox, isMobile && { width: '100%' }, isLight && styles.searchBoxLight]}>
+                <Search size={16} color={isLight ? '#64748b' : '#94a3b8'} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, isLight && styles.searchInputLight]}
                   placeholder="Search file name, notes..."
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <X size={15} color="#94a3b8" />
+                    <X size={15} color={isLight ? '#64748b' : '#94a3b8'} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -2071,32 +2132,44 @@ export default function App() {
                 gap: 8,
                 flexWrap: 'wrap'
               }}>
+                {/* Theme Toggle Button */}
+                <TouchableOpacity
+                  style={[styles.themeToggleBtn, isLight && styles.themeToggleBtnLight]}
+                  onPress={toggleTheme}
+                  accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
+                >
+                  {isLight ? <Moon size={12} color="#6366f1" /> : <Sun size={12} color="#f59e0b" />}
+                  <Text style={[styles.themeToggleBtnText, isLight && styles.themeToggleBtnTextLight]}>
+                    {isLight ? 'Dark Mode' : 'Light Mode'}
+                  </Text>
+                </TouchableOpacity>
+
                 {activeNav.type === 'all' && (
                   <TouchableOpacity
-                    style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive]}
+                    style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive, isLight && styles.allFilesToggleBtnLight, showAllFiles && isLight && styles.allFilesToggleBtnActiveLight]}
                     onPress={handleToggleShowAll}
                     accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
                   >
-                    {showAllFiles ? <Eye size={12} color="#38bdf8" /> : <EyeOff size={12} color="#94a3b8" />}
-                    <Text style={[styles.allFilesToggleBtnText, showAllFiles && styles.allFilesToggleBtnTextActive]}>
+                    {showAllFiles ? <Eye size={12} color={isLight ? '#0284c7' : '#38bdf8'} /> : <EyeOff size={12} color={isLight ? '#64748b' : '#94a3b8'} />}
+                    <Text style={[styles.allFilesToggleBtnText, showAllFiles && styles.allFilesToggleBtnTextActive, isLight && styles.allFilesToggleBtnTextLight, showAllFiles && isLight && styles.allFilesToggleBtnTextActiveLight]}>
                       {showAllFiles ? 'Display All: ON' : 'Display All: OFF'}
                     </Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
-                  style={styles.cachePill}
+                  style={[styles.cachePill, isLight && styles.cachePillLight]}
                   onPress={() => fetchData(false)}
                   title="Click to sync with database"
                 >
-                  <RefreshCw size={11} color={isSyncing ? '#38bdf8' : '#34d399'} />
-                  <Text style={styles.cachePillText}>
+                  <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+                  <Text style={[styles.cachePillText, isLight && styles.cachePillTextLight]}>
                     {isSyncing ? 'Syncing...' : (cacheSyncLabel ? `Cached • ${cacheSyncLabel}` : 'Live Cache')}
                   </Text>
                 </TouchableOpacity>
 
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>{filteredItems.length} records</Text>
+                <View style={[styles.countBadge, isLight && styles.countBadgeLight]}>
+                  <Text style={[styles.countBadgeText, isLight && styles.countBadgeTextLight]}>{filteredItems.length} records</Text>
                 </View>
               </View>
             </View>
@@ -2143,7 +2216,7 @@ export default function App() {
               {filteredItems.map((item, idx) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={styles.mobileCard}
+                  style={[styles.mobileCard, isLight && styles.mobileCardLight]}
                   onPress={() => setViewItem(item)}
                 >
                   <View style={styles.mobileCardHeader}>
@@ -2151,14 +2224,14 @@ export default function App() {
                       {item.fileFormat === 'XLSX' ? (
                         <FileSpreadsheet size={20} color="#34d399" />
                       ) : item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? (
-                        <ImageIcon size={20} color="#38bdf8" />
+                        <ImageIcon size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
                       ) : (
-                        <FileText size={20} color="#38bdf8" />
+                        <FileText size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
                       )}
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.mobileCardTitle} numberOfLines={1}>{item.fileName}</Text>
-                      <Text style={styles.mobileCardCategory} numberOfLines={1}>
+                      <Text style={[styles.mobileCardTitle, isLight && styles.mobileCardTitleLight]} numberOfLines={1}>{item.fileName}</Text>
+                      <Text style={[styles.mobileCardCategory, isLight && styles.mobileCardCategoryLight]} numberOfLines={1}>
                         {item.category} • {item.entity}
                       </Text>
                     </View>
@@ -2172,31 +2245,31 @@ export default function App() {
                     </View>
                   </View>
 
-                  <View style={styles.mobileCardMeta}>
+                  <View style={[styles.mobileCardMeta, isLight && styles.mobileCardMetaLight]}>
                     <View style={styles.mobileMetaItem}>
-                      <Text style={styles.mobileMetaLabel}>PERIOD / DATE</Text>
-                      <Text style={styles.mobileMetaVal}>
+                      <Text style={[styles.mobileMetaLabel, isLight && styles.mobileMetaLabelLight]}>PERIOD / DATE</Text>
+                      <Text style={[styles.mobileMetaVal, isLight && styles.mobileMetaValLight]}>
                         {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || 'N/A')}
                       </Text>
                     </View>
                     <View style={styles.mobileMetaItem}>
-                      <Text style={styles.mobileMetaLabel}>AMOUNT</Text>
-                      <Text style={[styles.mobileMetaVal, { color: '#38bdf8', fontWeight: '700' }]}>
+                      <Text style={[styles.mobileMetaLabel, isLight && styles.mobileMetaLabelLight]}>AMOUNT</Text>
+                      <Text style={[styles.mobileMetaVal, { color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }]}>
                         {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : 'N/A'}
                       </Text>
                     </View>
                     <View style={styles.mobileMetaItem}>
-                      <Text style={styles.mobileMetaLabel}>FORMAT</Text>
-                      <Text style={styles.mobileMetaVal}>{item.fileFormat || 'PDF'}</Text>
+                      <Text style={[styles.mobileMetaLabel, isLight && styles.mobileMetaLabelLight]}>FORMAT</Text>
+                      <Text style={[styles.mobileMetaVal, isLight && styles.mobileMetaValLight]}>{item.fileFormat || 'PDF'}</Text>
                     </View>
                   </View>
 
                   <View style={styles.mobileCardActions}>
                     <TouchableOpacity
-                      style={styles.mobileBtnView}
+                      style={[styles.mobileBtnView, isLight && styles.mobileBtnViewLight]}
                       onPress={() => setViewItem(item)}
                     >
-                      <Eye size={14} color="#38bdf8" />
+                      <Eye size={14} color={isLight ? '#0284c7' : '#38bdf8'} />
                       <Text style={styles.mobileBtnViewText}>View Details</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -2214,40 +2287,40 @@ export default function App() {
             <ScrollView horizontal style={styles.tableHorizontal}>
               <ScrollView style={styles.tableVertical}>
                 <View style={styles.table}>
-                  <View style={styles.tableRowHeader}>
-                    <Text style={[styles.th, { width: 45 }]}>#</Text>
-                    <Text style={[styles.th, { width: 280 }]}>FILE NAME</Text>
-                    <Text style={[styles.th, { width: 150 }]}>CATEGORY</Text>
-                    <Text style={[styles.th, { width: 120 }]}>ENTITY</Text>
-                    <Text style={[styles.th, { width: 115 }]}>PERIOD / DATE</Text>
-                    <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }]}>AMOUNT (PHP)</Text>
-                    <Text style={[styles.th, { width: 100, paddingLeft: 12 }]}>VOLUME</Text>
-                    <Text style={[styles.th, { width: 130 }]}>STATUS</Text>
-                    <Text style={[styles.th, { width: 90, textAlign: 'center' }]}>ACTIONS</Text>
+                  <View style={[styles.tableRowHeader, isLight && styles.tableRowHeaderLight]}>
+                    <Text style={[styles.th, { width: 45 }, isLight && styles.thLight]}>#</Text>
+                    <Text style={[styles.th, { width: 280 }, isLight && styles.thLight]}>FILE NAME</Text>
+                    <Text style={[styles.th, { width: 150 }, isLight && styles.thLight]}>CATEGORY</Text>
+                    <Text style={[styles.th, { width: 120 }, isLight && styles.thLight]}>ENTITY</Text>
+                    <Text style={[styles.th, { width: 115 }, isLight && styles.thLight]}>PERIOD / DATE</Text>
+                    <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }, isLight && styles.thLight]}>AMOUNT (PHP)</Text>
+                    <Text style={[styles.th, { width: 100, paddingLeft: 12 }, isLight && styles.thLight]}>VOLUME</Text>
+                    <Text style={[styles.th, { width: 130 }, isLight && styles.thLight]}>STATUS</Text>
+                    <Text style={[styles.th, { width: 90, textAlign: 'center' }, isLight && styles.thLight]}>ACTIONS</Text>
                   </View>
 
                   {filteredItems.map((item, idx) => (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}
+                      style={[styles.tableRow, idx % 2 === 1 && (isLight ? styles.tableRowAltLight : styles.tableRowAlt), isLight && styles.tableRowLight]}
                       onPress={() => setViewItem(item)}
                     >
                       <Text style={[styles.td, { width: 45, color: '#64748b' }]}>{idx + 1}</Text>
                       <View style={{ width: 280, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        {item.fileFormat === 'XLSX' ? <FileSpreadsheet size={16} color="#34d399" /> : <FileText size={16} color="#38bdf8" />}
-                        <Text style={[styles.td, { fontWeight: '600', color: '#f8fafc' }]} numberOfLines={1}>
+                        {item.fileFormat === 'XLSX' ? <FileSpreadsheet size={16} color="#34d399" /> : <FileText size={16} color={isLight ? '#0284c7' : '#38bdf8'} />}
+                        <Text style={[styles.td, { fontWeight: '600', color: isLight ? '#0f172a' : '#f8fafc' }]} numberOfLines={1}>
                           {item.fileName}
                         </Text>
                       </View>
-                      <Text style={[styles.td, { width: 150 }]} numberOfLines={1}>{item.category}</Text>
-                      <Text style={[styles.td, { width: 120 }]} numberOfLines={1}>{item.entity}</Text>
-                      <Text style={[styles.td, { width: 115 }]}>
+                      <Text style={[styles.td, { width: 150 }, isLight && styles.tdLight]} numberOfLines={1}>{item.category}</Text>
+                      <Text style={[styles.td, { width: 120 }, isLight && styles.tdLight]} numberOfLines={1}>{item.entity}</Text>
+                      <Text style={[styles.td, { width: 115 }, isLight && styles.tdLight]}>
                         {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || '-')}
                       </Text>
-                      <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: '#38bdf8' }]}>
+                      <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '600', color: isLight ? '#0284c7' : '#38bdf8' }]}>
                         {item.amount > 0 ? `₱${Number(item.amount).toLocaleString()}` : '-'}
                       </Text>
-                      <Text style={[styles.td, { width: 100, paddingLeft: 12 }]}>
+                      <Text style={[styles.td, { width: 100, paddingLeft: 12 }, isLight && styles.tdLight]}>
                         {item.unit === 'receipt' || item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? '-' : (item.quantity ? `${item.quantity} ${item.unit || ''}` : '-')}
                       </Text>
                       <View style={{ width: 130 }}>
@@ -2265,7 +2338,7 @@ export default function App() {
                           style={styles.btnTableAction}
                           onPress={() => setViewItem(item)}
                         >
-                          <Eye size={15} color="#38bdf8" />
+                          <Eye size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={styles.btnTableAction}
@@ -2288,19 +2361,19 @@ export default function App() {
       {/* ======================================================== */}
       <Modal visible={!!viewItem} transparent animationType="fade">
         <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
-          <View style={[styles.viewerModalContainer, isMobile && styles.modalContainerMobile]}>
-            <View style={[styles.viewerHeader, isMobile && styles.modalHeaderMobile]}>
+          <View style={[styles.viewerModalContainer, isMobile && styles.modalContainerMobile, isLight && styles.viewerModalContainerLight]}>
+            <View style={[styles.viewerHeader, isMobile && styles.modalHeaderMobile, isLight && styles.modalHeaderLight]}>
               <View style={[styles.viewerHeaderLeft, isMobile && { gap: 10, flex: 1, minWidth: 0 }]}>
                 <View style={[styles.viewerBadge, isMobile && { width: 38, height: 38 }]}>
                   {viewItem?.fileFormat === 'XLSX' ? (
                     <FileSpreadsheet size={isMobile ? 20 : 26} color="#34d399" />
                   ) : (
-                    <FileText size={isMobile ? 20 : 26} color="#38bdf8" />
+                    <FileText size={isMobile ? 20 : 26} color={isLight ? '#0284c7' : '#38bdf8'} />
                   )}
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.viewerTitle, isMobile && { fontSize: 14 }]} numberOfLines={1}>{viewItem?.fileName}</Text>
-                  <Text style={[styles.viewerSubtitle, isMobile && { fontSize: 10 }]} numberOfLines={1}>
+                  <Text style={[styles.viewerTitle, isMobile && { fontSize: 14 }, isLight && styles.viewerTitleLight]} numberOfLines={1}>{viewItem?.fileName}</Text>
+                  <Text style={[styles.viewerSubtitle, isMobile && { fontSize: 10 }, isLight && styles.viewerSubtitleLight]} numberOfLines={1}>
                     {viewItem?.category} • {viewItem?.subCategory} • Entity: {viewItem?.entity}
                   </Text>
                 </View>
@@ -2312,8 +2385,8 @@ export default function App() {
                   onPress={() => window.print()}
                   title="Print / Save PDF"
                 >
-                  <Printer size={16} color="#cbd5e1" />
-                  {!isMobile && <Text style={styles.btnOutlineText}>Print</Text>}
+                  <Printer size={16} color={isLight ? '#475569' : '#cbd5e1'} />
+                  {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#475569' }]}>Print</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -2329,20 +2402,20 @@ export default function App() {
                   }}
                   title="Export Data"
                 >
-                  <Download size={16} color="#cbd5e1" />
-                  {!isMobile && <Text style={styles.btnOutlineText}>Export</Text>}
+                  <Download size={16} color={isLight ? '#475569' : '#cbd5e1'} />
+                  {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#475569' }]}>Export</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.modalCloseBtn}
+                  style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}
                   onPress={() => setViewItem(null)}
                 >
-                  <X size={20} color="#94a3b8" />
+                  <X size={20} color={isLight ? '#475569' : '#94a3b8'} />
                 </TouchableOpacity>
               </View>
             </View>
 
-            <ScrollView style={styles.viewerBody}>
+            <ScrollView style={[styles.viewerBody, isLight && styles.modalBodyLight]}>
               <View style={styles.viewerStatsGrid}>
                 <View style={styles.viewerStatBox}>
                   <Text style={styles.viewerStatLabel}>ESTABLISHMENT</Text>
@@ -2469,9 +2542,9 @@ export default function App() {
       {/* ======================================================== */}
       <Modal visible={showAddModal} transparent animationType="fade">
         <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
-          <View style={[styles.formModalContainer, isMobile && styles.modalContainerMobile]}>
+          <View style={[styles.formModalContainer, isMobile && styles.modalContainerMobile, isLight && styles.formModalContainerLight]}>
             {/* Modal Header */}
-            <View style={[styles.modalHeader, isMobile && styles.modalHeaderMobile]}>
+            <View style={[styles.modalHeader, isMobile && styles.modalHeaderMobile, isLight && styles.modalHeaderLight]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                 {addMode !== 'options' && (
                   <TouchableOpacity
@@ -2481,16 +2554,16 @@ export default function App() {
                     }}
                     style={styles.backModalBtn}
                   >
-                    <ArrowLeft size={18} color="#38bdf8" />
+                    <ArrowLeft size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
                   </TouchableOpacity>
                 )}
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.modalTitle, isMobile && { fontSize: 15 }]} numberOfLines={1}>
+                  <Text style={[styles.modalTitle, isMobile && { fontSize: 15 }, isLight && styles.modalTitleLight]} numberOfLines={1}>
                     {addMode === 'options' && 'Add Document'}
                     {addMode === 'insert' && 'Insert Document from Device'}
                     {addMode === 'scan' && 'Scan Receipt Document'}
                   </Text>
-                  <Text style={[styles.modalHeaderSub, isMobile && { fontSize: 11 }]} numberOfLines={1}>
+                  <Text style={[styles.modalHeaderSub, isMobile && { fontSize: 11 }, isLight && styles.viewerSubtitleLight]} numberOfLines={1}>
                     {addMode === 'options' && 'Choose one of the two options below to add records'}
                     {addMode === 'insert' && `Target Category: ${activeNav.label}`}
                     {addMode === 'scan' && 'Choose receipt type and capture with camera'}
@@ -2498,8 +2571,8 @@ export default function App() {
                 </View>
               </View>
 
-              <TouchableOpacity onPress={closeAddModal} style={styles.modalCloseBtn}>
-                <X size={18} color="#94a3b8" />
+              <TouchableOpacity onPress={closeAddModal} style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}>
+                <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
               </TouchableOpacity>
             </View>
 
@@ -2514,7 +2587,7 @@ export default function App() {
               >
                 {/* Option 1: Insert Document */}
                 <TouchableOpacity
-                  style={[styles.optionCard, isMobile && styles.optionCardMobile]}
+                  style={[styles.optionCard, isMobile && styles.optionCardMobile, isLight && styles.optionCardLight]}
                   onPress={() => setAddMode('insert')}
                 >
                   <View style={styles.optionCardTopRow}>
@@ -2522,11 +2595,11 @@ export default function App() {
                       <UploadCloud size={24} color="#38bdf8" />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.optionTitle}>Insert Document</Text>
-                      <Text style={styles.optionSubtitle}>Select file from device</Text>
+                      <Text style={[styles.optionTitle, isLight && styles.optionTitleLight]}>Insert Document</Text>
+                      <Text style={[styles.optionSubtitle, isLight && styles.optionSubtitleLight]}>Select file from device</Text>
                     </View>
                   </View>
-                  <Text style={styles.optionDescription}>
+                  <Text style={[styles.optionDescription, isLight && styles.optionDescriptionLight]}>
                     Browse or upload PDF reports, Excel spreadsheets (.xlsx), text files, or pre-scanned digital images stored on your device.
                   </Text>
                   <View style={[styles.optionActionBadge, isMobile && { width: '100%', alignItems: 'center' }]}>
@@ -2536,7 +2609,7 @@ export default function App() {
 
                 {/* Option 2: Scan Document */}
                 <TouchableOpacity
-                  style={[styles.optionCard, styles.optionCardScan, isMobile && styles.optionCardMobile]}
+                  style={[styles.optionCard, styles.optionCardScan, isMobile && styles.optionCardMobile, isLight && styles.optionCardLight]}
                   onPress={() => setAddMode('scan')}
                 >
                   <View style={styles.optionCardTopRow}>
@@ -2544,11 +2617,11 @@ export default function App() {
                       <Camera size={24} color="#34d399" />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={styles.optionTitle}>Scan Document</Text>
+                      <Text style={[styles.optionTitle, isLight && styles.optionTitleLight]}>Scan Document</Text>
                       <Text style={[styles.optionSubtitle, { color: '#34d399' }]}>Camera receipt scanner</Text>
                     </View>
                   </View>
-                  <Text style={styles.optionDescription}>
+                  <Text style={[styles.optionDescription, isLight && styles.optionDescriptionLight]}>
                     Capture physical receipts or vouchers (Emission Sales, CTPL Insurance, Expenses, Consumables) via camera with real-time OCR extraction.
                   </Text>
                   <View style={[styles.optionActionBadge, styles.optionActionBadgeScan, isMobile && { width: '100%', alignItems: 'center' }]}>
@@ -4808,5 +4881,279 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(239, 68, 68, 0.25)'
+  },
+
+  // --- SYSTEM LIGHT MODE STYLES ---
+  containerLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  mainContentLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  contentAreaLight: {
+    backgroundColor: '#f8fafc'
+  },
+  sidebarLight: {
+    backgroundColor: '#ffffff',
+    borderRightColor: '#e2e8f0'
+  },
+  sidebarTitleRowLight: {
+    borderBottomColor: '#e2e8f0'
+  },
+  sidebarSectionTitleLight: {
+    color: '#64748b'
+  },
+  sidebarCollapseBtnLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  treeItemActiveLight: {
+    backgroundColor: 'rgba(2, 132, 199, 0.08)'
+  },
+  treeTextLight: {
+    color: '#334155'
+  },
+  treeTextActiveLight: {
+    color: '#0284c7'
+  },
+  sidebarAdminBoxLight: {
+    backgroundColor: '#f8fafc',
+    borderTopColor: '#e2e8f0'
+  },
+  adminNameTextLight: {
+    color: '#0f172a'
+  },
+  adminEmailTextLight: {
+    color: '#64748b'
+  },
+  adminBadgePillLight: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#bae6fd'
+  },
+  adminBadgePillTextLight: {
+    color: '#0284c7'
+  },
+  controlBarLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#e2e8f0'
+  },
+  breadcrumbItemLight: {
+    color: '#64748b'
+  },
+  breadcrumbActiveLight: {
+    color: '#0f172a'
+  },
+  searchBoxLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  searchInputLight: {
+    color: '#0f172a'
+  },
+  themeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    cursor: 'pointer'
+  },
+  themeToggleBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  themeToggleBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#f59e0b'
+  },
+  themeToggleBtnTextLight: {
+    color: '#6366f1'
+  },
+  allFilesToggleBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  allFilesToggleBtnTextLight: {
+    color: '#475569'
+  },
+  allFilesToggleBtnActiveLight: {
+    backgroundColor: 'rgba(2, 132, 199, 0.1)',
+    borderColor: 'rgba(2, 132, 199, 0.4)'
+  },
+  allFilesToggleBtnTextActiveLight: {
+    color: '#0284c7'
+  },
+  cachePillLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  cachePillTextLight: {
+    color: '#475569'
+  },
+  countBadgeLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  countBadgeTextLight: {
+    color: '#475569'
+  },
+  tableRowHeaderLight: {
+    backgroundColor: '#e2e8f0'
+  },
+  thLight: {
+    color: '#475569'
+  },
+  tableRowLight: {
+    borderBottomColor: '#e2e8f0'
+  },
+  tableRowAltLight: {
+    backgroundColor: '#f8fafc'
+  },
+  tdLight: {
+    color: '#1e293b'
+  },
+  mobileTopBarLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#e2e8f0'
+  },
+  mobileAppTitleLight: {
+    color: '#0f172a'
+  },
+  mobileAppSubLight: {
+    color: '#64748b'
+  },
+  mobileThemeBtn: {
+    padding: 7,
+    borderRadius: 8,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer'
+  },
+  mobileThemeBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  mobileSidebarDrawerLight: {
+    backgroundColor: '#ffffff',
+    borderRightColor: '#e2e8f0'
+  },
+  mobileCardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  mobileCardTitleLight: {
+    color: '#0f172a'
+  },
+  mobileCardCategoryLight: {
+    color: '#64748b'
+  },
+  mobileCardMetaLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0'
+  },
+  mobileMetaLabelLight: {
+    color: '#64748b'
+  },
+  mobileMetaValLight: {
+    color: '#0f172a'
+  },
+  mobileBtnViewLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  modalDialogLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  modalHeaderLight: {
+    borderBottomColor: '#e2e8f0'
+  },
+  modalTitleLight: {
+    color: '#0f172a'
+  },
+  modalCloseBtnLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  modalBodyLight: {
+    backgroundColor: '#ffffff'
+  },
+  modalFooterLight: {
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#f8fafc'
+  },
+  viewerCardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  viewerTitleLight: {
+    color: '#0f172a'
+  },
+  viewerSubtitleLight: {
+    color: '#64748b'
+  },
+  viewerSectionLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0'
+  },
+  viewerSectionTitleLight: {
+    color: '#334155'
+  },
+  viewerFieldLabelLight: {
+    color: '#64748b'
+  },
+  viewerFieldValueLight: {
+    color: '#0f172a'
+  },
+  notesBoxLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#e2e8f0'
+  },
+  notesTextLight: {
+    color: '#334155'
+  },
+  formInputLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+    color: '#0f172a'
+  },
+  formLabelLight: {
+    color: '#334155'
+  },
+  authCardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  authTitleLight: {
+    color: '#0f172a'
+  },
+  authSubtitleLight: {
+    color: '#64748b'
+  },
+  formModalContainerLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  viewerModalContainerLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  optionCardLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0'
+  },
+  optionTitleLight: {
+    color: '#0f172a'
+  },
+  optionSubtitleLight: {
+    color: '#64748b'
+  },
+  optionDescriptionLight: {
+    color: '#475569'
   }
 });
