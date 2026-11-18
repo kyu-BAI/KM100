@@ -180,7 +180,7 @@ export default function App() {
       const next = !prev;
       try {
         localStorage.setItem('petc_show_all_files', JSON.stringify(next));
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -206,6 +206,32 @@ export default function App() {
   // Document Viewer Modal State
   const [viewItem, setViewItem] = useState(null);
   const [notification, setNotification] = useState(null);
+
+  // Lazy-load high-resolution document image if opening an item where filePath wasn't in the initial list query
+  useEffect(() => {
+    if (!viewItem || viewItem.filePath) return;
+    let isCancelled = false;
+    const fetchPhoto = async () => {
+      try {
+        const table = viewItem.sourceTable || 'inventory_items';
+        const { data } = await supabase.from(table).select('file_path, preview_data').eq('id', viewItem.id).single();
+        if (!isCancelled && data && (data.file_path || data.preview_data)) {
+          setViewItem(prev => {
+            if (!prev || prev.id !== viewItem.id) return prev;
+            return {
+              ...prev,
+              filePath: data.file_path || prev.filePath,
+              previewData: data.preview_data || prev.previewData
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('Lazy photo fetch failed:', e);
+      }
+    };
+    fetchPhoto();
+    return () => { isCancelled = true; };
+  }, [viewItem?.id]);
 
   // Add Document Modal State: strictly 'options' | 'insert' | 'scan'
   const [showAddModal, setShowAddModal] = useState(false);
@@ -384,6 +410,9 @@ export default function App() {
   // Ref flag to ensure queries never run concurrently
   const isFetchingRef = useRef(false);
 
+  // Lightweight columns for master inventory table to avoid Postgres statement timeout on large base64 image blobs
+  const MASTER_INVENTORY_COLUMNS = 'id, file_name, title, category, category_id, sub_category, sub_category_id, entity, year, month, amount, currency, quantity, unit, status, file_format, file_size, notes, tags, created_at, updated_at, establishment, receipt_date, description';
+
   // Fetch data directly from Supabase across ALL tables in parallel
   const fetchData = async (silent = false) => {
     if (isFetchingRef.current) return;
@@ -392,13 +421,19 @@ export default function App() {
     setIsSyncing(true);
 
     try {
-      // Query master inventory and all 7 dedicated receipt tables concurrently
-      const queries = ALL_RECEIPT_TABLES.map(table =>
-        supabase
+      // Query master inventory (without heavy file_path blobs) and all 7 dedicated receipt tables concurrently
+      const queries = ALL_RECEIPT_TABLES.map(table => {
+        if (table === 'inventory_items') {
+          return supabase
+            .from(table)
+            .select(MASTER_INVENTORY_COLUMNS)
+            .order('created_at', { ascending: false });
+        }
+        return supabase
           .from(table)
           .select('*')
-          .order('created_at', { ascending: false })
-      );
+          .order('created_at', { ascending: false });
+      });
 
       const responses = await Promise.allSettled(queries);
       const itemMap = new Map();
@@ -418,6 +453,7 @@ export default function App() {
               itemMap.set(mapped.id, {
                 ...existing,
                 ...mapped,
+                filePath: existing.filePath || mapped.filePath || '',
                 establishment: mapped.establishment || existing.establishment || '',
                 receiptDate: mapped.receiptDate || existing.receiptDate || '',
                 description: mapped.description || existing.description || '',
@@ -457,9 +493,17 @@ export default function App() {
     } finally {
       isFetchingRef.current = false;
       setIsSyncing(false);
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
   };
+
+  // Watchdog timer: unconditionally guarantee loading screen terminates within 2.5s
+  useEffect(() => {
+    const watchdog = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+    return () => clearTimeout(watchdog);
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -1382,39 +1426,38 @@ export default function App() {
 
             <ScrollView style={styles.treeScroll} showsVerticalScrollIndicator={false}>
               {/* 1. All Files Node with Toggle Switch */}
-              <TouchableOpacity
+              <View
                 style={[
                   styles.treeItem,
                   activeNav.type === 'all' && styles.treeItemActive,
-                  { justifyContent: 'space-between' }
+                  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }
                 ]}
-                onPress={() => setActiveNav({
-                  type: 'all',
-                  year: null,
-                  month: null,
-                  subCategory: null,
-                  label: 'All Inventory Files'
-                })}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, paddingVertical: 4 }}
+                  onPress={() => setActiveNav({
+                    type: 'all',
+                    year: null,
+                    month: null,
+                    subCategory: null,
+                    label: 'All Inventory Files'
+                  })}
+                >
                   <Layers size={17} color={activeNav.type === 'all' ? '#38bdf8' : '#94a3b8'} />
                   <Text style={[styles.treeText, activeNav.type === 'all' && styles.treeTextActive]} numberOfLines={1}>
                     All Inventory Files ({items.length})
                   </Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Interactive Toggle Switch Button */}
                 <TouchableOpacity
                   style={[styles.sidebarToggleSwitch, showAllFiles && styles.sidebarToggleSwitchActive]}
-                  onPress={(e) => {
-                    if (e && e.stopPropagation) e.stopPropagation();
-                    handleToggleShowAll();
-                  }}
-                  title={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                  onPress={handleToggleShowAll}
+                  accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
                 >
                   <View style={[styles.sidebarToggleThumb, showAllFiles && styles.sidebarToggleThumbActive]} />
                 </TouchableOpacity>
-              </TouchableOpacity>
+              </View>
 
               {/* Actions in Sidebar */}
               <TouchableOpacity
@@ -2006,7 +2049,7 @@ export default function App() {
                 <Search size={15} color="#94a3b8" />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search file name, notes..."
+                  placeholder="Search file name"
                   placeholderTextColor="#64748b"
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -2023,7 +2066,7 @@ export default function App() {
                   <TouchableOpacity
                     style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive]}
                     onPress={handleToggleShowAll}
-                    title={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                    accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
                   >
                     {showAllFiles ? <Eye size={12} color="#38bdf8" /> : <EyeOff size={12} color="#94a3b8" />}
                     <Text style={[styles.allFilesToggleBtnText, showAllFiles && styles.allFilesToggleBtnTextActive]}>
@@ -3255,10 +3298,12 @@ const styles = StyleSheet.create({
 
   // Table View
   tableHorizontal: {
-    flex: 1
+    flex: 1,
+    width: '100%'
   },
   tableVertical: {
-    flex: 1
+    flex: 1,
+    width: '100%'
   },
   table: {
     minWidth: 1000,

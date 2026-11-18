@@ -123,7 +123,7 @@ async function extractWithGeminiVision(imageSource, onProgress) {
         }
 
         if (parsedJson) {
-          if (onProgress) onProgress(0.95, 'Gemini AI extraction complete!');
+          if (onProgress) onProgress(0.95, 'AI extraction complete!');
           return {
             establishment: (parsedJson.establishment || '').trim(),
             receiptDate: (parsedJson.receiptDate || '').trim(),
@@ -134,11 +134,11 @@ async function extractWithGeminiVision(imageSource, onProgress) {
           };
         }
       } catch (err) {
-        console.warn(`Error querying Gemini model ${model}:`, err.message || err);
+        console.warn(`Error querying model ${model}:`, err.message || err);
       }
     }
   } catch (err) {
-    console.warn('Gemini Vision extraction failed:', err);
+    console.warn('Extraction failed:', err);
   }
 
   return null;
