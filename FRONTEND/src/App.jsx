@@ -2072,7 +2072,7 @@ export default function App() {
             onPress={() => setSidebarOpen(prev => !prev)}
             title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
           >
-            <FolderOpen size={isSmallMobile ? 15 : 16} color={isLight ? '#0284c7' : '#38bdf8'} />
+            <Menu size={isSmallMobile ? 16 : 18} color={isLight ? '#0284c7' : '#38bdf8'} />
             {!isSmallMobile && (
               <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
                 {sidebarOpen ? 'Hide' : 'Folders'}
