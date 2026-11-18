@@ -311,6 +311,7 @@ export default function App() {
   const [ocrAmount, setOcrAmount] = useState('');
   const [ocrOrNumber, setOcrOrNumber] = useState('');
   const [isOcrVerifiedView, setIsOcrVerifiedView] = useState(false);
+  const [ocrValidationError, setOcrValidationError] = useState('');
 
   // Supabase Auth State (Admin accounts only)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -755,6 +756,7 @@ export default function App() {
     setIsSavingScan(false);
     setIsOcrProcessing(false);
     setIsOcrVerifiedView(false);
+    setOcrValidationError('');
     setOcrEstablishment('');
     setOcrReceiptDate('');
     setOcrDescription('');
@@ -1012,7 +1014,32 @@ export default function App() {
 
     // Apply whatever details were ACTUALLY extracted from the scanned image (NO hardcoded data)
     const applyOcrResult = (parsed) => {
-      setOcrEstablishment(parsed?.establishment || (selectedReceiptType?.entity ? `${selectedReceiptType.entity} Testing Center` : ''));
+      // 1. Strict Validation: Check if the image was identified as NOT a receipt
+      if (parsed && parsed.isReceipt === false) {
+        setIsOcrProcessing(false);
+        setIsOcrVerifiedView(false);
+        setOcrValidationError(parsed.rejectionReason || 'The scanned image is not a recognized official receipt, invoice, or voucher.');
+        showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.', 'error');
+        return;
+      }
+
+      // 2. Secondary verification: ensure valid receipt data exists
+      const parsedAmt = parsed?.amount ? parseFloat(parsed.amount) : 0;
+      const parsedEst = (parsed?.establishment || '').trim();
+      const parsedOr = (parsed?.orNumber || '').trim();
+
+      const hasReceiptData = Boolean((parsedEst.length >= 2) || (parsedAmt > 0) || (parsedOr.length >= 2));
+      if (!hasReceiptData) {
+        setIsOcrProcessing(false);
+        setIsOcrVerifiedView(false);
+        setOcrValidationError('Unable to detect any valid receipt data (establishment, amount, or invoice number). Please take a clearer photo of an official receipt.');
+        showNotice('Scan Rejected: No receipt data found in photo.', 'error');
+        return;
+      }
+
+      // Valid receipt detected! Clear any validation error and proceed to review
+      setOcrValidationError('');
+      setOcrEstablishment(parsedEst || (selectedReceiptType?.entity ? `${selectedReceiptType.entity} Testing Center` : ''));
       setOcrReceiptDate(parsed?.receiptDate || new Date().toISOString().split('T')[0]);
 
       // Default description MUST match the user's selected receipt classification!
@@ -1032,15 +1059,11 @@ export default function App() {
       }
 
       setOcrDescription(parsed?.description || defaultDesc);
-      setOcrAmount(parsed?.amount && parsed.amount > 0 ? parsed.amount.toString() : '');
-      setOcrOrNumber(parsed?.orNumber || '');
+      setOcrAmount(parsedAmt > 0 ? parsedAmt.toString() : '');
+      setOcrOrNumber(parsedOr);
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
-      if (parsed?.establishment || (parsed?.amount && parsed.amount > 0)) {
-        showNotice(`Receipt data extracted as ${selectedReceiptType?.name}! Please review details.`);
-      } else {
-        showNotice(`Receipt captured as ${selectedReceiptType?.name}! Review details before saving.`);
-      }
+      showNotice(`Receipt verified as ${selectedReceiptType?.name}! Please review details.`);
     };
 
     // Safety fallback: maximum 12 seconds wait time for AI recognition
@@ -1076,6 +1099,21 @@ export default function App() {
   const saveVerifiedReceiptToDatabase = async () => {
     if (!capturedReceiptPhoto) {
       showNotice('Please capture or select a receipt photo first', 'error');
+      return;
+    }
+
+    if (ocrValidationError) {
+      showNotice('Cannot save: The scanned photo was rejected as not a receipt.', 'error');
+      return;
+    }
+
+    const amt = parseFloat(ocrAmount) || 0;
+    const est = (ocrEstablishment || '').trim();
+    const orNum = (ocrOrNumber || '').trim();
+
+    // Strict validation: Reject if there are no valid receipt details at all
+    if (!est && amt <= 0 && !orNum) {
+      showNotice('Cannot save: No valid receipt details found. The system does not allow saving non-receipt photos.', 'error');
       return;
     }
 
@@ -2914,6 +2952,76 @@ export default function App() {
                         <View style={[styles.ocrProgressBarFill, { width: `${Math.round((ocrProgress || 0.4) * 100)}%` }]} />
                       </View>
                     </View>
+                  ) : ocrValidationError ? (
+                    /* OCR Error Screen: Non-Receipt Rejected */
+                    <View style={[styles.ocrErrorCard, isLight && styles.ocrErrorCardLight]}>
+                      <View style={styles.ocrErrorHeader}>
+                        <View style={styles.ocrErrorIconBox}>
+                          <AlertTriangle size={24} color="#ef4444" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.ocrErrorTitle, isLight && { color: '#b91c1c' }]}>
+                            Document Rejected: Not a Receipt
+                          </Text>
+                          <Text style={[styles.ocrErrorSubtitle, isLight && { color: '#64748b' }]}>
+                            The scanned photo could not be validated as an official receipt or invoice.
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Photo Thumbnail + Reason */}
+                      <View style={[styles.ocrErrorBody, isLight && { backgroundColor: '#fef2f2', borderColor: '#fecaca' }]}>
+                        {capturedReceiptPhoto && (
+                          <img
+                            src={capturedReceiptPhoto}
+                            alt="Rejected Upload"
+                            style={[styles.ocrThumb, { borderColor: '#ef4444', borderWidth: 2 }]}
+                          />
+                        )}
+                        <View style={{ flex: 1, gap: 4 }}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#991b1b' : '#f87171' }}>
+                            Validation Failure Reason:
+                          </Text>
+                          <Text style={{ fontSize: 12, color: isLight ? '#7f1d1d' : '#fca5a5', lineHeight: 16 }}>
+                            {ocrValidationError}
+                          </Text>
+                          <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginTop: 4 }}>
+                            🚫 Database Protection: Non-receipt images cannot be saved to the inventory.
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Action buttons to retake or pick file */}
+                      <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>
+                        <TouchableOpacity
+                          style={[styles.btnRetakeOcr, { flex: 1, backgroundColor: '#0284c7', borderColor: '#0284c7' }]}
+                          onPress={() => {
+                            setOcrValidationError('');
+                            setCapturedReceiptPhoto(null);
+                            startCamera();
+                          }}
+                        >
+                          <Camera size={16} color="#ffffff" />
+                          <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 13 }}>
+                            Retake Photo with Camera
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.btnRetakeOcr, isLight && styles.btnRetakeOcrLight, { flex: 1 }]}
+                          onPress={() => {
+                            setOcrValidationError('');
+                            setCapturedReceiptPhoto(null);
+                            document.getElementById('receiptPhotoUploadInput')?.click();
+                          }}
+                        >
+                          <UploadCloud size={16} color={isLight ? '#334155' : '#cbd5e1'} />
+                          <Text style={[styles.btnRetakeOcrText, isLight && styles.btnRetakeOcrTextLight]}>
+                            Upload Different File
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
                   ) : isOcrVerifiedView ? (
                     /* OCR Verification & Review Screen */
                     <View style={[styles.ocrVerificationContainer, isLight && styles.ocrVerificationContainerLight]}>
@@ -4400,6 +4508,50 @@ function createStyles(isLight) {
     backgroundColor: '#38bdf8',
     borderRadius: 3
   },
+  ocrErrorCard: {
+    backgroundColor: '#1c1917',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#ef4444',
+    gap: 14,
+    marginVertical: 8
+  },
+  ocrErrorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  ocrErrorIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)'
+  },
+  ocrErrorTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#f87171'
+  },
+  ocrErrorSubtitle: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginTop: 2
+  },
+  ocrErrorBody: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)'
+  },
   ocrVerificationContainer: {
     backgroundColor: '#131d31',
     borderRadius: 12,
@@ -5334,6 +5486,10 @@ function createStyles(isLight) {
   },
   ocrVerificationTitleLight: {
     color: '#0f172a'
+  },
+  ocrErrorCardLight: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fca5a5'
   },
   btnRetakeOcrLight: {
     backgroundColor: '#f1f5f9',

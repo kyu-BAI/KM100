@@ -69,15 +69,22 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
             {
               parts: [
                 {
-                  text: 'You are an expert OCR receipt extractor. Analyze this physical receipt image (both printed and handwritten text). ' + typeContext + 'Return ONLY valid JSON with the following structure:\n' +
+                  text: 'You are an expert OCR receipt extractor and financial document verifier.\n' +
+                        'CRITICAL VERIFICATION STEP:\n' +
+                        'First, determine whether this image is a genuine physical or digital receipt, sales invoice, official receipt (OR), cash voucher, billing invoice, or collection receipt.\n' +
+                        '- If the image is NOT a receipt (e.g. it shows a keyboard, computer monitor, person, face, animal, random object, blank paper, landscape, screenshot of a non-financial app, food without a bill, etc.), set "isReceipt": false, explain what is in the photo in "rejectionReason", and leave other fields empty.\n' +
+                        '- If the image IS a valid receipt, invoice, or voucher, set "isReceipt": true and extract the actual data.\n\n' +
+                        typeContext + 'Return ONLY valid JSON with the following structure:\n' +
                         '{\n' +
+                        '  "isReceipt": true,\n' +
+                        '  "rejectionReason": "",\n' +
                         '  "establishment": "Name of the business, store, or vendor at the top",\n' +
                         '  "receiptDate": "YYYY-MM-DD format (if handwritten e.g. 11-11-26, convert to 2026-11-11; if not found, use empty string)",\n' +
                         '  "description": "Short description of the items or nature of service (e.g. Emission Testing Sales, Daily Income Collection, Supplies, Fuel, Food, Service)",\n' +
                         '  "amount": 0.00,\n' +
                         '  "orNumber": "Official Receipt No., Sales Invoice No., or Reference Number"\n' +
                         '}\n' +
-                        'Important: Do NOT invent or hallucinate data. Read the actual text from the image accurately.'
+                        'Important: Do NOT hallucinate data. Read the actual text from the image accurately.'
                 },
                 {
                   inlineData: {
@@ -97,7 +104,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
         const controller = new AbortController();
         const fetchTimeout = setTimeout(() => controller.abort(), 7500);
 
-        if (onProgress) onProgress(0.55, 'Gemini AI reading text & figures...');
+        if (onProgress) onProgress(0.55, 'Gemini AI verifying document & reading text...');
 
         const res = await fetch(url, {
           method: 'POST',
@@ -125,13 +132,55 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
         }
 
         if (parsedJson) {
-          if (onProgress) onProgress(0.95, 'AI extraction complete!');
+          // If the AI explicitly rejected the image as not a receipt
+          if (parsedJson.isReceipt === false) {
+            if (onProgress) onProgress(1.0, 'Validation: Image is not a receipt.');
+            return {
+              isReceipt: false,
+              rejectionReason: parsedJson.rejectionReason || 'The scanned image does not appear to be an official receipt, invoice, or voucher.',
+              establishment: '',
+              receiptDate: '',
+              description: '',
+              amount: 0,
+              orNumber: '',
+              rawOcrText: candidateText
+            };
+          }
+
+          const establishment = (parsedJson.establishment || '').trim();
+          const amount = typeof parsedJson.amount === 'number' ? parsedJson.amount : parseFloat(parsedJson.amount) || 0;
+          const orNumber = String(parsedJson.orNumber || '').trim();
+
+          // Sanity check: must have at least one meaningful receipt field
+          const hasReceiptData = Boolean(
+            (establishment && establishment.length >= 2) ||
+            (amount > 0) ||
+            (orNumber && orNumber.length >= 2)
+          );
+
+          if (!hasReceiptData) {
+            if (onProgress) onProgress(1.0, 'Validation: No receipt details found.');
+            return {
+              isReceipt: false,
+              rejectionReason: 'No readable receipt details (store name, amount, or receipt number) could be found in this image.',
+              establishment: '',
+              receiptDate: '',
+              description: '',
+              amount: 0,
+              orNumber: '',
+              rawOcrText: candidateText
+            };
+          }
+
+          if (onProgress) onProgress(0.95, 'AI receipt verification complete!');
           return {
-            establishment: (parsedJson.establishment || '').trim(),
+            isReceipt: true,
+            rejectionReason: '',
+            establishment,
             receiptDate: (parsedJson.receiptDate || '').trim(),
             description: (parsedJson.description || '').trim(),
-            amount: typeof parsedJson.amount === 'number' ? parsedJson.amount : parseFloat(parsedJson.amount) || 0,
-            orNumber: String(parsedJson.orNumber || '').trim(),
+            amount,
+            orNumber,
             rawOcrText: candidateText
           };
         }
@@ -287,12 +336,20 @@ export function parseReceiptData(rawText = '', receiptType = null) {
     }
   }
 
+  // Receipt validity test for local OCR
+  const receiptKeywords = /(?:receipt|invoice|sales|official|voucher|total|amount|due|balance|paid|cash|php|₱|tin|bir|tax|vat|mvir|emission|subtotal|discount|qty|change|item|particulars|\bor\b|\bsi\b|\binv\b)/i;
+  const hasReceiptKeyword = receiptKeywords.test(cleanText);
+  const hasFinancialData = amount > 0 || (establishment && establishment.length >= 3) || (orNumber && orNumber.length >= 3);
+  const isReceipt = hasReceiptKeyword && hasFinancialData;
+
   return {
-    establishment,
-    receiptDate,
-    description,
-    amount,
-    orNumber,
+    isReceipt,
+    rejectionReason: isReceipt ? '' : 'No official receipt or financial transaction text was detected in this image.',
+    establishment: isReceipt ? establishment : '',
+    receiptDate: isReceipt ? receiptDate : '',
+    description: isReceipt ? description : '',
+    amount: isReceipt ? amount : 0,
+    orNumber: isReceipt ? orNumber : '',
     rawOcrText: rawText
   };
 }
@@ -308,9 +365,15 @@ export async function runOcrOnImage(imageSource, onProgress, receiptType = null)
 
     // 1. Primary: Use Gemini Vision AI
     const geminiResult = await extractWithGeminiVision(imageSource, onProgress, receiptType);
-    if (geminiResult && (geminiResult.establishment || geminiResult.amount > 0 || geminiResult.orNumber)) {
-      if (onProgress) onProgress(1.0, 'Receipt details verified with Gemini AI!');
-      return geminiResult;
+    if (geminiResult) {
+      if (geminiResult.isReceipt === false) {
+        if (onProgress) onProgress(1.0, 'Validation failed: Image is not a receipt.');
+        return geminiResult;
+      }
+      if (geminiResult.isReceipt === true) {
+        if (onProgress) onProgress(1.0, 'Receipt details verified with Gemini AI!');
+        return geminiResult;
+      }
     }
 
     // 2. Fallback: Local OCR
@@ -319,10 +382,19 @@ export async function runOcrOnImage(imageSource, onProgress, receiptType = null)
     const result = await worker.recognize(imageSource);
     const rawText = result && result.data ? result.data.text : '';
     const parsed = parseReceiptData(rawText, receiptType);
-    if (onProgress) onProgress(1.0, 'Receipt details extracted!');
+    if (onProgress) onProgress(1.0, parsed.isReceipt ? 'Receipt details extracted!' : 'Validation failed: Not a receipt.');
     return parsed;
   } catch (err) {
     console.warn('OCR processing error:', err);
-    return parseReceiptData('', receiptType);
+    return {
+      isReceipt: false,
+      rejectionReason: 'Unable to analyze image. Please ensure the image is a clear, valid receipt.',
+      establishment: '',
+      receiptDate: '',
+      description: '',
+      amount: 0,
+      orNumber: '',
+      rawOcrText: ''
+    };
   }
 }
