@@ -869,20 +869,34 @@ export default function App() {
       // 1. Structure each record neatly into tabular columns
       const exportRows = folderItems.map((item, index) => {
         const amt = parseFloat(item.amount) || 0;
+
+        // Clean document title: strip invoice/OR/reference numbers from the title so it only appears in its own column
+        let rawTitle = (item.title || item.description || '-').trim();
+        const matchedInvoice = rawTitle.match(/\s*\(?(?:№|No\.?|OR|Invoice|Ref|#)[\s:#-]*([A-Za-z0-9-]+)\)?/i);
+        let invoiceNo = item.orNumber || item.refNo || item.previewData?.invoice_number || item.previewData?.reference_no || '';
+        if (!invoiceNo && matchedInvoice && matchedInvoice[1]) {
+          invoiceNo = matchedInvoice[1];
+        }
+
+        // Clean Title without invoice number
+        let cleanDocTitle = rawTitle
+          .replace(/\s*\(?(?:№|No\.?|OR|Invoice|Ref|#)[\s:#-]*[A-Za-z0-9-]+\)?/gi, '')
+          .replace(/[\s\-()]+$/, '')
+          .trim();
+        if (!cleanDocTitle) cleanDocTitle = item.description || item.establishment || '-';
+
         return {
           'No.': index + 1,
           'File Name': item.fileName || '-',
-          'Document Title': item.title || item.description || '-',
+          'Document Title': cleanDocTitle,
           'Establishment / Store': item.establishment || item.previewData?.establishment || '-',
           'Category': item.category || '-',
           'Sub-Category': item.subCategory || '-',
           'Entity / Branch': item.entity || '-',
-          'Period (Year)': item.year || '-',
-          'Month': item.month || '-',
           'Receipt Date': item.receiptDate || item.previewData?.receipt_date || '-',
           'Date Scanned / Recorded': item.scannedDate || item.createdAt || '-',
           'Amount (PHP)': amt,
-          'Official Ref / Invoice No.': item.orNumber || item.refNo || item.previewData?.invoice_number || item.previewData?.reference_no || '-',
+          'Invoice / OR No.': invoiceNo || '-',
           'Audit Status': item.status || 'Active',
           'File Format': item.fileFormat || 'JPG',
           'Database Source': item.sourceTable || 'inventory_items'
@@ -899,12 +913,10 @@ export default function App() {
         'Category': '',
         'Sub-Category': '',
         'Entity / Branch': '',
-        'Period (Year)': '',
-        'Month': '',
         'Receipt Date': '',
         'Date Scanned / Recorded': 'TOTAL SUM (PHP):',
         'Amount (PHP)': totalAmount,
-        'Official Ref / Invoice No.': '',
+        'Invoice / OR No.': '',
         'Audit Status': '',
         'File Format': '',
         'Database Source': ''
@@ -921,12 +933,10 @@ export default function App() {
         { wch: 18 },  // Category
         { wch: 24 },  // Sub-Category
         { wch: 16 },  // Entity / Branch
-        { wch: 14 },  // Period (Year)
-        { wch: 10 },  // Month
         { wch: 14 },  // Receipt Date
-        { wch: 22 },  // Date Scanned / Recorded
+        { wch: 24 },  // Date Scanned / Recorded
         { wch: 18 },  // Amount (PHP)
-        { wch: 26 },  // Official Ref / Invoice No.
+        { wch: 22 },  // Invoice / OR No.
         { wch: 15 },  // Audit Status
         { wch: 12 },  // File Format
         { wch: 25 },  // Database Source
@@ -1370,7 +1380,7 @@ export default function App() {
         receiptTitle = rawCustomName.replace(/\.[^/.]+$/, '');
       } else {
         receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
-        receiptTitle = `${establishment} - ${description} (№ ${refCode})`;
+        receiptTitle = `${establishment} - ${description}`;
       }
 
       const scanDateToday = new Date().toISOString().split('T')[0];
