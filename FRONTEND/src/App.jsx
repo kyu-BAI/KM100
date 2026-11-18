@@ -165,6 +165,26 @@ export default function App() {
     }
   };
 
+  // Toggle state to control whether all files within the system are displayed
+  const [showAllFiles, setShowAllFiles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('petc_show_all_files');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const handleToggleShowAll = () => {
+    setShowAllFiles(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('petc_show_all_files', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Tree expansion state
@@ -509,6 +529,11 @@ export default function App() {
 
   // Filter items strictly based on the left sidebar navigation
   const filteredItems = useMemo(() => {
+    // If viewing All Inventory Files and the user has toggled off displaying all files
+    if (activeNav.type === 'all' && !showAllFiles) {
+      return [];
+    }
+
     return items.filter(item => {
       // 1. Category Filtering
       const activeType = (activeNav.type || '').toLowerCase();
@@ -616,7 +641,7 @@ export default function App() {
 
       return true;
     });
-  }, [items, activeNav, searchQuery]);
+  }, [items, activeNav, searchQuery, showAllFiles]);
 
   // Open & Close Add Document Modal
   const openAddModal = () => {
@@ -1356,11 +1381,12 @@ export default function App() {
             </View>
 
             <ScrollView style={styles.treeScroll} showsVerticalScrollIndicator={false}>
-              {/* 1. All Files Node */}
+              {/* 1. All Files Node with Toggle Switch */}
               <TouchableOpacity
                 style={[
                   styles.treeItem,
-                  activeNav.type === 'all' && styles.treeItemActive
+                  activeNav.type === 'all' && styles.treeItemActive,
+                  { justifyContent: 'space-between' }
                 ]}
                 onPress={() => setActiveNav({
                   type: 'all',
@@ -1370,10 +1396,24 @@ export default function App() {
                   label: 'All Inventory Files'
                 })}
               >
-                <Layers size={17} color={activeNav.type === 'all' ? '#38bdf8' : '#94a3b8'} />
-                <Text style={[styles.treeText, activeNav.type === 'all' && styles.treeTextActive]}>
-                  All Inventory Files ({items.length})
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                  <Layers size={17} color={activeNav.type === 'all' ? '#38bdf8' : '#94a3b8'} />
+                  <Text style={[styles.treeText, activeNav.type === 'all' && styles.treeTextActive]} numberOfLines={1}>
+                    All Inventory Files ({items.length})
+                  </Text>
+                </View>
+
+                {/* Interactive Toggle Switch Button */}
+                <TouchableOpacity
+                  style={[styles.sidebarToggleSwitch, showAllFiles && styles.sidebarToggleSwitchActive]}
+                  onPress={(e) => {
+                    if (e && e.stopPropagation) e.stopPropagation();
+                    handleToggleShowAll();
+                  }}
+                  title={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                >
+                  <View style={[styles.sidebarToggleThumb, showAllFiles && styles.sidebarToggleThumbActive]} />
+                </TouchableOpacity>
               </TouchableOpacity>
 
               {/* Actions in Sidebar */}
@@ -1979,6 +2019,19 @@ export default function App() {
               </View>
 
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {activeNav.type === 'all' && (
+                  <TouchableOpacity
+                    style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive]}
+                    onPress={handleToggleShowAll}
+                    title={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                  >
+                    {showAllFiles ? <Eye size={12} color="#38bdf8" /> : <EyeOff size={12} color="#94a3b8" />}
+                    <Text style={[styles.allFilesToggleBtnText, showAllFiles && styles.allFilesToggleBtnTextActive]}>
+                      {showAllFiles ? 'Display All: ON' : 'Display All: OFF'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
                   style={styles.cachePill}
                   onPress={() => fetchData(false)}
@@ -2004,17 +2057,34 @@ export default function App() {
               <Text style={styles.loadingText}>Loading inventory records...</Text>
             </View>
           ) : filteredItems.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Layers size={48} color="#334155" />
-              <Text style={styles.emptyTitle}>
-                {items.length === 0 ? 'No files or documents currently in system' : 'No records found in this category'}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                {items.length === 0
-                  ? 'Your inventory database is currently empty. Tap "Add Document" to add records.'
-                  : 'Select another category or year/month to view documents.'}
-              </Text>
-            </View>
+            activeNav.type === 'all' && !showAllFiles ? (
+              <View style={styles.emptyContainer}>
+                <EyeOff size={48} color="#64748b" />
+                <Text style={styles.emptyTitle}>All Files Display is Hidden</Text>
+                <Text style={styles.emptySubtitle}>
+                  You have toggled off displaying all {items.length} files. You can turn it back on anytime using the toggle button, or select a specific category folder from the sidebar.
+                </Text>
+                <TouchableOpacity
+                  style={styles.btnToggleEmptyOn}
+                  onPress={handleToggleShowAll}
+                >
+                  <Eye size={15} color="#0f172a" />
+                  <Text style={styles.btnToggleEmptyOnText}>Show All Files ({items.length})</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Layers size={48} color="#334155" />
+                <Text style={styles.emptyTitle}>
+                  {items.length === 0 ? 'No files or documents currently in system' : 'No records found in this category'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {items.length === 0
+                    ? 'Your inventory database is currently empty. Tap "Add Document" to add records.'
+                    : 'Select another category or year/month to view documents.'}
+                </Text>
+              </View>
+            )
           ) : isMobile ? (
             /* MOBILE TOUCH-FRIENDLY DOCUMENT CARDS */
             <ScrollView style={styles.mobileCardList} showsVerticalScrollIndicator={false}>
@@ -3116,6 +3186,71 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#34d399',
     fontWeight: '600'
+  },
+  allFilesToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#131d31',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    cursor: 'pointer'
+  },
+  allFilesToggleBtnActive: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: 'rgba(56, 189, 248, 0.45)'
+  },
+  allFilesToggleBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#94a3b8'
+  },
+  allFilesToggleBtnTextActive: {
+    color: '#38bdf8'
+  },
+  sidebarToggleSwitch: {
+    width: 32,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 2,
+    justifyContent: 'center',
+    cursor: 'pointer'
+  },
+  sidebarToggleSwitchActive: {
+    backgroundColor: '#0369a1',
+    borderColor: '#38bdf8'
+  },
+  sidebarToggleThumb: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#64748b'
+  },
+  sidebarToggleThumbActive: {
+    backgroundColor: '#ffffff',
+    alignSelf: 'flex-end'
+  },
+  btnToggleEmptyOn: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#38bdf8',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    cursor: 'pointer'
+  },
+  btnToggleEmptyOnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0f172a'
   },
 
   // Table View
