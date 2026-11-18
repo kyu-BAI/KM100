@@ -8,6 +8,7 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  Image,
   useWindowDimensions
 } from 'react-native';
 import {
@@ -1942,7 +1943,7 @@ export default function App() {
               <View style={styles.authFieldGroup}>
                 <Text style={styles.authLabel}>ADMIN FULL NAME</Text>
                 <View style={styles.authInputWrapper}>
-                  <User size={16} color="#64748b" style={{ marginRight: 8 }} />
+                  <User size={16} color="#64748b" />
                   <TextInput
                     style={styles.authInput}
                     placeholder="e.g. Maria Santos"
@@ -1957,7 +1958,7 @@ export default function App() {
             <View style={styles.authFieldGroup}>
               <Text style={styles.authLabel}>ADMIN EMAIL ADDRESS</Text>
               <View style={styles.authInputWrapper}>
-                <Mail size={16} color="#64748b" style={{ marginRight: 8 }} />
+                <Mail size={16} color="#64748b" />
                 <TextInput
                   style={styles.authInput}
                   placeholder="admin@petc.com"
@@ -1973,7 +1974,7 @@ export default function App() {
             <View style={styles.authFieldGroup}>
               <Text style={styles.authLabel}>PASSWORD</Text>
               <View style={styles.authInputWrapper}>
-                <Lock size={16} color="#64748b" style={{ marginRight: 8 }} />
+                <Lock size={16} color="#64748b" />
                 <TextInput
                   style={[styles.authInput, { paddingRight: 40 }]}
                   placeholder={authMode === 'register' ? 'Min. 6 characters' : 'Enter your password'}
@@ -1995,7 +1996,7 @@ export default function App() {
               <View style={styles.authFieldGroup}>
                 <Text style={styles.authLabel}>CONFIRM PASSWORD</Text>
                 <View style={styles.authInputWrapper}>
-                  <Lock size={16} color="#64748b" style={{ marginRight: 8 }} />
+                  <Lock size={16} color="#64748b" />
                   <TextInput
                     style={[styles.authInput, { paddingRight: 40 }]}
                     placeholder="Re-enter password to confirm"
@@ -3648,10 +3649,10 @@ export default function App() {
                     </Text>
                   </View>
                   <View style={styles.scannedImageViewerBox}>
-                    <img
-                      src={viewItem.filePath || viewItem.previewData?.image}
-                      alt="Scanned physical document"
-                      style={{ width: '100%', maxHeight: 420, objectFit: 'contain', borderRadius: 8, backgroundColor: isLight ? '#f8fafc' : '#0c1322' }}
+                    <Image
+                      source={{ uri: viewItem.filePath || viewItem.previewData?.image }}
+                      style={{ width: '100%', height: 380, borderRadius: 8, backgroundColor: isLight ? '#f8fafc' : '#0c1322' }}
+                      resizeMode="contain"
                     />
                   </View>
                 </View>
@@ -3999,10 +4000,10 @@ export default function App() {
                       {/* Photo Thumbnail + Reason */}
                       <View style={[styles.ocrErrorBody, isLight && { backgroundColor: '#fef2f2', borderColor: '#fecaca' }]}>
                         {capturedReceiptPhoto && (
-                          <img
-                            src={capturedReceiptPhoto}
-                            alt="Rejected Upload"
-                            style={{ width: 60, height: 75, borderRadius: 6, objectFit: 'cover', border: '2px solid #ef4444' }}
+                          <Image
+                            source={{ uri: capturedReceiptPhoto }}
+                            style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 2, borderColor: '#ef4444' }}
+                            resizeMode="cover"
                           />
                         )}
                         <View style={{ flex: 1, gap: 4 }}>
@@ -4065,10 +4066,10 @@ export default function App() {
                       {/* Receipt thumbnail + Target Table info */}
                       <View style={[styles.ocrPreviewRow, isLight && styles.ocrPreviewRowLight]}>
                         {capturedReceiptPhoto && (
-                          <img
-                            src={capturedReceiptPhoto}
-                            alt="Captured Receipt"
-                            style={{ width: 60, height: 75, borderRadius: 6, objectFit: 'cover', border: isLight ? '1px solid #cbd5e1' : '1px solid #334155' }}
+                          <Image
+                            source={{ uri: capturedReceiptPhoto }}
+                            style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : '#334155' }}
+                            resizeMode="cover"
                           />
                         )}
                         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
@@ -6532,6 +6533,7 @@ function createStyles(isLight) {
     borderWidth: 1,
     borderColor: '#334155',
     paddingHorizontal: 12,
+    gap: 8,
     position: 'relative'
   },
   authInputIcon: {

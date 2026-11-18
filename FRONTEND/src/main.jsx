@@ -16,6 +16,24 @@ class ErrorBoundary extends React.Component {
     console.error('App Crash Error:', error, errorInfo);
   }
 
+  handleHardReset = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) {
+      console.error('Hard reset error:', e);
+    }
+    window.location.replace(window.location.origin + window.location.pathname + '?v=' + Date.now());
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -27,40 +45,71 @@ class ErrorBoundary extends React.Component {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 24,
-          fontFamily: 'sans-serif'
+          padding: 20,
+          fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
           <div style={{
             maxWidth: 480,
             width: '100%',
             backgroundColor: '#0f172a',
-            padding: 28,
+            padding: 24,
             borderRadius: 14,
             border: '1px solid #1e293b',
-            textAlign: 'center'
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)'
           }}>
-            <h2 style={{ color: '#f87171', margin: '0 0 10px 0', fontSize: 20 }}>System Notice</h2>
-            <p style={{ color: '#94a3b8', fontSize: 13, margin: '0 0 20px 0' }}>
+            <h2 style={{ color: '#f87171', margin: '0 0 10px 0', fontSize: 20, fontWeight: 700 }}>
+              System Notice
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, margin: '0 0 18px 0', lineHeight: 1.5 }}>
               {this.state.error?.message || 'An unexpected error occurred while loading the application.'}
             </p>
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.location.reload();
-              }}
-              style={{
-                backgroundColor: '#0284c7',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              Reload System
-            </button>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={this.handleHardReset}
+                style={{
+                  backgroundColor: '#0284c7',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 22px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Clear Cache & Update App
+              </button>
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                }}
+                style={{
+                  backgroundColor: '#1e293b',
+                  color: '#cbd5e1',
+                  border: '1px solid #334155',
+                  padding: '12px 18px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Retry
+              </button>
+            </div>
+
+            {this.state.error?.stack && (
+              <details style={{ marginTop: 18, textAlign: 'left', backgroundColor: '#020617', padding: 10, borderRadius: 8, border: '1px solid #1e293b' }}>
+                <summary style={{ cursor: 'pointer', color: '#38bdf8', fontSize: 11, fontWeight: 600 }}>
+                  Technical Diagnostics
+                </summary>
+                <pre style={{ fontSize: 10, color: '#fca5a5', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginTop: 8, fontFamily: 'monospace' }}>
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );
