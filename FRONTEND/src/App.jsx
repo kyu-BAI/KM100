@@ -4236,6 +4236,7 @@ export default function App() {
                         <View style={styles.scannerCornerTR} />
                         <View style={styles.scannerCornerBL} />
                         <View style={styles.scannerCornerBR} />
+                        <View style={styles.scannerLaserLine} />
                         <Text style={styles.scannerGuideText}>Center receipt inside frame</Text>
                       </View>
 
@@ -4546,7 +4547,8 @@ function createStyles(isLight) {
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#10b981',
-    boxShadow: '0 2px 10px rgba(5, 150, 105, 0.35)'
+    boxShadow: '0 2px 10px rgba(5, 150, 105, 0.35)',
+    transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease, filter 0.15s ease'
   },
   heroScanBtnText: {
     color: '#ffffff',
@@ -4669,7 +4671,8 @@ function createStyles(isLight) {
     borderColor: '#1e293b',
     padding: 14,
     gap: 4,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease'
   },
   statCardMobile: {
     flexBasis: '47%',
@@ -4752,7 +4755,8 @@ function createStyles(isLight) {
     borderRadius: 10,
     backgroundColor: '#0f172a',
     borderWidth: 1,
-    borderColor: '#1e293b'
+    borderColor: '#1e293b',
+    transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   categoryTabLight: {
     backgroundColor: '#ffffff',
@@ -4837,7 +4841,8 @@ function createStyles(isLight) {
     borderRadius: 20,
     backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: '#334155',
+    transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   subFilterChipLight: {
     backgroundColor: '#ffffff',
@@ -4907,7 +4912,9 @@ function createStyles(isLight) {
     borderRadius: 30,
     boxShadow: '0 8px 24px rgba(5, 150, 105, 0.5)',
     borderWidth: 1,
-    borderColor: '#34d399'
+    borderColor: '#34d399',
+    animation: 'pulseGlow 2.8s infinite',
+    transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease'
   },
   mobileFloatingBtnText: {
     color: '#ffffff',
@@ -4928,7 +4935,9 @@ function createStyles(isLight) {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
-    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+    animation: 'toastSlideIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    transition: 'all 0.2s ease'
   },
   toastSuccess: {
     backgroundColor: '#059669',
@@ -5028,7 +5037,8 @@ function createStyles(isLight) {
   },
   treeChildren: {
     paddingLeft: 22,
-    marginTop: 2
+    marginTop: 2,
+    animation: 'accordionDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   treeSubItem: {
     flexDirection: 'row',
@@ -5205,7 +5215,8 @@ function createStyles(isLight) {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   exportExcelBtnLight: {
     backgroundColor: '#ecfdf5',
@@ -5307,7 +5318,8 @@ function createStyles(isLight) {
     paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
-    backgroundColor: isLight ? '#ffffff' : '#0f172a'
+    backgroundColor: isLight ? '#ffffff' : '#0f172a',
+    transition: 'background-color 0.15s ease, transform 0.15s ease'
   },
   tableRowAlt: {
     backgroundColor: isLight ? '#f8fafc' : '#131d31'
@@ -5432,9 +5444,11 @@ function createStyles(isLight) {
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backdropFilter: 'blur(4px)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24
+    padding: 24,
+    animation: 'fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   modalOverlayMobile: {
     padding: 8
@@ -5458,7 +5472,8 @@ function createStyles(isLight) {
     borderWidth: 1,
     borderColor: isLight ? '#cbd5e1' : '#334155',
     flexDirection: 'column',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   viewerHeader: {
     flexDirection: 'row',
@@ -5653,7 +5668,8 @@ function createStyles(isLight) {
     borderWidth: 1,
     borderColor: isLight ? '#cbd5e1' : '#334155',
     flexDirection: 'column',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   modalHeader: {
     flexDirection: 'row',
@@ -6062,6 +6078,16 @@ function createStyles(isLight) {
     borderRightWidth: 3,
     borderColor: '#34d399'
   },
+  scannerLaserLine: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    height: 2,
+    backgroundColor: '#38bdf8',
+    boxShadow: '0 0 12px 3px rgba(56, 189, 248, 0.9)',
+    animation: 'scannerLaser 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate',
+    zIndex: 10
+  },
   scannerGuideText: {
     position: 'absolute',
     bottom: 8,
@@ -6180,7 +6206,8 @@ function createStyles(isLight) {
   ocrProgressBarFill: {
     height: '100%',
     backgroundColor: '#38bdf8',
-    borderRadius: 3
+    borderRadius: 3,
+    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
   },
   ocrErrorCard: {
     backgroundColor: '#1c1917',
@@ -6710,7 +6737,9 @@ function createStyles(isLight) {
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    zIndex: 998
+    backdropFilter: 'blur(3px)',
+    zIndex: 998,
+    animation: 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   mobileSidebarDrawer: {
     position: 'absolute',
@@ -6724,7 +6753,8 @@ function createStyles(isLight) {
     borderRightWidth: 1,
     borderRightColor: '#1e293b',
     zIndex: 999,
-    boxShadow: '10px 0 30px rgba(0, 0, 0, 0.8)'
+    boxShadow: '10px 0 30px rgba(0, 0, 0, 0.8)',
+    animation: 'slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   mobileCloseDrawerBtn: {
     padding: 6,
@@ -6748,7 +6778,8 @@ function createStyles(isLight) {
     borderColor: '#1e293b',
     padding: 14,
     marginBottom: 10,
-    gap: 10
+    gap: 10,
+    transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease, border-color 0.18s ease'
   },
   mobileCardHeader: {
     flexDirection: 'row',
@@ -7184,7 +7215,8 @@ function createStyles(isLight) {
     borderColor: isLight ? '#cbd5e1' : '#334155',
     flexDirection: 'column',
     overflow: 'hidden',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+    animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
   },
   renameModalContainerLight: {
     backgroundColor: '#ffffff',

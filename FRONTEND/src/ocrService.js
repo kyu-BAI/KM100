@@ -388,7 +388,7 @@ export async function runOcrOnImage(imageSource, onProgress, receiptType = null)
     console.warn('OCR processing error:', err);
     return {
       isReceipt: false,
-      rejectionReason: 'Unable to analyze image. Please ensure the image is a clear, valid receipt.',
+      rejectionReason: 'Unable to analyze image. Please ensure the image is a clear and valid receipt.',
       establishment: '',
       receiptDate: '',
       description: '',
