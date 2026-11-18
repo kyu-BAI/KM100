@@ -161,9 +161,14 @@ const RECEIPT_TYPES = [
 ];
 
 export default function App() {
-  const { width } = useWindowDimensions();
-  const isMobile = width < 768;
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const { width, height } = useWindowDimensions();
+  const isSmallMobile = width < 480;            // Compact smartphones (320px - 480px, e.g. iPhone SE, small Androids)
+  const isMobile = width < 768;                 // All smartphones (< 768px)
+  const isTablet = width >= 768 && width < 1024;// Tablets (768px - 1023px, iPad portrait, foldables)
+  const isDesktop = width >= 1024;              // Desktops & Laptops (>= 1024px)
+  const isDrawerMode = width < 1024;            // Sidebar operates as slide-in drawer on mobile & tablet
+  const useCardsView = width < 860;             // Document cards view (< 860px), Data table (>= 860px)
+  const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false));
 
   const [items, setItems] = useState(() => loadCachedItems());
   const [loading, setLoading] = useState(() => loadCachedItems().length === 0);
@@ -181,7 +186,7 @@ export default function App() {
 
   const setActiveNav = (nav) => {
     _setActiveNav(nav);
-    if (isMobile) {
+    if (isDrawerMode) {
       setSidebarOpen(false);
     }
   };
@@ -2046,37 +2051,50 @@ export default function App() {
       )}
 
       {/* GLOBAL PROFESSIONAL TOP HEADER BAR */}
-      <View style={[styles.topHeader, isMobile && styles.topHeaderMobile, isLight && styles.topHeaderLight]}>
-        <View style={styles.topHeaderLeft}>
+      <View style={[
+        styles.topHeader,
+        isMobile && styles.topHeaderMobile,
+        isSmallMobile && styles.topHeaderSmallMobile,
+        isLight && styles.topHeaderLight
+      ]}>
+        <View style={[styles.topHeaderLeft, isSmallMobile && { gap: 6 }]}>
           <TouchableOpacity
-            style={[styles.sidebarToggleBtn, isLight && styles.sidebarToggleBtnLight]}
+            style={[
+              styles.sidebarToggleBtn,
+              isSmallMobile && { paddingHorizontal: 7, paddingVertical: 6 },
+              isLight && styles.sidebarToggleBtnLight
+            ]}
             onPress={() => setSidebarOpen(prev => !prev)}
             title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
           >
-            <FolderOpen size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
-            <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
-              {sidebarOpen ? 'Hide Folders' : 'Folders'}
-            </Text>
+            <FolderOpen size={isSmallMobile ? 15 : 16} color={isLight ? '#0284c7' : '#38bdf8'} />
+            {!isSmallMobile && (
+              <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
+                {sidebarOpen ? 'Hide' : 'Folders'}
+              </Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.brandContainer}>
             <View style={styles.brandBadge}>
               <Text style={styles.brandBadgeText}>KM100</Text>
             </View>
-            <View>
-              <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
-                RECEIPT & INVENTORY
-              </Text>
-              {!isMobile && (
-                <Text style={[styles.brandSub, isLight && styles.brandSubLight]}>
-                  Emission Testing & Branch Records
+            {!isSmallMobile && (
+              <View>
+                <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                  RECEIPT & INVENTORY
                 </Text>
-              )}
-            </View>
+                {isDesktop && (
+                  <Text style={[styles.brandSub, isLight && styles.brandSubLight]}>
+                    Emission Testing & Branch Records
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
-        {/* Center Search Bar on Desktop */}
+        {/* Center Search Bar on Desktop & Large Tablet */}
         {!isMobile && (
           <View style={[styles.headerSearchBox, isLight && styles.headerSearchBoxLight]}>
             <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
@@ -2096,18 +2114,20 @@ export default function App() {
         )}
 
         {/* Right Header Action Cluster */}
-        <View style={styles.topHeaderRight}>
+        <View style={[styles.topHeaderRight, isSmallMobile && { gap: 5 }]}>
           {/* PRIMARY HERO BUTTON: SCAN RECEIPT */}
           <TouchableOpacity
-            style={styles.heroScanBtn}
+            style={[styles.heroScanBtn, isSmallMobile && { paddingHorizontal: 9, paddingVertical: 7, gap: 5 }]}
             onPress={openAddModal}
             title="Scan physical receipt or upload document"
           >
-            <Camera size={16} color="#ffffff" />
-            <Text style={styles.heroScanBtnText}>Scan Receipt</Text>
+            <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
+            <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
+              {isSmallMobile ? 'Scan' : 'Scan Receipt'}
+            </Text>
           </TouchableOpacity>
 
-          {/* SECONDARY ACTION: EXPORT EXCEL (Desktop) */}
+          {/* SECONDARY ACTION: EXPORT EXCEL (Desktop & Tablet) */}
           {!isMobile && (
             <TouchableOpacity
               style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
@@ -2123,41 +2143,41 @@ export default function App() {
 
           {/* Theme Toggle Button */}
           <TouchableOpacity
-            style={[styles.headerIconBtn, isLight && styles.headerIconBtnLight]}
+            style={[styles.headerIconBtn, isSmallMobile && { padding: 6 }, isLight && styles.headerIconBtnLight]}
             onPress={toggleTheme}
             title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
           >
-            {isLight ? <Moon size={16} color="#6366f1" /> : <Sun size={16} color="#f59e0b" />}
+            {isLight ? <Moon size={isSmallMobile ? 14 : 16} color="#6366f1" /> : <Sun size={isSmallMobile ? 14 : 16} color="#f59e0b" />}
           </TouchableOpacity>
 
-          {/* Live Sync Pill */}
-          <TouchableOpacity
-            style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
-            onPress={() => fetchData(false)}
-            title="Click to sync with database"
-          >
-            <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
-            {!isMobile && (
+          {/* Live Sync Pill (Desktop & Tablet only) */}
+          {!isMobile && (
+            <TouchableOpacity
+              style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
+              onPress={() => fetchData(false)}
+              title="Click to sync with database"
+            >
+              <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
               <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
                 {isSyncing ? 'Syncing...' : 'Sync'}
               </Text>
-            )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
           {/* User Profile / Logout */}
           {currentUser && (
-            <View style={styles.headerUserBlock}>
-              <View style={[styles.headerUserAvatar, isLight && styles.headerUserAvatarLight]}>
-                <Text style={styles.headerUserInitial}>
+            <View style={[styles.headerUserBlock, isSmallMobile && { marginLeft: 0 }]}>
+              <View style={[styles.headerUserAvatar, isSmallMobile && { width: 26, height: 26 }, isLight && styles.headerUserAvatarLight]}>
+                <Text style={[styles.headerUserInitial, isSmallMobile && { fontSize: 11 }]}>
                   {(currentUser.name || currentUser.email || 'A').charAt(0).toUpperCase()}
                 </Text>
               </View>
               <TouchableOpacity
-                style={[styles.headerLogoutBtn, isLight && styles.headerLogoutBtnLight]}
+                style={[styles.headerLogoutBtn, isSmallMobile && { padding: 5 }, isLight && styles.headerLogoutBtnLight]}
                 onPress={handleLogout}
                 title="Sign Out"
               >
-                <LogOut size={14} color="#f87171" />
+                <LogOut size={isSmallMobile ? 12 : 14} color="#f87171" />
               </TouchableOpacity>
             </View>
           )}
@@ -2166,8 +2186,8 @@ export default function App() {
 
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
       <View style={[styles.mainContent, isLight && styles.mainContentLight]}>
-        {/* Backdrop for Mobile Drawer */}
-        {isMobile && sidebarOpen && (
+        {/* Backdrop for Drawer on Mobile & Tablet */}
+        {isDrawerMode && sidebarOpen && (
           <TouchableOpacity
             style={styles.mobileDrawerBackdrop}
             activeOpacity={1}
@@ -2175,13 +2195,13 @@ export default function App() {
           />
         )}
 
-        {/* LEFT SIDEBAR (Desktop toggleable / Mobile drawer) */}
+        {/* LEFT SIDEBAR (Desktop docked / Drawer on Tablet & Mobile) */}
         {sidebarOpen && (
           <View style={[
             styles.sidebar,
-            isMobile && styles.mobileSidebarDrawer,
+            isDrawerMode && styles.mobileSidebarDrawer,
             isLight && styles.sidebarLight,
-            isMobile && isLight && styles.mobileSidebarDrawerLight
+            isDrawerMode && isLight && styles.mobileSidebarDrawerLight
           ]}>
             <View style={[styles.sidebarTitleRow, isLight && styles.sidebarTitleRowLight]}>
               <Text style={[styles.sidebarSectionTitle, isLight && styles.sidebarSectionTitleLight]}>DOCUMENT DIRECTORY</Text>
@@ -2190,7 +2210,7 @@ export default function App() {
                 style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
                 title="Hide sidebar"
               >
-                {isMobile ? <X size={18} color={isLight ? '#475569' : '#94a3b8'} /> : <ChevronLeft size={16} color={isLight ? '#475569' : '#94a3b8'} />}
+                {isDrawerMode ? <X size={18} color={isLight ? '#475569' : '#94a3b8'} /> : <ChevronLeft size={16} color={isLight ? '#475569' : '#94a3b8'} />}
               </TouchableOpacity>
             </View>
 
@@ -2946,6 +2966,7 @@ export default function App() {
             <TouchableOpacity
               style={[
                 styles.statCard,
+                isMobile && styles.statCardMobile,
                 activeNav.type === 'expenses' && styles.statCardActive,
                 isLight && styles.statCardLight,
                 activeNav.type === 'expenses' && isLight && styles.statCardActiveLight
@@ -2958,11 +2979,11 @@ export default function App() {
                   <CreditCard size={15} color="#ef4444" />
                 </View>
               </View>
-              <Text style={[styles.statCardValue, { color: isLight ? '#b91c1c' : '#f87171' }]}>
+              <Text style={[styles.statCardValue, isMobile && styles.statCardValueMobile, { color: isLight ? '#b91c1c' : '#f87171' }]} numberOfLines={1}>
                 ₱{stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
-              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
-                {stats.totalExpensesCount} Receipts • Click to view
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]} numberOfLines={1}>
+                {stats.totalExpensesCount} Receipts • {isSmallMobile ? 'View' : 'Click to view'}
               </Text>
             </TouchableOpacity>
 
@@ -2970,6 +2991,7 @@ export default function App() {
             <TouchableOpacity
               style={[
                 styles.statCard,
+                isMobile && styles.statCardMobile,
                 activeNav.type === 'petc-sales' && styles.statCardActive,
                 isLight && styles.statCardLight,
                 activeNav.type === 'petc-sales' && isLight && styles.statCardActiveLight
@@ -2982,11 +3004,11 @@ export default function App() {
                   <TrendingUp size={15} color="#10b981" />
                 </View>
               </View>
-              <Text style={[styles.statCardValue, { color: isLight ? '#047857' : '#34d399' }]}>
+              <Text style={[styles.statCardValue, isMobile && styles.statCardValueMobile, { color: isLight ? '#047857' : '#34d399' }]} numberOfLines={1}>
                 ₱{stats.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
-              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
-                {stats.totalSalesCount} Invoices • Click to view
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]} numberOfLines={1}>
+                {stats.totalSalesCount} Invoices • {isSmallMobile ? 'View' : 'Click to view'}
               </Text>
             </TouchableOpacity>
 
@@ -2994,6 +3016,7 @@ export default function App() {
             <TouchableOpacity
               style={[
                 styles.statCard,
+                isMobile && styles.statCardMobile,
                 activeNav.type === 'petc-income' && styles.statCardActive,
                 isLight && styles.statCardLight,
                 activeNav.type === 'petc-income' && isLight && styles.statCardActiveLight
@@ -3006,11 +3029,11 @@ export default function App() {
                   <DollarSign size={15} color="#0284c7" />
                 </View>
               </View>
-              <Text style={[styles.statCardValue, { color: isLight ? '#0369a1' : '#38bdf8' }]}>
+              <Text style={[styles.statCardValue, isMobile && styles.statCardValueMobile, { color: isLight ? '#0369a1' : '#38bdf8' }]} numberOfLines={1}>
                 ₱{stats.totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
-              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
-                {stats.totalIncomeCount} Collections • Click to view
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]} numberOfLines={1}>
+                {stats.totalIncomeCount} Collections • {isSmallMobile ? 'View' : 'Click to view'}
               </Text>
             </TouchableOpacity>
 
@@ -3018,6 +3041,7 @@ export default function App() {
             <TouchableOpacity
               style={[
                 styles.statCard,
+                isMobile && styles.statCardMobile,
                 activeNav.type === 'all' && styles.statCardActive,
                 isLight && styles.statCardLight,
                 activeNav.type === 'all' && isLight && styles.statCardActiveLight
@@ -3030,11 +3054,11 @@ export default function App() {
                   <Layers size={15} color="#8b5cf6" />
                 </View>
               </View>
-              <Text style={[styles.statCardValue, { color: isLight ? '#6d28d9' : '#a78bfa' }]}>
+              <Text style={[styles.statCardValue, isMobile && styles.statCardValueMobile, { color: isLight ? '#6d28d9' : '#a78bfa' }]} numberOfLines={1}>
                 {stats.totalRecords} Records
               </Text>
-              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
-                Complete Database • Click to view
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]} numberOfLines={1}>
+                All Categories • {isSmallMobile ? 'View' : 'Click to view'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -3310,8 +3334,8 @@ export default function App() {
                 </View>
               </View>
             )
-          ) : isMobile ? (
-            /* MOBILE TOUCH-FRIENDLY DOCUMENT CARDS */
+          ) : useCardsView ? (
+            /* TOUCH-FRIENDLY DOCUMENT CARDS (MOBILE & TABLET) */
             <ScrollView style={styles.mobileCardList} showsVerticalScrollIndicator={false}>
               {filteredItems.map((item, idx) => (
                 <TouchableOpacity
@@ -4195,7 +4219,7 @@ export default function App() {
                         autoPlay
                         playsInline
                         muted
-                        style={{ width: '100%', height: isMobile ? 320 : 360, objectFit: 'cover', borderRadius: 8, backgroundColor: '#000' }}
+                        style={{ width: '100%', height: isSmallMobile ? 240 : isMobile ? 300 : 360, objectFit: 'cover', borderRadius: 8, backgroundColor: '#000' }}
                       />
                       <View style={styles.cameraOverlayFrame}>
                         <View style={styles.scannerCornerTL} />
@@ -4212,7 +4236,7 @@ export default function App() {
                           disabled={isSavingScan || isOcrProcessing}
                         >
                           <Camera size={18} color="#fff" />
-                          <Text style={styles.btnCaptureShutterText}>Capture & Read Receipt</Text>
+                          <Text style={styles.btnCaptureShutterText}>{isSmallMobile ? 'Capture' : 'Capture & Read Receipt'}</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.btnFlipCamera} onPress={flipCamera}>
@@ -4285,8 +4309,8 @@ export default function App() {
       {/* 3. RENAME DOCUMENT MODAL                                  */}
       {/* ======================================================== */}
       <Modal visible={!!renameItem} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.renameModalContainer, isLight && styles.renameModalContainerLight]}>
+        <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
+          <View style={[styles.renameModalContainer, isMobile && { width: '92%', maxWidth: '100%' }, isLight && styles.renameModalContainerLight]}>
             <View style={styles.renameModalHeader}>
               <View style={styles.renameIconBox}>
                 <Edit3 size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
@@ -4397,8 +4421,13 @@ function createStyles(isLight) {
   },
   topHeaderMobile: {
     height: 56,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     gap: 8
+  },
+  topHeaderSmallMobile: {
+    height: 50,
+    paddingHorizontal: 6,
+    gap: 5
   },
   topHeaderLeft: {
     flexDirection: 'row',
@@ -4614,13 +4643,16 @@ function createStyles(isLight) {
     paddingBottom: 4
   },
   statsGridMobile: {
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 12
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 2
   },
   statCard: {
     flex: 1,
+    minWidth: 140,
     backgroundColor: '#0f172a',
     borderRadius: 12,
     borderWidth: 1,
@@ -4628,6 +4660,12 @@ function createStyles(isLight) {
     padding: 14,
     gap: 4,
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+  },
+  statCardMobile: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    padding: 10,
+    borderRadius: 10
   },
   statCardLight: {
     backgroundColor: '#ffffff',
@@ -4667,6 +4705,10 @@ function createStyles(isLight) {
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.5
+  },
+  statCardValueMobile: {
+    fontSize: 14,
+    letterSpacing: -0.2
   },
   statCardSub: {
     fontSize: 11,

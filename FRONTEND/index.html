@@ -26,6 +26,11 @@
         color: #f8fafc;
         -webkit-font-smoothing: antialiased;
         overflow: hidden;
+        -webkit-text-size-adjust: 100%;
+      }
+      /* Prevent accidental zoom gesture on rapid taps */
+      button, a, input, [role="button"] {
+        touch-action: manipulation;
       }
       /* Custom scrollbars for clean UI */
       ::-webkit-scrollbar {
