@@ -58,7 +58,7 @@ import {
   Edit3
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { runOcrOnImage } from './ocrService';
 import { loadCachedItems, saveCachedItems, getCacheSyncTime, clearCachedItems } from './cacheService';
 
@@ -854,7 +854,7 @@ export default function App() {
     });
   };
 
-  // Export any selected folder's records into a clean, organized Excel (.xlsx) file
+  // Export any selected folder's records into a clean, executive formal Excel (.xlsx) file
   const exportFolderToExcel = (targetNav) => {
     const nav = targetNav || activeNav;
     const folderLabel = nav.label || 'Inventory Folder';
@@ -866,8 +866,21 @@ export default function App() {
     }
 
     try {
-      // 1. Structure each record neatly into tabular columns
-      const exportRows = folderItems.map((item, index) => {
+      const encodeCell = (r, c) => XLSX.utils.encode_cell({ r, c });
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      // 1. Prepare raw matrix with Title and Subtitle Block
+      const aoa = [
+        ['KM100 DOCUMENT INVENTORY SYSTEM - ' + folderLabel.toUpperCase()],
+        ['DEPARTMENT / FOLDER: ' + folderLabel + '   |   EXPORT DATE: ' + dateStr + ' ' + timeStr + '   |   TOTAL DOCUMENTS: ' + folderItems.length + '   |   AUDIT STATUS: VERIFIED RECORDS'],
+        [], // Spacer row
+        ['No.', 'File Name', 'Document Title', 'Establishment / Store', 'Category', 'Sub-Category', 'Entity / Branch', 'Receipt Date', 'Date Scanned / Recorded', 'Amount (PHP)', 'Invoice / OR No.', 'Audit Status']
+      ];
+
+      // 2. Map and clean each item row
+      folderItems.forEach((item, index) => {
         const amt = parseFloat(item.amount) || 0;
 
         // Clean document title: strip invoice/OR/reference numbers from the title so it only appears in its own column
@@ -885,63 +898,199 @@ export default function App() {
           .trim();
         if (!cleanDocTitle) cleanDocTitle = item.description || item.establishment || '-';
 
-        return {
-          'No.': index + 1,
-          'File Name': item.fileName || '-',
-          'Document Title': cleanDocTitle,
-          'Establishment / Store': item.establishment || item.previewData?.establishment || '-',
-          'Category': item.category || '-',
-          'Sub-Category': item.subCategory || '-',
-          'Entity / Branch': item.entity || '-',
-          'Receipt Date': item.receiptDate || item.previewData?.receipt_date || '-',
-          'Date Scanned / Recorded': item.scannedDate || item.createdAt || '-',
-          'Amount (PHP)': amt,
-          'Invoice / OR No.': invoiceNo || '-',
-          'Audit Status': item.status || 'Active'
-        };
+        aoa.push([
+          index + 1,
+          item.fileName || '-',
+          cleanDocTitle,
+          item.establishment || item.previewData?.establishment || '-',
+          item.category || '-',
+          item.subCategory || '-',
+          item.entity || '-',
+          item.receiptDate || item.previewData?.receipt_date || '-',
+          item.scannedDate || item.createdAt || '-',
+          amt,
+          invoiceNo || '-',
+          item.status || 'Active'
+        ]);
       });
 
-      // 2. Add an organized summary total row at the bottom
+      // 3. Add highlighted Total Summary row at bottom
       const totalAmount = folderItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-      exportRows.push({
-        'No.': '',
-        'File Name': 'TOTAL SUMMARY',
-        'Document Title': `${folderItems.length} Records in ${folderLabel}`,
-        'Establishment / Store': '',
-        'Category': '',
-        'Sub-Category': '',
-        'Entity / Branch': '',
-        'Receipt Date': '',
-        'Date Scanned / Recorded': 'TOTAL SUM (PHP):',
-        'Amount (PHP)': totalAmount,
-        'Invoice / OR No.': '',
-        'Audit Status': ''
+      const summaryRowIdx = aoa.length;
+      aoa.push([
+        '', '', '', '', '', '', '', '', 'GRAND TOTAL SUM (PHP):', totalAmount, '', ''
+      ]);
+
+      // 4. Generate worksheet from matrix
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // --- STYLES DEFINITION FOR FORMAL CORPORATE OFFICE ENVIRONMENT ---
+      const titleStyle = {
+        font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '0F172A' } }, // Deep Executive Navy
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+
+      const metaStyle = {
+        font: { name: 'Calibri', sz: 9.5, italic: true, color: { rgb: '475569' } },
+        fill: { fgColor: { rgb: 'F1F5F9' } }, // Cool Corporate Gray
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+
+      const headerStyle = {
+        font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '1E293B' } }, // Navy Header
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin', color: { rgb: '475569' } },
+          bottom: { style: 'medium', color: { rgb: '0F172A' } },
+          left: { style: 'thin', color: { rgb: '475569' } },
+          right: { style: 'thin', color: { rgb: '475569' } }
+        }
+      };
+
+      const cellBorder = {
+        top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+        bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+        left: { style: 'thin', color: { rgb: 'E2E8F0' } },
+        right: { style: 'thin', color: { rgb: 'E2E8F0' } }
+      };
+
+      const totalLabelStyle = {
+        font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '065F46' } },
+        fill: { fgColor: { rgb: 'ECFDF5' } }, // Soft Emerald Mint
+        alignment: { horizontal: 'right', vertical: 'center' },
+        border: {
+          top: { style: 'thin', color: { rgb: '059669' } },
+          bottom: { style: 'double', color: { rgb: '059669' } },
+          left: { style: 'thin', color: { rgb: 'A7F3D0' } },
+          right: { style: 'thin', color: { rgb: 'A7F3D0' } }
+        }
+      };
+
+      const totalAmountStyle = {
+        font: { name: 'Calibri', sz: 12, bold: true, color: { rgb: '064E3B' } },
+        fill: { fgColor: { rgb: 'D1FAE5' } }, // Prominent Emerald Highlight
+        alignment: { horizontal: 'right', vertical: 'center' },
+        border: {
+          top: { style: 'thin', color: { rgb: '059669' } },
+          bottom: { style: 'double', color: { rgb: '047857' } }, // Classic accounting double underline
+          left: { style: 'thin', color: { rgb: '059669' } },
+          right: { style: 'thin', color: { rgb: '059669' } }
+        },
+        numFmt: '#,##0.00'
+      };
+
+      // 5. Apply Title Row 0 styles
+      for (let c = 0; c < 12; c++) {
+        const ref = encodeCell(0, c);
+        if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+        ws[ref].s = titleStyle;
+      }
+      ws['A1'].v = 'KM100 DOCUMENT INVENTORY SYSTEM - ' + folderLabel.toUpperCase();
+
+      // Apply Meta Row 1 styles
+      for (let c = 0; c < 12; c++) {
+        const ref = encodeCell(1, c);
+        if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+        ws[ref].s = metaStyle;
+      }
+
+      // Apply Table Header Row 3 styles
+      for (let c = 0; c < 12; c++) {
+        const ref = encodeCell(3, c);
+        if (ws[ref]) ws[ref].s = headerStyle;
+      }
+
+      // Apply Data Rows styling (zebra striping & clean cell alignments)
+      folderItems.forEach((_, idx) => {
+        const r = 4 + idx;
+        const isEven = idx % 2 === 0;
+        const bg = isEven ? 'FFFFFF' : 'F8FAFC';
+
+        for (let c = 0; c < 12; c++) {
+          const ref = encodeCell(r, c);
+          if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+
+          let align = 'left';
+          if (c === 0 || c === 6 || c === 7 || c === 8 || c === 10 || c === 11) align = 'center';
+          if (c === 9) align = 'right';
+
+          let fontColor = '1E293B';
+          let bold = false;
+          if (c === 2) bold = true; // Highlight Document title
+          if (c === 9) { bold = true; fontColor = '0F172A'; } // Amount
+          if (c === 10) { bold = true; fontColor = '0284C7'; } // Invoice / OR No.
+          if (c === 11) { bold = true; fontColor = '059669'; } // Active status
+
+          const cellStyle = {
+            font: { name: 'Calibri', sz: 10, bold, color: { rgb: fontColor } },
+            fill: { fgColor: { rgb: bg } },
+            alignment: { horizontal: align, vertical: 'center' },
+            border: cellBorder
+          };
+
+          if (c === 9) {
+            cellStyle.numFmt = '#,##0.00';
+            ws[ref].t = 'n';
+          }
+
+          ws[ref].s = cellStyle;
+        }
       });
 
-      // 3. Create Excel worksheet with auto-sized column widths
-      const ws = XLSX.utils.json_to_sheet(exportRows);
+      // Apply Total Summary Row styling (High Importance Highlight)
+      for (let c = 0; c < 12; c++) {
+        const ref = encodeCell(summaryRowIdx, c);
+        if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+        if (c === 9) {
+          ws[ref].s = totalAmountStyle;
+          ws[ref].t = 'n';
+        } else {
+          ws[ref].s = totalLabelStyle;
+        }
+      }
 
-      ws['!cols'] = [
-        { wch: 6 },   // No.
-        { wch: 32 },  // File Name
-        { wch: 36 },  // Document Title
-        { wch: 26 },  // Establishment / Store
-        { wch: 18 },  // Category
-        { wch: 24 },  // Sub-Category
-        { wch: 16 },  // Entity / Branch
-        { wch: 14 },  // Receipt Date
-        { wch: 24 },  // Date Scanned / Recorded
-        { wch: 18 },  // Amount (PHP)
-        { wch: 22 },  // Invoice / OR No.
-        { wch: 15 },  // Audit Status
+      // Row heights (Title 32pt, Meta 20pt, Spacer 10pt, Header 28pt, Data 22pt, Total 28pt)
+      const rowHeights = [
+        { hpt: 32 },
+        { hpt: 20 },
+        { hpt: 10 },
+        { hpt: 28 }
+      ];
+      folderItems.forEach(() => rowHeights.push({ hpt: 22 }));
+      rowHeights.push({ hpt: 28 });
+      ws['!rows'] = rowHeights;
+
+      // Cell Merges: Title across A-L, Meta across A-L, Summary label across A-I
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+        { s: { r: summaryRowIdx, c: 0 }, e: { r: summaryRowIdx, c: 8 } }
       ];
 
-      // 4. Create workbook and add worksheet (Excel sheet names limit: 31 chars, no special chars)
+      // Auto-sized professional column widths
+      ws['!cols'] = [
+        { wch: 8 },   // No.
+        { wch: 34 },  // File Name
+        { wch: 38 },  // Document Title
+        { wch: 28 },  // Establishment / Store
+        { wch: 18 },  // Category
+        { wch: 24 },  // Sub-Category
+        { wch: 18 },  // Entity / Branch
+        { wch: 16 },  // Receipt Date
+        { wch: 24 },  // Date Scanned / Recorded
+        { wch: 22 },  // Amount (PHP)
+        { wch: 22 },  // Invoice / OR No.
+        { wch: 16 },  // Audit Status
+      ];
+
+      // 6. Create workbook and add worksheet
       const wb = XLSX.utils.book_new();
       const safeSheetName = folderLabel.replace(/[\\/?*:[\]]/g, '').slice(0, 31) || 'Inventory';
       XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
 
-      // 5. Clean download file name and initiate instant browser download
+      // 7. Clean download file name and initiate instant browser download
       const cleanLabel = folderLabel.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_');
       const todayDate = new Date().toISOString().split('T')[0];
       const downloadFileName = `${cleanLabel}_${todayDate}.xlsx`;
@@ -949,7 +1098,7 @@ export default function App() {
       try {
         XLSX.writeFile(wb, downloadFileName);
       } catch (writeErr) {
-        // Fallback for browsers or sandboxes requiring Blob URL trigger
+        // Fallback for browsers or mobile web apps requiring Blob URL trigger
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
@@ -1744,7 +1893,7 @@ export default function App() {
               <View style={styles.authFieldGroup}>
                 <Text style={styles.authLabel}>ADMIN FULL NAME</Text>
                 <View style={styles.authInputWrapper}>
-                  <User size={16} color="#64748b" style={styles.authInputIcon} />
+                  <User size={16} color="#64748b" style={{ marginRight: 8 }} />
                   <TextInput
                     style={styles.authInput}
                     placeholder="e.g. Maria Santos"
@@ -1759,7 +1908,7 @@ export default function App() {
             <View style={styles.authFieldGroup}>
               <Text style={styles.authLabel}>ADMIN EMAIL ADDRESS</Text>
               <View style={styles.authInputWrapper}>
-                <Mail size={16} color="#64748b" style={styles.authInputIcon} />
+                <Mail size={16} color="#64748b" style={{ marginRight: 8 }} />
                 <TextInput
                   style={styles.authInput}
                   placeholder="admin@petc.com"
@@ -1775,7 +1924,7 @@ export default function App() {
             <View style={styles.authFieldGroup}>
               <Text style={styles.authLabel}>PASSWORD</Text>
               <View style={styles.authInputWrapper}>
-                <Lock size={16} color="#64748b" style={styles.authInputIcon} />
+                <Lock size={16} color="#64748b" style={{ marginRight: 8 }} />
                 <TextInput
                   style={[styles.authInput, { paddingRight: 40 }]}
                   placeholder={authMode === 'register' ? 'Min. 6 characters' : 'Enter your password'}
@@ -1797,7 +1946,7 @@ export default function App() {
               <View style={styles.authFieldGroup}>
                 <Text style={styles.authLabel}>CONFIRM PASSWORD</Text>
                 <View style={styles.authInputWrapper}>
-                  <Lock size={16} color="#64748b" style={styles.authInputIcon} />
+                  <Lock size={16} color="#64748b" style={{ marginRight: 8 }} />
                   <TextInput
                     style={[styles.authInput, { paddingRight: 40 }]}
                     placeholder="Re-enter password to confirm"
@@ -3527,7 +3676,7 @@ export default function App() {
                           <img
                             src={capturedReceiptPhoto}
                             alt="Captured Receipt"
-                            style={styles.ocrThumb}
+                            style={{ width: 60, height: 75, borderRadius: 6, objectFit: 'cover', border: isLight ? '1px solid #cbd5e1' : '1px solid #334155' }}
                           />
                         )}
                         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>

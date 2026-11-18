@@ -15,7 +15,8 @@
     "react-dom": "^19.0.0",
     "react-native-web": "^0.19.13",
     "tesseract.js": "^7.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
