@@ -39,7 +39,7 @@ async function getOcrWorker(onProgress) {
  * Uses Google Gemini Vision API to accurately read physical receipts (handwritten & printed).
  * High accuracy: extracts establishment, date, description, amount, and invoice/OR number.
  */
-async function extractWithGeminiVision(imageSource, onProgress) {
+async function extractWithGeminiVision(imageSource, onProgress, receiptType = null) {
   if (!GEMINI_API_KEY) return null;
 
   try {
@@ -58,6 +58,8 @@ async function extractWithGeminiVision(imageSource, onProgress) {
     // High availability models
     const modelsToTry = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
 
+    const typeContext = receiptType?.name ? `The document is being filed as: "${receiptType.name}" (${receiptType.category || ''}). ` : '';
+
     for (const model of modelsToTry) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
@@ -67,11 +69,11 @@ async function extractWithGeminiVision(imageSource, onProgress) {
             {
               parts: [
                 {
-                  text: 'You are an expert OCR receipt extractor. Analyze this physical receipt image (both printed and handwritten text). Return ONLY valid JSON with the following structure:\n' +
+                  text: 'You are an expert OCR receipt extractor. Analyze this physical receipt image (both printed and handwritten text). ' + typeContext + 'Return ONLY valid JSON with the following structure:\n' +
                         '{\n' +
                         '  "establishment": "Name of the business, store, or vendor at the top",\n' +
                         '  "receiptDate": "YYYY-MM-DD format (if handwritten e.g. 11-11-26, convert to 2026-11-11; if not found, use empty string)",\n' +
-                        '  "description": "Short description of items or nature of service (e.g. Meals, Supplies, Diesel, Vehicle Inspection)",\n' +
+                        '  "description": "Short description of the items or nature of service (e.g. Emission Testing Sales, Daily Income Collection, Supplies, Fuel, Food, Service)",\n' +
                         '  "amount": 0.00,\n' +
                         '  "orNumber": "Official Receipt No., Sales Invoice No., or Reference Number"\n' +
                         '}\n' +
@@ -148,7 +150,7 @@ async function extractWithGeminiVision(imageSource, onProgress) {
  * Fallback receipt parsing that dynamically extracts details from the raw scanned text.
  * NEVER hardcodes any specific store, amount, or invoice number.
  */
-export function parseReceiptData(rawText = '') {
+export function parseReceiptData(rawText = '', receiptType = null) {
   const cleanText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = cleanText
     .split('\n')
@@ -219,12 +221,14 @@ export function parseReceiptData(rawText = '') {
   }
 
   // 4. EXTRACT DESCRIPTION / ITEMS
-  if (/meal|food|dinner|lunch|breakfast|snack|sizzling|steak|restaurant|burger|chicken|beverage|drink|coffee/i.test(cleanText)) {
-    description = 'Meals & Refreshments';
-  } else if (/emission|inspection|mvir|smoke|testing\s+fee|vehicle/i.test(cleanText)) {
-    description = 'Vehicle Emission Testing';
+  if (/emission|inspection|mvir|smoke|testing\s+fee|vehicle/i.test(cleanText)) {
+    description = 'Vehicle Emission Testing Sales';
   } else if (/insurance|ctpl|coci|premium|policy/i.test(cleanText)) {
-    description = 'PETC CTPL Insurance';
+    description = 'PETC CTPL Insurance Payment';
+  } else if (/collection|remittance|revenue|sales|income/i.test(cleanText)) {
+    description = 'Daily Collection / Revenue';
+  } else if (/meal|food|dinner|lunch|breakfast|snack|sizzling|steak|restaurant|burger|chicken|beverage|drink|coffee/i.test(cleanText)) {
+    description = 'Meals & Refreshments';
   } else if (/paper|ink|ribbon|filter|chemical|suppl|consumable/i.test(cleanText)) {
     description = 'Office & Testing Supplies';
   } else if (/fuel|gasoline|diesel|petron|shell|caltex|v-power|unleaded/i.test(cleanText)) {
@@ -233,6 +237,13 @@ export function parseReceiptData(rawText = '') {
     description = 'Operational Utility / Rent';
   } else if (/repair|maintenance|hardware|parts|tools|labor/i.test(cleanText)) {
     description = 'Maintenance & Repairs';
+  } else if (receiptType) {
+    if (receiptType.id === 'petc-sales') description = 'Vehicle Emission Testing Sales';
+    else if (receiptType.id === 'petc-income') description = 'Daily Collection / Revenue';
+    else if (receiptType.id === 'petc-insurance') description = 'PETC CTPL Insurance Payment';
+    else if (receiptType.id === 'consumables-delivery') description = 'Office & Testing Supplies';
+    else if (receiptType.id === 'voucher-disbursement') description = 'Petty Cash Payment Voucher';
+    else if (receiptType.name) description = receiptType.name;
   } else {
     const descSection = cleanText.match(/(?:item\s+description|nature\s+of\s+service|particulars)[\s\S]{0,100}/i);
     if (descSection) {
@@ -291,12 +302,12 @@ export function parseReceiptData(rawText = '') {
  * 1. Uses Gemini Vision AI for high-accuracy handwritten & printed text recognition.
  * 2. Falls back to local Tesseract OCR if network is unavailable.
  */
-export async function runOcrOnImage(imageSource, onProgress) {
+export async function runOcrOnImage(imageSource, onProgress, receiptType = null) {
   try {
     if (onProgress) onProgress(0.1, 'Analyzing receipt image with Gemini Vision AI...');
 
     // 1. Primary: Use Gemini Vision AI
-    const geminiResult = await extractWithGeminiVision(imageSource, onProgress);
+    const geminiResult = await extractWithGeminiVision(imageSource, onProgress, receiptType);
     if (geminiResult && (geminiResult.establishment || geminiResult.amount > 0 || geminiResult.orNumber)) {
       if (onProgress) onProgress(1.0, 'Receipt details verified with Gemini AI!');
       return geminiResult;
@@ -307,11 +318,11 @@ export async function runOcrOnImage(imageSource, onProgress) {
     const worker = await getOcrWorker(onProgress);
     const result = await worker.recognize(imageSource);
     const rawText = result && result.data ? result.data.text : '';
-    const parsed = parseReceiptData(rawText);
+    const parsed = parseReceiptData(rawText, receiptType);
     if (onProgress) onProgress(1.0, 'Receipt details extracted!');
     return parsed;
   } catch (err) {
     console.warn('OCR processing error:', err);
-    return parseReceiptData('');
+    return parseReceiptData('', receiptType);
   }
 }

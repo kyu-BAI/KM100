@@ -71,8 +71,20 @@ const RECEIPT_TYPES = [
     description: 'Vehicle emission testing fee receipt & inspection certificate',
     category: 'PETC Sales',
     categoryId: 'petc-sales',
+    subCategory: 'Emission Testing',
     entity: 'PETC',
     prefix: 'SALES'
+  },
+  {
+    id: 'petc-income',
+    name: 'PETC Income Receipt',
+    tableName: 'inventory_items',
+    description: 'PETC daily collections, revenue vouchers & operational income',
+    category: 'PETC Income',
+    categoryId: 'petc-income',
+    subCategory: 'Daily Collection',
+    entity: 'PETC',
+    prefix: 'INC'
   },
   {
     id: 'petc-insurance',
@@ -81,6 +93,7 @@ const RECEIPT_TYPES = [
     description: 'Compulsory third party liability insurance policy payment',
     category: 'PETC Insurance',
     categoryId: 'petc-insurance',
+    subCategory: 'CTPL Insurance',
     entity: 'PETC',
     prefix: 'INS'
   },
@@ -478,7 +491,7 @@ export default function App() {
         const tableName = ALL_RECEIPT_TABLES[index];
         if (res.status === 'fulfilled' && res.value && !res.value.error && Array.isArray(res.value.data)) {
           res.value.data.forEach(rawRow => {
-            const mapped = mapFromDb(rawRow);
+            const mapped = mapFromDb(rawRow, tableName);
             if (!mapped || !mapped.id) return;
 
             if (!itemMap.has(mapped.id)) {
@@ -486,9 +499,17 @@ export default function App() {
             } else {
               // Merge so dedicated table OCR data augments the master record
               const existing = itemMap.get(mapped.id);
+              // Ensure genuine non-expense category/entity is strictly preserved
+              const finalCategory = (existing.category && existing.category !== 'Expenses') ? existing.category : mapped.category;
+              const finalCategoryId = (existing.categoryId && existing.categoryId !== 'expenses') ? existing.categoryId : mapped.categoryId;
+              const finalEntity = existing.entity || mapped.entity;
+
               itemMap.set(mapped.id, {
                 ...existing,
                 ...mapped,
+                category: finalCategory,
+                categoryId: finalCategoryId,
+                entity: finalEntity,
                 filePath: existing.filePath || mapped.filePath || '',
                 establishment: mapped.establishment || existing.establishment || '',
                 receiptDate: mapped.receiptDate || existing.receiptDate || '',
@@ -626,6 +647,7 @@ export default function App() {
           itemCat.replace(/\s+/g, '-') === activeType ||
           (activeType === 'expenses' && itemCat.includes('expense')) ||
           (activeType === 'petc-sales' && (itemCat.includes('sale') || itemCat.includes('emission'))) ||
+          (activeType === 'petc-income' && (itemCat.includes('income') || itemCat.includes('revenue') || itemCat.includes('collection'))) ||
           (activeType === 'petc-insurance' && (itemCat.includes('insurance') || itemCat.includes('ctpl'))) ||
           (activeType === 'consumables' && itemCat.includes('consumable')) ||
           (activeType === 'vouchers' && itemCat.includes('voucher'));
@@ -739,6 +761,34 @@ export default function App() {
     setOcrAmount('');
     setOcrOrNumber('');
     stopCamera();
+
+    // Auto-select receipt classification based on current active navigation context
+    if (activeNav.type === 'petc-sales') {
+      const match = RECEIPT_TYPES.find(r => r.id === 'petc-sales');
+      if (match) setSelectedReceiptType(match);
+    } else if (activeNav.type === 'petc-income') {
+      const match = RECEIPT_TYPES.find(r => r.id === 'petc-income');
+      if (match) setSelectedReceiptType(match);
+    } else if (activeNav.type === 'petc-insurance') {
+      const match = RECEIPT_TYPES.find(r => r.id === 'petc-insurance');
+      if (match) setSelectedReceiptType(match);
+    } else if (activeNav.type === 'expenses') {
+      let expenseId = 'expenses-petc';
+      if (activeNav.subCategory?.includes('Red Goose')) {
+        expenseId = 'expenses-red-goose';
+      } else if (activeNav.subCategory?.includes('Knoah Mari')) {
+        expenseId = 'expenses-knoah-mari';
+      }
+      const match = RECEIPT_TYPES.find(r => r.id === expenseId);
+      if (match) setSelectedReceiptType(match);
+    } else if (activeNav.type === 'consumables') {
+      const match = RECEIPT_TYPES.find(r => r.id === 'consumables-delivery');
+      if (match) setSelectedReceiptType(match);
+    } else if (activeNav.type === 'vouchers') {
+      const match = RECEIPT_TYPES.find(r => r.id === 'voucher-disbursement');
+      if (match) setSelectedReceiptType(match);
+    }
+
     setShowAddModal(true);
   };
 
@@ -962,17 +1012,34 @@ export default function App() {
 
     // Apply whatever details were ACTUALLY extracted from the scanned image (NO hardcoded data)
     const applyOcrResult = (parsed) => {
-      setOcrEstablishment(parsed?.establishment || '');
+      setOcrEstablishment(parsed?.establishment || (selectedReceiptType?.entity ? `${selectedReceiptType.entity} Testing Center` : ''));
       setOcrReceiptDate(parsed?.receiptDate || new Date().toISOString().split('T')[0]);
-      setOcrDescription(parsed?.description || (selectedReceiptType?.name ? selectedReceiptType.name : ''));
+
+      // Default description MUST match the user's selected receipt classification!
+      let defaultDesc = selectedReceiptType?.name || 'Official Receipt';
+      if (selectedReceiptType?.id === 'petc-sales') {
+        defaultDesc = 'Vehicle Emission Testing Sales';
+      } else if (selectedReceiptType?.id === 'petc-income') {
+        defaultDesc = 'Daily Collection / Revenue';
+      } else if (selectedReceiptType?.id === 'petc-insurance') {
+        defaultDesc = 'PETC CTPL Insurance Payment';
+      } else if (selectedReceiptType?.id === 'consumables-delivery') {
+        defaultDesc = 'Office & Testing Supplies';
+      } else if (selectedReceiptType?.id === 'voucher-disbursement') {
+        defaultDesc = 'Petty Cash Payment Voucher';
+      } else if (selectedReceiptType?.categoryId === 'expenses') {
+        defaultDesc = `${selectedReceiptType.entity || 'PETC'} Operational Expense`;
+      }
+
+      setOcrDescription(parsed?.description || defaultDesc);
       setOcrAmount(parsed?.amount && parsed.amount > 0 ? parsed.amount.toString() : '');
       setOcrOrNumber(parsed?.orNumber || '');
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
       if (parsed?.establishment || (parsed?.amount && parsed.amount > 0)) {
-        showNotice('Receipt data extracted with Gemini AI! Please review details.');
+        showNotice(`Receipt data extracted as ${selectedReceiptType?.name}! Please review details.`);
       } else {
-        showNotice('Receipt captured! Review and confirm details before saving.');
+        showNotice(`Receipt captured as ${selectedReceiptType?.name}! Review details before saving.`);
       }
     };
 
@@ -988,7 +1055,7 @@ export default function App() {
       const parsed = await runOcrOnImage(dataUrl, (prog, msg) => {
         setOcrProgress(prog);
         setOcrStatusText(msg);
-      });
+      }, selectedReceiptType);
 
       if (!finished) {
         finished = true;
@@ -1014,9 +1081,18 @@ export default function App() {
 
     setIsSavingScan(true);
     try {
-      const establishment = (ocrEstablishment || 'Unknown Establishment').trim();
+      const establishment = (ocrEstablishment || (selectedReceiptType.entity ? `${selectedReceiptType.entity} Center` : 'Official Store')).trim();
       const receiptDate = (ocrReceiptDate || new Date().toISOString().split('T')[0]).trim();
-      const description = (ocrDescription || 'Meals').trim();
+
+      let fallbackDesc = selectedReceiptType.name || 'Official Receipt';
+      if (selectedReceiptType.id === 'petc-sales') fallbackDesc = 'Vehicle Emission Testing Sales';
+      else if (selectedReceiptType.id === 'petc-income') fallbackDesc = 'Daily Collection / Revenue';
+      else if (selectedReceiptType.id === 'petc-insurance') fallbackDesc = 'PETC CTPL Insurance Payment';
+      else if (selectedReceiptType.id === 'consumables-delivery') fallbackDesc = 'Office & Testing Supplies';
+      else if (selectedReceiptType.id === 'voucher-disbursement') fallbackDesc = 'Petty Cash Payment Voucher';
+      else if (selectedReceiptType.categoryId === 'expenses') fallbackDesc = `${selectedReceiptType.entity || 'PETC'} Operational Expense`;
+
+      const description = (ocrDescription || fallbackDesc).trim();
       const amt = parseFloat(ocrAmount) || 0;
       const refCode = (ocrOrNumber || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
       const receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
@@ -1024,6 +1100,16 @@ export default function App() {
       const scanDateToday = new Date().toISOString().split('T')[0];
       const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
       const currentMonthName = monthNames[new Date().getMonth()] || 'FEB';
+
+      const targetYear = activeNav.year || scanDateToday.split('-')[0] || '2026';
+      const targetMonth = activeNav.month || currentMonthName;
+
+      let targetSubCat = selectedReceiptType.subCategory || 'Receipt Scan';
+      if (selectedReceiptType.categoryId === 'petc-sales') {
+        targetSubCat = targetMonth ? `Sales ${targetYear} (${targetMonth})` : 'Emission Testing Sales';
+      } else if (selectedReceiptType.categoryId === 'petc-income') {
+        targetSubCat = targetMonth ? `Income ${targetYear} (${targetMonth})` : 'Daily Collection';
+      }
 
       const scannedItemPayload = {
         id: `SCN-${Date.now()}`,
@@ -1035,10 +1121,10 @@ export default function App() {
         description,
         category: selectedReceiptType.category,
         categoryId: selectedReceiptType.categoryId,
-        subCategory: selectedReceiptType.subCategory || 'Receipt Scan',
+        subCategory: targetSubCat,
         entity: selectedReceiptType.entity,
-        year: activeNav.year || scanDateToday.split('-')[0] || '2026',
-        month: activeNav.month || currentMonthName,
+        year: targetYear,
+        month: targetMonth,
         amount: amt,
         currency: 'PHP',
         quantity: 1,
@@ -1047,14 +1133,16 @@ export default function App() {
         fileFormat: 'JPG',
         fileSize: `${Math.round(capturedReceiptPhoto.length * 0.75 / 1024)} KB`,
         filePath: capturedReceiptPhoto,
-        notes: `Establishment: ${establishment} | Scanned: ${scanDateToday} | Date: ${receiptDate} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.`,
-        tags: ['Scanned Receipt', establishment, selectedReceiptType.name, selectedReceiptType.entity],
+        notes: `Establishment: ${establishment} | Scanned: ${scanDateToday} | Date: ${receiptDate} | Classification: ${selectedReceiptType.name} | Category: ${selectedReceiptType.category} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.`,
+        tags: ['Scanned Receipt', establishment, selectedReceiptType.name, selectedReceiptType.entity, selectedReceiptType.category],
         previewData: {
           establishment,
           receipt_date: receiptDate,
           description,
           amount: amt,
           or_number: refCode,
+          category: selectedReceiptType.category,
+          entity: selectedReceiptType.entity,
           columns: ['Receipt Field', 'Extracted Value'],
           rows: [
             ['Establishment', establishment],
@@ -1070,15 +1158,17 @@ export default function App() {
           summary: {
             'Establishment': establishment,
             'Receipt Date': receiptDate,
+            'Category': selectedReceiptType.category,
+            'Entity': selectedReceiptType.entity,
             'Total Amount': amt > 0 ? `PHP ${amt.toLocaleString()}` : 'N/A',
             'Official Ref': refCode
           }
         }
       };
 
-      // 1. Direct Supabase PostgreSQL upsert to dedicated receipt table (e.g. knoah_mari_expense_receipts)
+      // 1. Direct Supabase PostgreSQL upsert to dedicated receipt table (e.g. petc_sales_receipts, knoah_mari_expense_receipts)
       const targetTable = selectedReceiptType.tableName;
-      if (targetTable) {
+      if (targetTable && targetTable !== 'inventory_items') {
         let dedicatedRecord = {
           id: scannedItemPayload.id,
           or_number: refCode,
@@ -1127,23 +1217,25 @@ export default function App() {
 
         if (dedicatedErr) {
           console.error(`Dedicated table "${targetTable}" error:`, dedicatedErr);
-          throw new Error(`Failed saving to dedicated table "${targetTable}": ${dedicatedErr.message}`);
         }
       }
 
-      // 2. Asynchronously mirror into master inventory_items without blocking the UI
+      // 2. Mirror into master inventory_items
       try {
         let dbRow = mapToDb(scannedItemPayload);
-        supabase.from('inventory_items').upsert(dbRow).then(res => {
-          if (res.error && res.error.code === 'PGRST204') {
-            delete dbRow.establishment;
-            delete dbRow.receipt_date;
-            delete dbRow.description;
-            supabase.from('inventory_items').upsert(dbRow);
-          }
-        }).catch(() => { });
+        const invPromise = supabase.from('inventory_items').upsert(dbRow);
+        const invTimeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Master inventory timeout')), 7000)
+        );
+        let { error: invErr } = await Promise.race([invPromise, invTimeout]);
+        if (invErr && invErr.code === 'PGRST204') {
+          delete dbRow.establishment;
+          delete dbRow.receipt_date;
+          delete dbRow.description;
+          await supabase.from('inventory_items').upsert(dbRow);
+        }
       } catch (mirrorErr) {
-        console.warn('Master inventory mirror skipped:', mirrorErr);
+        console.warn('Master inventory mirror error:', mirrorErr);
       }
 
       // 3. Update local state immediately & persist to system cache
@@ -1156,7 +1248,7 @@ export default function App() {
       // 4. Success feedback and close modal IMMEDIATELY
       stopCamera();
       closeAddModal();
-      showNotice(`Receipt from "${establishment}" (PHP ${amt.toLocaleString()}) saved to "${targetTable}"!`);
+      showNotice(`Receipt from "${establishment}" (PHP ${amt.toLocaleString()}) saved as ${selectedReceiptType.category}!`);
       fetchData(true);
     } catch (err) {
       console.error('Error saving scanned receipt:', err);
@@ -2747,22 +2839,28 @@ export default function App() {
                       return (
                         <TouchableOpacity
                           key={rt.id}
-                          style={[styles.receiptTypeCard, isSelected && styles.receiptTypeCardActive, isMobile && { width: '100%' }]}
+                          style={[
+                            styles.receiptTypeCard,
+                            isLight && styles.receiptTypeCardLight,
+                            isSelected && styles.receiptTypeCardActive,
+                            isSelected && isLight && styles.receiptTypeCardActiveLight,
+                            isMobile && { width: '100%' }
+                          ]}
                           onPress={() => setSelectedReceiptType(rt)}
                         >
                           <View style={styles.receiptTypeHeader}>
-                            <Text style={[styles.receiptTypeName, isSelected && styles.receiptTypeNameActive]}>
+                            <Text style={[styles.receiptTypeName, isLight && styles.receiptTypeNameLight, isSelected && styles.receiptTypeNameActive]}>
                               {rt.name}
                             </Text>
-                            {isSelected && <CheckCircle2 size={16} color="#34d399" />}
+                            {isSelected && <CheckCircle2 size={16} color={isLight ? '#059669' : '#34d399'} />}
                           </View>
-                          <Text style={styles.receiptTypeDesc} numberOfLines={2}>{rt.description}</Text>
+                          <Text style={[styles.receiptTypeDesc, isLight && styles.receiptTypeDescLight]} numberOfLines={2}>{rt.description}</Text>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                            <View style={styles.receiptEntityBadge}>
-                              <Text style={styles.receiptEntityBadgeText}>{rt.category} • {rt.entity}</Text>
+                            <View style={[styles.receiptEntityBadge, isLight && styles.receiptEntityBadgeLight]}>
+                              <Text style={[styles.receiptEntityBadgeText, isLight && styles.receiptEntityBadgeTextLight]}>{rt.category} • {rt.entity}</Text>
                             </View>
-                            <View style={[styles.receiptEntityBadge, { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
-                              <Text style={[styles.receiptEntityBadgeText, { color: '#38bdf8', fontSize: 10, fontFamily: 'monospace' }]}>
+                            <View style={[styles.receiptEntityBadge, isLight ? { backgroundColor: 'rgba(2, 132, 199, 0.1)', borderColor: 'rgba(2, 132, 199, 0.25)' } : { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
+                              <Text style={[styles.receiptEntityBadgeText, isLight ? { color: '#0284c7', fontSize: 10, fontFamily: 'monospace' } : { color: '#38bdf8', fontSize: 10, fontFamily: 'monospace' }]}>
                                 📁 {rt.tableName}
                               </Text>
                             </View>
@@ -2774,13 +2872,13 @@ export default function App() {
 
                   {/* Step B: Intelligent Camera & OCR Capture Triggers */}
                   <View style={{ marginTop: 18, marginBottom: 8 }}>
-                    <Text style={styles.scanSectionHeading}>
+                    <Text style={[styles.scanSectionHeading, isLight && { color: '#0284c7' }]}>
                       2. SCAN RECEIPT (AUTO-READS ESTABLISHMENT, DATE, AMOUNT & ITEMS):
                     </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(56, 189, 248, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginTop: 6, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
-                      <CheckCircle2 size={14} color="#34d399" />
-                      <Text style={{ fontSize: 11, color: '#94a3b8', flex: 1 }}>
-                        Target Destination: <Text style={{ color: '#38bdf8', fontWeight: '700', fontFamily: 'monospace' }}>public.{selectedReceiptType.tableName}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: isLight ? '#f1f5f9' : 'rgba(56, 189, 248, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginTop: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : 'rgba(56, 189, 248, 0.2)' }}>
+                      <CheckCircle2 size={14} color={isLight ? '#059669' : '#34d399'} />
+                      <Text style={{ fontSize: 11, color: isLight ? '#475569' : '#94a3b8', flex: 1 }}>
+                        Target Classification: <Text style={{ color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>{selectedReceiptType.name} ({selectedReceiptType.category})</Text>
                       </Text>
                     </View>
                   </View>
@@ -2806,11 +2904,11 @@ export default function App() {
 
                   {isOcrProcessing ? (
                     /* OCR Processing Screen */
-                    <View style={styles.ocrScanningCard}>
+                    <View style={[styles.ocrScanningCard, isLight && { backgroundColor: '#f8fafc', borderColor: '#38bdf8' }]}>
                       <ActivityIndicator size="large" color="#38bdf8" />
                       <View style={{ alignItems: 'center', gap: 4 }}>
-                        <Text style={styles.ocrScanningTitle}>Reading Receipt with Gemini Vision AI...</Text>
-                        <Text style={styles.ocrScanningSub}>{ocrStatusText || 'Extracting establishment, date, description & amount...'}</Text>
+                        <Text style={[styles.ocrScanningTitle, isLight && { color: '#0284c7' }]}>Reading Receipt with Gemini Vision AI...</Text>
+                        <Text style={[styles.ocrScanningSub, isLight && { color: '#64748b' }]}>{ocrStatusText || 'Extracting establishment, date, description & amount...'}</Text>
                       </View>
                       <View style={styles.ocrProgressBarBg}>
                         <View style={[styles.ocrProgressBarFill, { width: `${Math.round((ocrProgress || 0.4) * 100)}%` }]} />
@@ -2818,19 +2916,19 @@ export default function App() {
                     </View>
                   ) : isOcrVerifiedView ? (
                     /* OCR Verification & Review Screen */
-                    <View style={styles.ocrVerificationContainer}>
-                      <View style={styles.ocrVerificationHeader}>
+                    <View style={[styles.ocrVerificationContainer, isLight && styles.ocrVerificationContainerLight]}>
+                      <View style={[styles.ocrVerificationHeader, isLight && { borderBottomColor: '#e2e8f0' }]}>
                         <View style={styles.ocrVerificationTitleRow}>
-                          <Sparkles size={18} color="#38bdf8" />
-                          <Text style={styles.ocrVerificationTitle}>Extracted Receipt Details</Text>
+                          <Sparkles size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Text style={[styles.ocrVerificationTitle, isLight && styles.ocrVerificationTitleLight]}>Extracted Receipt Details</Text>
                         </View>
-                        <View style={[styles.receiptEntityBadge, { backgroundColor: 'rgba(52, 211, 153, 0.15)', borderColor: 'rgba(52, 211, 153, 0.3)', borderWidth: 1 }]}>
-                          <Text style={[styles.receiptEntityBadgeText, { color: '#34d399' }]}>OCR Extracted</Text>
+                        <View style={[styles.receiptEntityBadge, { backgroundColor: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(52, 211, 153, 0.15)', borderColor: isLight ? 'rgba(16, 185, 129, 0.3)' : 'rgba(52, 211, 153, 0.3)', borderWidth: 1 }]}>
+                          <Text style={[styles.receiptEntityBadgeText, { color: isLight ? '#059669' : '#34d399' }]}>OCR Extracted</Text>
                         </View>
                       </View>
 
                       {/* Receipt thumbnail + Target Table info */}
-                      <View style={styles.ocrPreviewRow}>
+                      <View style={[styles.ocrPreviewRow, isLight && styles.ocrPreviewRowLight]}>
                         {capturedReceiptPhoto && (
                           <img
                             src={capturedReceiptPhoto}
@@ -2839,14 +2937,14 @@ export default function App() {
                           />
                         )}
                         <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-                          <Text style={{ fontSize: 13, color: '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
+                          <Text style={{ fontSize: 13, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
                             {ocrEstablishment || selectedReceiptType.name}
                           </Text>
-                          <Text style={{ fontSize: 11, color: '#94a3b8' }} numberOfLines={1}>
-                            Category: <Text style={{ color: '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
+                          <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }} numberOfLines={1}>
+                            Classification: <Text style={{ color: isLight ? '#0f172a' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
                           </Text>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                            <Text style={{ fontSize: 10, color: '#34d399', fontFamily: 'monospace', fontWeight: '700' }}>
+                            <Text style={{ fontSize: 10, color: isLight ? '#059669' : '#34d399', fontFamily: 'monospace', fontWeight: '700' }}>
                               📁 public.{selectedReceiptType.tableName}
                             </Text>
                           </View>
@@ -2858,60 +2956,60 @@ export default function App() {
                         {/* 1. Establishment */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
-                            <Building2 size={13} color="#38bdf8" />
-                            <Text style={styles.ocrFieldLabel}>Establishment / Store Name:</Text>
+                            <Building2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Establishment / Store Name:</Text>
                           </View>
                           <TextInput
-                            style={styles.ocrFieldInput}
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
                             value={ocrEstablishment}
                             onChangeText={setOcrEstablishment}
                             placeholder="e.g. Store or Business Name"
-                            placeholderTextColor="#64748b"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           />
                         </View>
 
                         {/* 2. Date */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
-                            <Calendar size={13} color="#38bdf8" />
-                            <Text style={styles.ocrFieldLabel}>Receipt Date:</Text>
+                            <Calendar size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Receipt Date:</Text>
                           </View>
                           <TextInput
-                            style={styles.ocrFieldInput}
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
                             value={ocrReceiptDate}
                             onChangeText={setOcrReceiptDate}
                             placeholder="YYYY-MM-DD"
-                            placeholderTextColor="#64748b"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           />
                         </View>
 
                         {/* 3. Description */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
-                            <FileText size={13} color="#38bdf8" />
-                            <Text style={styles.ocrFieldLabel}>Description / Nature of Service:</Text>
+                            <FileText size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Description / Nature of Service:</Text>
                           </View>
                           <TextInput
-                            style={styles.ocrFieldInput}
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
                             value={ocrDescription}
                             onChangeText={setOcrDescription}
                             placeholder="e.g. Service or Item Details"
-                            placeholderTextColor="#64748b"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           />
                         </View>
 
                         {/* 4. Amount */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
-                            <DollarSign size={13} color="#34d399" />
-                            <Text style={styles.ocrFieldLabel}>Amount (PHP):</Text>
+                            <DollarSign size={13} color={isLight ? '#059669' : '#34d399'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Amount (PHP):</Text>
                           </View>
                           <TextInput
-                            style={[styles.ocrFieldInput, { color: '#34d399', fontWeight: '700' }]}
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight, { color: isLight ? '#059669' : '#34d399', fontWeight: '700' }]}
                             value={ocrAmount}
                             onChangeText={setOcrAmount}
                             placeholder="0.00"
-                            placeholderTextColor="#64748b"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                             keyboardType="numeric"
                           />
                         </View>
@@ -2919,15 +3017,15 @@ export default function App() {
                         {/* 5. OR Number */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
-                            <Receipt size={13} color="#38bdf8" />
-                            <Text style={styles.ocrFieldLabel}>Invoice / OR No.:</Text>
+                            <Receipt size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Invoice / OR No.:</Text>
                           </View>
                           <TextInput
-                            style={styles.ocrFieldInput}
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
                             value={ocrOrNumber}
                             onChangeText={setOcrOrNumber}
                             placeholder="e.g. OR-2026-001"
-                            placeholderTextColor="#64748b"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           />
                         </View>
                       </View>
@@ -2945,21 +3043,21 @@ export default function App() {
                             <>
                               <CheckCircle2 size={16} color="#fff" />
                               <Text style={styles.btnSaveVerifiedText}>
-                                Save to {selectedReceiptType.tableName}
+                                Save as {selectedReceiptType.name}
                               </Text>
                             </>
                           )}
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                          style={styles.btnRetakeOcr}
+                          style={[styles.btnRetakeOcr, isLight && styles.btnRetakeOcrLight]}
                           onPress={() => {
                             setIsOcrVerifiedView(false);
                             setCapturedReceiptPhoto(null);
                           }}
                         >
-                          <RefreshCw size={14} color="#94a3b8" />
-                          <Text style={styles.btnRetakeOcrText}>Retake Photo</Text>
+                          <RefreshCw size={14} color={isLight ? '#475569' : '#94a3b8'} />
+                          <Text style={[styles.btnRetakeOcrText, isLight && styles.btnRetakeOcrTextLight]}>Retake Photo</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -5197,6 +5295,52 @@ function createStyles(isLight) {
   },
   optionDescriptionLight: {
     color: '#475569'
+  },
+  receiptTypeCardLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0'
+  },
+  receiptTypeCardActiveLight: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#10b981'
+  },
+  receiptTypeNameLight: {
+    color: '#0f172a'
+  },
+  receiptTypeDescLight: {
+    color: '#64748b'
+  },
+  receiptEntityBadgeLight: {
+    backgroundColor: '#e2e8f0'
+  },
+  receiptEntityBadgeTextLight: {
+    color: '#334155'
+  },
+  ocrVerificationContainerLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#cbd5e1'
+  },
+  ocrPreviewRowLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0'
+  },
+  ocrFieldInputLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1',
+    color: '#0f172a'
+  },
+  ocrFieldLabelLight: {
+    color: '#334155'
+  },
+  ocrVerificationTitleLight: {
+    color: '#0f172a'
+  },
+  btnRetakeOcrLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  btnRetakeOcrTextLight: {
+    color: '#334155'
   }
   });
 }

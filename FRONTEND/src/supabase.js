@@ -6,10 +6,63 @@ const SUPABASE_KEY = (typeof import.meta !== 'undefined' && import.meta.env && i
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Database mappers matching public.inventory_items and dedicated receipt tables
-export function mapFromDb(row) {
+export function mapFromDb(row, tableName = '') {
   if (!row) return null;
-  const rawCat = row.category || 'Expenses';
-  const rawCatId = row.category_id || rawCat.toLowerCase().replace(/\s+/g, '-');
+
+  // Determine category accurately based on category field, source table, or filename
+  let rawCat = row.category;
+  const fileName = row.file_name || '';
+
+  if (!rawCat || (rawCat === 'Expenses' && (
+    tableName === 'petc_sales_receipts' || 
+    tableName === 'petc_income_receipts' || 
+    tableName === 'petc_insurance_receipts' || 
+    tableName === 'consumables_receipts' || 
+    tableName === 'voucher_receipts' || 
+    fileName.includes('SALES') || 
+    fileName.includes('INC') || 
+    fileName.includes('INS') || 
+    fileName.includes('CNS') || 
+    fileName.includes('VCH')
+  ))) {
+    if (tableName === 'petc_sales_receipts' || fileName.includes('SALES')) {
+      rawCat = 'PETC Sales';
+    } else if (tableName === 'petc_insurance_receipts' || fileName.includes('INS')) {
+      rawCat = 'PETC Insurance';
+    } else if (fileName.includes('INC')) {
+      rawCat = 'PETC Income';
+    } else if (tableName === 'consumables_receipts' || fileName.includes('CNS')) {
+      rawCat = 'Consumables';
+    } else if (tableName === 'voucher_receipts' || fileName.includes('VCH')) {
+      rawCat = 'Vouchers';
+    } else if (!rawCat) {
+      rawCat = 'Expenses';
+    }
+  }
+
+  // Derive category_id accurately
+  let rawCatId = row.category_id;
+  if (!rawCatId || (rawCatId === 'expenses' && rawCat !== 'Expenses')) {
+    if (rawCat === 'PETC Sales') rawCatId = 'petc-sales';
+    else if (rawCat === 'PETC Income') rawCatId = 'petc-income';
+    else if (rawCat === 'PETC Insurance') rawCatId = 'petc-insurance';
+    else if (rawCat === 'Consumables') rawCatId = 'consumables';
+    else if (rawCat === 'Vouchers') rawCatId = 'vouchers';
+    else rawCatId = rawCat.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  // Derive entity accurately
+  let rawEntity = row.entity;
+  if (!rawEntity) {
+    if (tableName === 'knoah_mari_expense_receipts' || fileName.includes('EXP-KM')) {
+      rawEntity = 'Knoah Mari';
+    } else if (tableName === 'red_goose_expense_receipts' || fileName.includes('EXP-RG')) {
+      rawEntity = 'Red Goose';
+    } else {
+      rawEntity = 'PETC';
+    }
+  }
+
   const scanDate = row.scanned_at 
     ? new Date(row.scanned_at).toISOString().split('T')[0]
     : (row.created_at ? new Date(row.created_at).toISOString().split('T')[0] : '');
@@ -25,9 +78,9 @@ export function mapFromDb(row) {
     description: row.description || row.preview_data?.description || '',
     category: rawCat,
     categoryId: rawCatId,
-    subCategory: row.sub_category || (row.entity ? `${row.entity} ${rawCat}` : rawCat),
+    subCategory: row.sub_category || (rawEntity ? `${rawEntity} ${rawCat}` : rawCat),
     subCategoryId: row.sub_category_id || '',
-    entity: row.entity || '',
+    entity: rawEntity,
     year: row.year ? String(row.year) : '',
     month: row.month ? String(row.month).toUpperCase() : '',
     amount: Number(row.amount) || 0,
