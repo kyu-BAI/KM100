@@ -54,7 +54,8 @@ import {
   Sparkles,
   Receipt,
   Sun,
-  Moon
+  Moon,
+  Edit3
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
 import { runOcrOnImage } from './ocrService';
@@ -312,6 +313,12 @@ export default function App() {
   const [ocrOrNumber, setOcrOrNumber] = useState('');
   const [isOcrVerifiedView, setIsOcrVerifiedView] = useState(false);
   const [ocrValidationError, setOcrValidationError] = useState('');
+  const [ocrReceiptName, setOcrReceiptName] = useState('');
+
+  // Rename Saved Document State
+  const [renameItem, setRenameItem] = useState(null);
+  const [renameNewName, setRenameNewName] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // Supabase Auth State (Admin accounts only)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -757,6 +764,7 @@ export default function App() {
     setIsOcrProcessing(false);
     setIsOcrVerifiedView(false);
     setOcrValidationError('');
+    setOcrReceiptName('');
     setOcrEstablishment('');
     setOcrReceiptDate('');
     setOcrDescription('');
@@ -1061,6 +1069,11 @@ export default function App() {
       setOcrDescription(parsed?.description || defaultDesc);
       setOcrAmount(parsedAmt > 0 ? parsedAmt.toString() : '');
       setOcrOrNumber(parsedOr);
+
+      const refCode = (parsedOr || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
+      const defaultName = `Scanned_${selectedReceiptType?.prefix || 'REC'}_${refCode}`;
+      setOcrReceiptName(defaultName);
+
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
       showNotice(`Receipt verified as ${selectedReceiptType?.name}! Please review details.`);
@@ -1133,7 +1146,20 @@ export default function App() {
       const description = (ocrDescription || fallbackDesc).trim();
       const amt = parseFloat(ocrAmount) || 0;
       const refCode = (ocrOrNumber || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
-      const receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
+      
+      let rawCustomName = (ocrReceiptName || '').trim();
+      let receiptFileName = '';
+      let receiptTitle = '';
+
+      if (rawCustomName) {
+        receiptFileName = rawCustomName.match(/\.(jpg|jpeg|png|pdf)$/i)
+          ? rawCustomName
+          : `${rawCustomName}.jpg`;
+        receiptTitle = rawCustomName.replace(/\.[^/.]+$/, '');
+      } else {
+        receiptFileName = `Scanned_${selectedReceiptType.prefix}_${refCode}.jpg`;
+        receiptTitle = `${establishment} - ${description} (№ ${refCode})`;
+      }
 
       const scanDateToday = new Date().toISOString().split('T')[0];
       const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -1152,7 +1178,7 @@ export default function App() {
       const scannedItemPayload = {
         id: `SCN-${Date.now()}`,
         fileName: receiptFileName,
-        title: `${establishment} - ${description} (№ ${refCode})`,
+        title: receiptTitle,
         establishment,
         receiptDate,
         scannedDate: scanDateToday,
@@ -1361,6 +1387,61 @@ export default function App() {
     } catch (err) {
       console.error(err);
       showNotice('Failed to delete item', 'error');
+    }
+  };
+
+  // Rename Saved Document
+  const handleRenameItem = async () => {
+    if (!renameItem || !renameNewName.trim()) return;
+    const rawNewName = renameNewName.trim();
+    setIsRenaming(true);
+    try {
+      const id = renameItem.id;
+      const ext = (renameItem.fileFormat || 'JPG').toLowerCase();
+      const finalFileName = rawNewName.includes('.') ? rawNewName : `${rawNewName}.${ext}`;
+      const finalTitle = rawNewName.replace(/\.[^/.]+$/, '');
+
+      // 1. Update master inventory_items table
+      await supabase.from('inventory_items').update({
+        file_name: finalFileName,
+        title: finalTitle,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+
+      // 2. Update dedicated table if present
+      const targetTable = renameItem.sourceTable;
+      if (targetTable && targetTable !== 'inventory_items') {
+        try {
+          await supabase.from(targetTable).update({
+            file_name: finalFileName,
+            title: finalTitle,
+            updated_at: new Date().toISOString()
+          }).eq('id', id);
+        } catch (tableErr) {
+          console.warn(`Dedicated table rename (${targetTable}):`, tableErr);
+        }
+      }
+
+      // 3. Update local state and cached items
+      setItems(prev => {
+        const next = prev.map(i => i.id === id ? { ...i, fileName: finalFileName, title: finalTitle } : i);
+        saveCachedItems(next);
+        return next;
+      });
+
+      // 4. Update Document Viewer modal if viewing this document
+      if (viewItem && viewItem.id === id) {
+        setViewItem(prev => ({ ...prev, fileName: finalFileName, title: finalTitle }));
+      }
+
+      showNotice(`Document renamed to "${finalFileName}"!`);
+      setRenameItem(null);
+      setRenameNewName('');
+    } catch (err) {
+      console.error('Failed to rename document:', err);
+      showNotice('Failed to rename document: ' + (err.message || err), 'error');
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -2404,6 +2485,16 @@ export default function App() {
                       <Text style={styles.mobileBtnViewText}>View Details</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
+                      style={[styles.mobileBtnView, isLight && styles.mobileBtnViewLight, { flex: 0, paddingHorizontal: 12 }]}
+                      onPress={() => {
+                        setRenameItem(item);
+                        setRenameNewName(item.fileName || '');
+                      }}
+                      title="Rename Document"
+                    >
+                      <Edit3 size={14} color={isLight ? '#0284c7' : '#38bdf8'} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       style={styles.mobileBtnDelete}
                       onPress={() => handleDeleteItem(item.id, item.fileName)}
                     >
@@ -2426,7 +2517,7 @@ export default function App() {
                     <Text style={[styles.th, { width: 115 }, isLight && styles.thLight]}>PERIOD / DATE</Text>
                     <Text style={[styles.th, { width: 130, textAlign: 'right', paddingRight: 16 }, isLight && styles.thLight]}>AMOUNT (PHP)</Text>
                     <Text style={[styles.th, { width: 130 }, isLight && styles.thLight]}>STATUS</Text>
-                    <Text style={[styles.th, { width: 90, textAlign: 'center' }, isLight && styles.thLight]}>ACTIONS</Text>
+                    <Text style={[styles.th, { width: 125, textAlign: 'center' }, isLight && styles.thLight]}>ACTIONS</Text>
                   </View>
 
                   {filteredItems.map((item, idx) => (
@@ -2474,16 +2565,28 @@ export default function App() {
                           </Text>
                         </View>
                       </View>
-                      <View style={{ width: 90, flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+                      <View style={{ width: 125, flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
                         <TouchableOpacity
                           style={[styles.btnTableAction, isLight && styles.btnTableActionLight]}
                           onPress={() => setViewItem(item)}
+                          title="View Document"
                         >
                           <Eye size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.btnTableAction, isLight && styles.btnTableActionLight]}
+                          onPress={() => {
+                            setRenameItem(item);
+                            setRenameNewName(item.fileName || '');
+                          }}
+                          title="Rename Document"
+                        >
+                          <Edit3 size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.btnTableAction, isLight && styles.btnTableActionLight]}
                           onPress={() => handleDeleteItem(item.id, item.fileName)}
+                          title="Delete Document"
                         >
                           <Trash2 size={15} color="#f87171" />
                         </TouchableOpacity>
@@ -2528,6 +2631,18 @@ export default function App() {
                 >
                   <Printer size={16} color={isLight ? '#475569' : '#cbd5e1'} />
                   {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#475569' }]}>Print</Text>}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btnOutline, isMobile && { paddingHorizontal: 8, paddingVertical: 6 }]}
+                  onPress={() => {
+                    setRenameItem(viewItem);
+                    setRenameNewName(viewItem?.fileName || '');
+                  }}
+                  title="Rename Document"
+                >
+                  <Edit3 size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#0284c7' }]}>Rename</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -3059,8 +3174,23 @@ export default function App() {
                         </View>
                       </View>
 
-                      {/* Form fields: Establishment, Date, Description, Amount, OR No */}
+                      {/* Form fields: Receipt Name, Establishment, Date, Description, Amount, OR No */}
                       <View style={styles.ocrFieldsGrid}>
+                        {/* 0. Receipt / File Name (Customizable before saving) */}
+                        <View style={styles.ocrFieldItem}>
+                          <View style={styles.ocrFieldLabelRow}>
+                            <Edit3 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Receipt / File Name (Customizable):</Text>
+                          </View>
+                          <TextInput
+                            style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight, { fontWeight: '700' }]}
+                            value={ocrReceiptName}
+                            onChangeText={setOcrReceiptName}
+                            placeholder="e.g. Scanned_REC_1001 or Custom Receipt Name"
+                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          />
+                        </View>
+
                         {/* 1. Establishment */}
                         <View style={styles.ocrFieldItem}>
                           <View style={styles.ocrFieldLabelRow}>
@@ -3259,6 +3389,74 @@ export default function App() {
                 </View>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================== */}
+      {/* 3. RENAME DOCUMENT MODAL                                  */}
+      {/* ======================================================== */}
+      <Modal visible={!!renameItem} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.renameModalContainer, isLight && styles.renameModalContainerLight]}>
+            <View style={styles.renameModalHeader}>
+              <View style={styles.renameIconBox}>
+                <Edit3 size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.renameModalTitle, isLight && styles.renameModalTitleLight]}>Rename Document</Text>
+                <Text style={styles.renameModalSubtitle}>Update the document file name and record title</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}
+                onPress={() => {
+                  setRenameItem(null);
+                  setRenameNewName('');
+                }}
+              >
+                <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.renameModalBody}>
+              <Text style={[styles.renameFieldLabel, isLight && styles.renameFieldLabelLight]}>DOCUMENT FILE NAME:</Text>
+              <TextInput
+                style={[styles.renameInput, isLight && styles.renameInputLight]}
+                value={renameNewName}
+                onChangeText={setRenameNewName}
+                placeholder="Enter new file name..."
+                placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                autoFocus
+                selectTextOnFocus
+              />
+              <Text style={styles.renameHint}>
+                Format: {renameItem?.fileFormat || 'JPG'} • Current: {renameItem?.fileName}
+              </Text>
+            </View>
+
+            <View style={styles.renameModalFooter}>
+              <TouchableOpacity
+                style={[styles.btnSecondary, isLight && styles.btnSecondaryLight]}
+                onPress={() => {
+                  setRenameItem(null);
+                  setRenameNewName('');
+                }}
+                disabled={isRenaming}
+              >
+                <Text style={[styles.btnSecondaryText, isLight && styles.btnSecondaryTextLight]}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.btnSaveVerified, isRenaming && { opacity: 0.6 }]}
+                onPress={handleRenameItem}
+                disabled={isRenaming}
+              >
+                <CheckCircle2 size={16} color="#ffffff" />
+                <Text style={styles.btnSaveVerifiedText}>
+                  {isRenaming ? 'Saving...' : 'Save Name'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -5497,6 +5695,102 @@ function createStyles(isLight) {
   },
   btnRetakeOcrTextLight: {
     color: '#334155'
+  },
+
+  // Rename Modal Styles
+  renameModalContainer: {
+    width: '90%',
+    maxWidth: 480,
+    backgroundColor: isLight ? '#ffffff' : '#0f172a',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: isLight ? '#cbd5e1' : '#334155',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+  },
+  renameModalContainerLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  renameModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: isLight ? '#ffffff' : '#131d31',
+    borderBottomWidth: 1,
+    borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+  },
+  renameIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)'
+  },
+  renameModalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: isLight ? '#0f172a' : '#f8fafc'
+  },
+  renameModalTitleLight: {
+    color: '#0f172a'
+  },
+  renameModalSubtitle: {
+    fontSize: 12,
+    color: isLight ? '#64748b' : '#94a3b8',
+    marginTop: 2
+  },
+  renameModalBody: {
+    padding: 20,
+    backgroundColor: isLight ? '#ffffff' : '#0f172a'
+  },
+  renameFieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: isLight ? '#64748b' : '#94a3b8',
+    letterSpacing: 0.5,
+    marginBottom: 8
+  },
+  renameFieldLabelLight: {
+    color: '#475569'
+  },
+  renameInput: {
+    backgroundColor: isLight ? '#f8fafc' : '#1e293b',
+    borderWidth: 1,
+    borderColor: isLight ? '#cbd5e1' : '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: isLight ? '#0f172a' : '#f8fafc'
+  },
+  renameInputLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#cbd5e1',
+    color: '#0f172a'
+  },
+  renameHint: {
+    fontSize: 11,
+    color: isLight ? '#94a3b8' : '#64748b',
+    marginTop: 8
+  },
+  renameModalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: isLight ? '#f8fafc' : '#131d31',
+    borderTopWidth: 1,
+    borderTopColor: isLight ? '#e2e8f0' : '#1e293b'
   }
   });
 }
