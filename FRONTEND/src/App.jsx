@@ -1867,7 +1867,7 @@ export default function App() {
   // ----------------------------------------------------
   if (!currentUser) {
     return (
-      <View style={[styles.authContainer, isMobile && { padding: 12 }, isLight && styles.containerLight]}>
+      <ScrollView style={{ flex: 1, backgroundColor: isLight ? '#f1f5f9' : '#0b1120' }} contentContainerStyle={[styles.authContainer, isMobile && { padding: 12 }, { flexGrow: 1, position: 'relative' }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {/* Quick Theme Toggle on Auth Screen */}
         <TouchableOpacity
           style={[{ position: 'absolute', top: 16, right: 16, zIndex: 10 }, styles.themeToggleBtn, isLight && styles.themeToggleBtnLight]}
@@ -2054,7 +2054,7 @@ export default function App() {
             </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -2086,7 +2086,7 @@ export default function App() {
             title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
           >
             <Menu size={isSmallMobile ? 16 : 18} color={isLight ? '#0284c7' : '#38bdf8'} />
-            {!isSmallMobile && (
+            {!isMobile && (
               <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
                 {sidebarOpen ? 'Hide' : 'Folders'}
               </Text>
@@ -2104,7 +2104,8 @@ export default function App() {
               borderWidth: 1.5,
               borderColor: '#f97316',
               overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)'
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)',
+              flexShrink: 0
             }}>
               <Image
                 source={{ uri: '/km100-logo.png' }}
@@ -2112,28 +2113,28 @@ export default function App() {
                 resizeMode="contain"
               />
             </View>
-            {!isSmallMobile && (
-              <View style={{ gap: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
-                    KM100
-                  </Text>
+            <View style={{ gap: 1, minWidth: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                  KM100
+                </Text>
+                {width >= 620 && (
                   <View style={styles.brandBadge}>
                     <Text style={styles.brandBadgeText}>INVENTORY</Text>
                   </View>
-                </View>
-                {isDesktop && (
-                  <Text style={[styles.brandSub, isLight && styles.brandSubLight]}>
-                    Skills & Training Center, Inc. • Emission Testing Portal
-                  </Text>
                 )}
               </View>
-            )}
+              {isDesktop && (
+                <Text style={[styles.brandSub, isLight && styles.brandSubLight]} numberOfLines={1}>
+                  Skills & Training Center, Inc. • Emission Testing Portal
+                </Text>
+              )}
+            </View>
           </View>
         </View>
 
         {/* Center Search Bar on Desktop & Large Tablet */}
-        {!isMobile && (
+        {width >= 960 && (
           <View style={[styles.headerSearchBox, isLight && styles.headerSearchBoxLight]}>
             <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
             <TextInput
@@ -2161,12 +2162,12 @@ export default function App() {
           >
             <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
             <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
-              {isSmallMobile ? 'Scan' : 'Scan Receipt'}
+              {width < 440 ? 'Scan' : 'Scan Receipt'}
             </Text>
           </TouchableOpacity>
 
           {/* SECONDARY ACTION: EXPORT EXCEL (Desktop & Tablet) */}
-          {!isMobile && (
+          {width >= 1180 && (
             <TouchableOpacity
               style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
               onPress={() => exportFolderToExcel(activeNav)}
@@ -2189,7 +2190,7 @@ export default function App() {
           </TouchableOpacity>
 
           {/* Live Sync Pill (Desktop & Tablet only) */}
-          {!isMobile && (
+          {width >= 1280 && (
             <TouchableOpacity
               style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
               onPress={() => fetchData(false)}
@@ -3198,7 +3199,7 @@ export default function App() {
 
           {/* 3. CONTEXTUAL SUB-CATEGORY / YEAR FILTER CHIPS */}
           {activeNav.type === 'expenses' && (
-            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Branch Filter:</Text>
               <TouchableOpacity
                 style={[styles.subFilterChip, !activeNav.subCategory && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.subCategory && isLight && styles.subFilterChipActiveLight]}
@@ -3224,11 +3225,11 @@ export default function App() {
               >
                 <Text style={[styles.subFilterChipText, activeNav.subCategory === 'knoah-mari-2026' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'knoah-mari-2026' && isLight && styles.subFilterChipTextActiveLight]}>Knoah Mari 2026</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView></View>
           )}
 
           {(activeNav.type === 'petc-sales' || activeNav.type === 'petc-income') && (
-            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Year Filter:</Text>
               <TouchableOpacity
                 style={[styles.subFilterChip, !activeNav.year && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.year && isLight && styles.subFilterChipActiveLight]}
@@ -3248,11 +3249,11 @@ export default function App() {
               >
                 <Text style={[styles.subFilterChipText, activeNav.year === '2027' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.year === '2027' && isLight && styles.subFilterChipTextActiveLight]}>2027</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView></View>
           )}
 
           {activeNav.type === 'consumables' && (
-            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Category Filter:</Text>
               <TouchableOpacity
                 style={[styles.subFilterChip, !activeNav.subCategory && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.subCategory && isLight && styles.subFilterChipActiveLight]}
@@ -3278,16 +3279,16 @@ export default function App() {
               >
                 <Text style={[styles.subFilterChipText, activeNav.subCategory === 'red-goose' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'red-goose' && isLight && styles.subFilterChipTextActiveLight]}>Red Goose</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView></View>
           )}
 
           {/* 4. CLEAN SEARCH & FILTER ACTION BAR */}
-          <View style={[styles.controlBar, isLight && styles.controlBarLight]}>
-            <View style={styles.controlBarLeft}>
-              <View style={styles.breadcrumbs}>
+          <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
+            <View style={[styles.controlBarLeft, isMobile && { width: '100%', justifyContent: 'space-between', gap: 8 }]}>
+              <View style={[styles.breadcrumbs, { flex: 1, minWidth: 0 }]}>
                 <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Records</Text>
                 <ChevronRight size={14} color={isLight ? '#94a3b8' : '#64748b'} />
-                <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]}>{activeNav.label}</Text>
+                <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]} numberOfLines={1}>{activeNav.label}</Text>
               </View>
 
               {(activeNav.type !== 'all' || activeNav.year || activeNav.subCategory || searchQuery) && (
@@ -3299,15 +3300,15 @@ export default function App() {
                   }}
                 >
                   <X size={12} color={isLight ? '#ef4444' : '#f87171'} />
-                  <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset Filters</Text>
+                  <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset</Text>
                 </TouchableOpacity>
               )}
             </View>
 
-            <View style={styles.controlBarRight}>
-              {/* Mobile Search Input */}
-              {isMobile && (
-                <View style={[styles.searchBox, { width: '100%', marginBottom: 4 }, isLight && styles.searchBoxLight]}>
+            <View style={[styles.controlBarRight, isMobile && { width: '100%', flexDirection: 'column', gap: 8, alignItems: 'stretch' }]}>
+              {/* Search input for screens < 960px where it is not in the top header */}
+              {width < 960 && (
+                <View style={[styles.searchBox, { width: '100%' }, isLight && styles.searchBoxLight]}>
                   <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
                   <TextInput
                     style={[styles.searchInput, isLight && styles.searchInputLight]}
@@ -3324,7 +3325,7 @@ export default function App() {
                 </View>
               )}
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'space-between' : 'flex-end', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
                 {/* Export Excel Button */}
                 <TouchableOpacity
                   style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
@@ -5634,6 +5635,9 @@ function createStyles(isLight) {
       backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
     },
     viewerBody: {
+    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
       padding: 24,
       backgroundColor: isLight ? '#ffffff' : '#0f172a'
     },
@@ -5813,6 +5817,9 @@ function createStyles(isLight) {
       marginTop: 2
     },
     modalBody: {
+    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
       padding: 20,
       backgroundColor: isLight ? '#ffffff' : '#0f172a'
     },
@@ -5829,6 +5836,9 @@ function createStyles(isLight) {
     },
     // Options Screen (The Two Cards)
     optionsBody: {
+    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
       padding: 24,
       gap: 16
     },
@@ -6210,12 +6220,15 @@ function createStyles(isLight) {
       letterSpacing: 0.5
     },
     cameraActionRow: {
-      position: 'absolute',
-      bottom: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10
-    },
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
     btnCaptureShutter: {
       flexDirection: 'row',
       alignItems: 'center',
