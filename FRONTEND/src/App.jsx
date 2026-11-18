@@ -55,7 +55,11 @@ import {
   Receipt,
   Sun,
   Moon,
-  Edit3
+  Edit3,
+  TrendingUp,
+  CreditCard,
+  FolderOpen,
+  Plus
 } from 'lucide-react';
 import { supabase, mapFromDb, mapToDb } from './supabase';
 import XLSX from 'xlsx-js-style';
@@ -237,6 +241,46 @@ export default function App() {
   }, [isLight]);
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Live Dashboard Statistics for Quick Overview
+  const stats = useMemo(() => {
+    let totalSales = 0;
+    let totalSalesCount = 0;
+    let totalIncome = 0;
+    let totalIncomeCount = 0;
+    let totalExpenses = 0;
+    let totalExpensesCount = 0;
+    let totalConsumablesCount = 0;
+
+    items.forEach(item => {
+      const amt = parseFloat(item.amount) || 0;
+      const cat = (item.category || item.categoryId || '').toLowerCase();
+
+      if (cat.includes('sale') || cat.includes('emission') || cat === 'petc-sales') {
+        totalSales += amt;
+        totalSalesCount++;
+      } else if (cat.includes('income') || cat.includes('revenue') || cat.includes('collection') || cat === 'petc-income') {
+        totalIncome += amt;
+        totalIncomeCount++;
+      } else if (cat.includes('expense') || cat === 'expenses') {
+        totalExpenses += amt;
+        totalExpensesCount++;
+      } else if (cat.includes('consumable')) {
+        totalConsumablesCount++;
+      }
+    });
+
+    return {
+      totalRecords: items.length,
+      totalSales,
+      totalSalesCount,
+      totalIncome,
+      totalIncomeCount,
+      totalExpenses,
+      totalExpensesCount,
+      totalConsumablesCount
+    };
+  }, [items]);
 
   // Tree expansion state
   const [expandedNodes, setExpandedNodes] = useState({
@@ -2001,36 +2045,124 @@ export default function App() {
         </View>
       )}
 
-      {/* Mobile Top Bar */}
-      {isMobile && (
-        <View style={[styles.mobileTopBar, isLight && styles.mobileTopBarLight]}>
+      {/* GLOBAL PROFESSIONAL TOP HEADER BAR */}
+      <View style={[styles.topHeader, isMobile && styles.topHeaderMobile, isLight && styles.topHeaderLight]}>
+        <View style={styles.topHeaderLeft}>
           <TouchableOpacity
-            style={styles.mobileMenuBtn}
+            style={[styles.sidebarToggleBtn, isLight && styles.sidebarToggleBtnLight]}
             onPress={() => setSidebarOpen(prev => !prev)}
+            title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
           >
-            <Menu size={22} color={isLight ? '#0284c7' : '#38bdf8'} />
+            <FolderOpen size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
+            <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
+              {sidebarOpen ? 'Hide Folders' : 'Folders'}
+            </Text>
           </TouchableOpacity>
-          <View style={styles.mobileTitleBlock}>
-            <Text style={[styles.mobileAppTitle, isLight && styles.mobileAppTitleLight]} numberOfLines={1}>PETC INVENTORY</Text>
-            <Text style={[styles.mobileAppSub, isLight && styles.mobileAppSubLight]} numberOfLines={1}>{activeNav.label}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <TouchableOpacity
-              style={[styles.mobileThemeBtn, isLight && styles.mobileThemeBtnLight]}
-              onPress={toggleTheme}
-              accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
-            >
-              {isLight ? <Moon size={18} color="#6366f1" /> : <Sun size={18} color="#f59e0b" />}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.mobileAddBtn}
-              onPress={openAddModal}
-            >
-              <PlusCircle size={22} color="#34d399" />
-            </TouchableOpacity>
+
+          <View style={styles.brandContainer}>
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeText}>KM100</Text>
+            </View>
+            <View>
+              <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                RECEIPT & INVENTORY
+              </Text>
+              {!isMobile && (
+                <Text style={[styles.brandSub, isLight && styles.brandSubLight]}>
+                  Emission Testing & Branch Records
+                </Text>
+              )}
+            </View>
           </View>
         </View>
-      )}
+
+        {/* Center Search Bar on Desktop */}
+        {!isMobile && (
+          <View style={[styles.headerSearchBox, isLight && styles.headerSearchBoxLight]}>
+            <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+            <TextInput
+              style={[styles.headerSearchInput, isLight && styles.headerSearchInputLight]}
+              placeholder="Search store, receipt title, invoice #, amount..."
+              placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Right Header Action Cluster */}
+        <View style={styles.topHeaderRight}>
+          {/* PRIMARY HERO BUTTON: SCAN RECEIPT */}
+          <TouchableOpacity
+            style={styles.heroScanBtn}
+            onPress={openAddModal}
+            title="Scan physical receipt or upload document"
+          >
+            <Camera size={16} color="#ffffff" />
+            <Text style={styles.heroScanBtnText}>Scan Receipt</Text>
+          </TouchableOpacity>
+
+          {/* SECONDARY ACTION: EXPORT EXCEL (Desktop) */}
+          {!isMobile && (
+            <TouchableOpacity
+              style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
+              onPress={() => exportFolderToExcel(activeNav)}
+              title="Download formal Excel spreadsheet (.xlsx)"
+            >
+              <FileSpreadsheet size={15} color={isLight ? '#059669' : '#34d399'} />
+              <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>
+                Export Excel
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Theme Toggle Button */}
+          <TouchableOpacity
+            style={[styles.headerIconBtn, isLight && styles.headerIconBtnLight]}
+            onPress={toggleTheme}
+            title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+          >
+            {isLight ? <Moon size={16} color="#6366f1" /> : <Sun size={16} color="#f59e0b" />}
+          </TouchableOpacity>
+
+          {/* Live Sync Pill */}
+          <TouchableOpacity
+            style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
+            onPress={() => fetchData(false)}
+            title="Click to sync with database"
+          >
+            <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+            {!isMobile && (
+              <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
+                {isSyncing ? 'Syncing...' : 'Sync'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* User Profile / Logout */}
+          {currentUser && (
+            <View style={styles.headerUserBlock}>
+              <View style={[styles.headerUserAvatar, isLight && styles.headerUserAvatarLight]}>
+                <Text style={styles.headerUserInitial}>
+                  {(currentUser.name || currentUser.email || 'A').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.headerLogoutBtn, isLight && styles.headerLogoutBtnLight]}
+                onPress={handleLogout}
+                title="Sign Out"
+              >
+                <LogOut size={14} color="#f87171" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
 
       {/* MAIN WORKSPACE: LEFT SIDEBAR IS THE SOLE NAVIGATION */}
       <View style={[styles.mainContent, isLight && styles.mainContentLight]}>
@@ -2807,68 +2939,305 @@ export default function App() {
 
         {/* MAIN VIEWING AREA */}
         <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
-          {/* CONTROL BAR: Burger Menu Toggle, Breadcrumbs, Search & Record Count */}
-          <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
-            <View style={styles.controlBarLeft}>
-              <TouchableOpacity
-                style={[styles.burgerToggleBtn, isMobile && { display: 'none' }, isLight && styles.burgerToggleBtnLight]}
-                onPress={() => setSidebarOpen(prev => !prev)}
-                title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-              >
-                <Menu size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
-              </TouchableOpacity>
 
-              <View style={[styles.breadcrumbs, isMobile && { display: 'none' }]}>
-                <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Inventory</Text>
+          {/* 1. CORE METRICS OVERVIEW (AT-A-GLANCE SUMMARY CARDS) */}
+          <View style={[styles.statsGrid, isMobile && styles.statsGridMobile]}>
+            {/* Card 1: Expenses */}
+            <TouchableOpacity
+              style={[
+                styles.statCard,
+                activeNav.type === 'expenses' && styles.statCardActive,
+                isLight && styles.statCardLight,
+                activeNav.type === 'expenses' && isLight && styles.statCardActiveLight
+              ]}
+              onPress={() => setActiveNav({ type: 'expenses', year: null, month: null, subCategory: null, label: 'Expenses' })}
+            >
+              <View style={styles.statCardHeader}>
+                <Text style={[styles.statCardLabel, isLight && styles.statCardLabelLight]}>TOTAL EXPENSES</Text>
+                <View style={[styles.statIconBadge, { backgroundColor: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.15)' }]}>
+                  <CreditCard size={15} color="#ef4444" />
+                </View>
+              </View>
+              <Text style={[styles.statCardValue, { color: isLight ? '#b91c1c' : '#f87171' }]}>
+                ₱{stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
+                {stats.totalExpensesCount} Receipts • Click to view
+              </Text>
+            </TouchableOpacity>
+
+            {/* Card 2: PETC Sales */}
+            <TouchableOpacity
+              style={[
+                styles.statCard,
+                activeNav.type === 'petc-sales' && styles.statCardActive,
+                isLight && styles.statCardLight,
+                activeNav.type === 'petc-sales' && isLight && styles.statCardActiveLight
+              ]}
+              onPress={() => setActiveNav({ type: 'petc-sales', year: null, month: null, subCategory: null, label: 'PETC Sales' })}
+            >
+              <View style={styles.statCardHeader}>
+                <Text style={[styles.statCardLabel, isLight && styles.statCardLabelLight]}>PETC SALES</Text>
+                <View style={[styles.statIconBadge, { backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)' }]}>
+                  <TrendingUp size={15} color="#10b981" />
+                </View>
+              </View>
+              <Text style={[styles.statCardValue, { color: isLight ? '#047857' : '#34d399' }]}>
+                ₱{stats.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
+                {stats.totalSalesCount} Invoices • Click to view
+              </Text>
+            </TouchableOpacity>
+
+            {/* Card 3: PETC Income */}
+            <TouchableOpacity
+              style={[
+                styles.statCard,
+                activeNav.type === 'petc-income' && styles.statCardActive,
+                isLight && styles.statCardLight,
+                activeNav.type === 'petc-income' && isLight && styles.statCardActiveLight
+              ]}
+              onPress={() => setActiveNav({ type: 'petc-income', year: null, month: null, subCategory: null, label: 'PETC Income' })}
+            >
+              <View style={styles.statCardHeader}>
+                <Text style={[styles.statCardLabel, isLight && styles.statCardLabelLight]}>PETC INCOME</Text>
+                <View style={[styles.statIconBadge, { backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)' }]}>
+                  <DollarSign size={15} color="#0284c7" />
+                </View>
+              </View>
+              <Text style={[styles.statCardValue, { color: isLight ? '#0369a1' : '#38bdf8' }]}>
+                ₱{stats.totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </Text>
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
+                {stats.totalIncomeCount} Collections • Click to view
+              </Text>
+            </TouchableOpacity>
+
+            {/* Card 4: Total Files */}
+            <TouchableOpacity
+              style={[
+                styles.statCard,
+                activeNav.type === 'all' && styles.statCardActive,
+                isLight && styles.statCardLight,
+                activeNav.type === 'all' && isLight && styles.statCardActiveLight
+              ]}
+              onPress={() => setActiveNav({ type: 'all', year: null, month: null, subCategory: null, label: 'All Inventory Files' })}
+            >
+              <View style={styles.statCardHeader}>
+                <Text style={[styles.statCardLabel, isLight && styles.statCardLabelLight]}>ALL RECORDS</Text>
+                <View style={[styles.statIconBadge, { backgroundColor: isLight ? '#ede9fe' : 'rgba(139, 92, 246, 0.15)' }]}>
+                  <Layers size={15} color="#8b5cf6" />
+                </View>
+              </View>
+              <Text style={[styles.statCardValue, { color: isLight ? '#6d28d9' : '#a78bfa' }]}>
+                {stats.totalRecords} Records
+              </Text>
+              <Text style={[styles.statCardSub, isLight && styles.statCardSubLight]}>
+                Complete Database • Click to view
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 2. SIMPLE CATEGORY NAVIGATION TABS (ONE-CLICK ACCESS) */}
+          <View style={[styles.categoryNavBar, isLight && styles.categoryNavBarLight]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryNavScroll}>
+              {[
+                { id: 'all', label: 'All Records', count: stats.totalRecords, icon: Layers },
+                { id: 'petc-sales', label: 'PETC Sales', count: stats.totalSalesCount, icon: TrendingUp },
+                { id: 'petc-income', label: 'PETC Income', count: stats.totalIncomeCount, icon: DollarSign },
+                { id: 'expenses', label: 'Expenses', count: stats.totalExpensesCount, icon: CreditCard },
+                { id: 'consumables', label: 'Consumables', count: stats.totalConsumablesCount, icon: Package },
+                { id: 'petc-insurance', label: 'Insurance', count: null, icon: ShieldCheck },
+                { id: 'vouchers', label: 'Vouchers', count: null, icon: Receipt },
+              ].map(cat => {
+                const isActive = activeNav.type === cat.id;
+                const IconComponent = cat.icon;
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.categoryTab,
+                      isActive && styles.categoryTabActive,
+                      isLight && styles.categoryTabLight,
+                      isActive && isLight && styles.categoryTabActiveLight
+                    ]}
+                    onPress={() => {
+                      let defaultLabel = cat.label;
+                      if (cat.id === 'all') defaultLabel = 'All Inventory Files';
+                      setActiveNav({
+                        type: cat.id,
+                        year: null,
+                        month: null,
+                        subCategory: null,
+                        label: defaultLabel
+                      });
+                    }}
+                  >
+                    <IconComponent size={14} color={isActive ? (isLight ? '#0284c7' : '#38bdf8') : (isLight ? '#64748b' : '#94a3b8')} />
+                    <Text style={[
+                      styles.categoryTabText,
+                      isActive && styles.categoryTabTextActive,
+                      isLight && styles.categoryTabTextLight,
+                      isActive && isLight && styles.categoryTabTextActiveLight
+                    ]}>
+                      {cat.label}
+                    </Text>
+                    {cat.count !== null && (
+                      <View style={[
+                        styles.categoryTabBadge,
+                        isActive && styles.categoryTabBadgeActive,
+                        isLight && styles.categoryTabBadgeLight
+                      ]}>
+                        <Text style={[
+                          styles.categoryTabBadgeText,
+                          isActive && styles.categoryTabBadgeTextActive,
+                          isLight && styles.categoryTabBadgeTextLight
+                        ]}>
+                          {cat.count}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {/* 3. CONTEXTUAL SUB-CATEGORY / YEAR FILTER CHIPS */}
+          {activeNav.type === 'expenses' && (
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+              <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Branch Filter:</Text>
+              <TouchableOpacity
+                style={[styles.subFilterChip, !activeNav.subCategory && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.subCategory && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'expenses', year: null, month: null, subCategory: null, label: 'Expenses' })}
+              >
+                <Text style={[styles.subFilterChipText, !activeNav.subCategory && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, !activeNav.subCategory && isLight && styles.subFilterChipTextActiveLight]}>All Expenses</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'expenses-2026' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'expenses-2026' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'expenses', year: '2026', month: null, subCategory: 'expenses-2026', label: 'Expenses > Expenses 2026 (PETC)' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'expenses-2026' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'expenses-2026' && isLight && styles.subFilterChipTextActiveLight]}>Expenses 2026 (PETC)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'red-goose-2026' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'red-goose-2026' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'expenses', year: '2026', month: null, subCategory: 'red-goose-2026', label: 'Expenses > Red Goose 2026' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'red-goose-2026' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'red-goose-2026' && isLight && styles.subFilterChipTextActiveLight]}>Red Goose 2026</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'knoah-mari-2026' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'knoah-mari-2026' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'expenses', year: '2026', month: null, subCategory: 'knoah-mari-2026', label: 'Expenses > Knoah Mari 2026' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'knoah-mari-2026' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'knoah-mari-2026' && isLight && styles.subFilterChipTextActiveLight]}>Knoah Mari 2026</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {(activeNav.type === 'petc-sales' || activeNav.type === 'petc-income') && (
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+              <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Year Filter:</Text>
+              <TouchableOpacity
+                style={[styles.subFilterChip, !activeNav.year && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.year && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: activeNav.type, year: null, month: null, subCategory: null, label: activeNav.type === 'petc-sales' ? 'PETC Sales' : 'PETC Income' })}
+              >
+                <Text style={[styles.subFilterChipText, !activeNav.year && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, !activeNav.year && isLight && styles.subFilterChipTextActiveLight]}>All Years</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.year === '2026' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.year === '2026' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: activeNav.type, year: '2026', month: null, subCategory: null, label: `${activeNav.type === 'petc-sales' ? 'PETC Sales' : 'PETC Income'} > 2026` })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.year === '2026' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.year === '2026' && isLight && styles.subFilterChipTextActiveLight]}>2026</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.year === '2027' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.year === '2027' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: activeNav.type, year: '2027', month: null, subCategory: null, label: `${activeNav.type === 'petc-sales' ? 'PETC Sales' : 'PETC Income'} > 2027` })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.year === '2027' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.year === '2027' && isLight && styles.subFilterChipTextActiveLight]}>2027</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {activeNav.type === 'consumables' && (
+            <View style={[styles.subFilterRow, isLight && styles.subFilterRowLight]}>
+              <Text style={[styles.subFilterHeading, isLight && styles.subFilterHeadingLight]}>Category Filter:</Text>
+              <TouchableOpacity
+                style={[styles.subFilterChip, !activeNav.subCategory && styles.subFilterChipActive, isLight && styles.subFilterChipLight, !activeNav.subCategory && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'consumables', year: null, month: null, subCategory: null, label: 'Consumables' })}
+              >
+                <Text style={[styles.subFilterChipText, !activeNav.subCategory && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, !activeNav.subCategory && isLight && styles.subFilterChipTextActiveLight]}>All Consumables</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'office-supply' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'office-supply' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'consumables', year: null, month: null, subCategory: 'office-supply', label: 'Consumables > Office supply' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'office-supply' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'office-supply' && isLight && styles.subFilterChipTextActiveLight]}>Office Supply</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'cleaning-supply' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'cleaning-supply' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'consumables', year: null, month: null, subCategory: 'cleaning-supply', label: 'Consumables > Cleaning supply' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'cleaning-supply' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'cleaning-supply' && isLight && styles.subFilterChipTextActiveLight]}>Cleaning Supply</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subFilterChip, activeNav.subCategory === 'red-goose' && styles.subFilterChipActive, isLight && styles.subFilterChipLight, activeNav.subCategory === 'red-goose' && isLight && styles.subFilterChipActiveLight]}
+                onPress={() => setActiveNav({ type: 'consumables', year: null, month: null, subCategory: 'red-goose', label: 'Consumables > Red Goose' })}
+              >
+                <Text style={[styles.subFilterChipText, activeNav.subCategory === 'red-goose' && styles.subFilterChipTextActive, isLight && styles.subFilterChipTextLight, activeNav.subCategory === 'red-goose' && isLight && styles.subFilterChipTextActiveLight]}>Red Goose</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* 4. CLEAN SEARCH & FILTER ACTION BAR */}
+          <View style={[styles.controlBar, isLight && styles.controlBarLight]}>
+            <View style={styles.controlBarLeft}>
+              <View style={styles.breadcrumbs}>
+                <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Records</Text>
                 <ChevronRight size={14} color={isLight ? '#94a3b8' : '#64748b'} />
                 <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]}>{activeNav.label}</Text>
               </View>
+
+              {(activeNav.type !== 'all' || activeNav.year || activeNav.subCategory || searchQuery) && (
+                <TouchableOpacity
+                  style={[styles.clearFilterBtn, isLight && styles.clearFilterBtnLight]}
+                  onPress={() => {
+                    setActiveNav({ type: 'all', year: null, month: null, subCategory: null, label: 'All Inventory Files' });
+                    setSearchQuery('');
+                  }}
+                >
+                  <X size={12} color={isLight ? '#ef4444' : '#f87171'} />
+                  <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset Filters</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            <View style={[
-              styles.controlBarRight,
-              isMobile && { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: 10 }
-            ]}>
-              <View style={[styles.searchBox, isMobile && { width: '100%' }, isLight && styles.searchBoxLight]}>
-                <Search size={16} color={isLight ? '#64748b' : '#94a3b8'} />
-                <TextInput
-                  style={[styles.searchInput, isLight && styles.searchInputLight]}
-                  placeholder="Search file name"
-                  placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <X size={15} color={isLight ? '#64748b' : '#94a3b8'} />
-                  </TouchableOpacity>
-                )}
-              </View>
+            <View style={styles.controlBarRight}>
+              {/* Mobile Search Input */}
+              {isMobile && (
+                <View style={[styles.searchBox, { width: '100%', marginBottom: 4 }, isLight && styles.searchBoxLight]}>
+                  <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                  <TextInput
+                    style={[styles.searchInput, isLight && styles.searchInputLight]}
+                    placeholder="Search store, invoice #, amount..."
+                    placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                      <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: isMobile ? 'space-between' : 'flex-end',
-                gap: 8,
-                flexWrap: 'wrap'
-              }}>
-                {/* Theme Toggle Button */}
-                <TouchableOpacity
-                  style={[styles.themeToggleBtn, isLight && styles.themeToggleBtnLight]}
-                  onPress={toggleTheme}
-                  accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
-                >
-                  {isLight ? <Moon size={12} color="#6366f1" /> : <Sun size={12} color="#f59e0b" />}
-                  <Text style={[styles.themeToggleBtnText, isLight && styles.themeToggleBtnTextLight]}>
-                    {isLight ? 'Dark Mode' : 'Light Mode'}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Export Current Folder to Excel (.xlsx) */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {/* Export Excel Button */}
                 <TouchableOpacity
                   style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
                   onPress={() => exportFolderToExcel(activeNav)}
-                  title={`Export "${activeNav.label}" into organized Excel file`}
+                  title={`Export "${activeNav.label}" into formal Excel spreadsheet`}
                 >
                   <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
                   <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
@@ -2876,32 +3245,11 @@ export default function App() {
                   </Text>
                 </TouchableOpacity>
 
-                {activeNav.type === 'all' && (
-                  <TouchableOpacity
-                    style={[styles.allFilesToggleBtn, showAllFiles && styles.allFilesToggleBtnActive, isLight && styles.allFilesToggleBtnLight, showAllFiles && isLight && styles.allFilesToggleBtnActiveLight]}
-                    onPress={handleToggleShowAll}
-                    accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
-                  >
-                    {showAllFiles ? <Eye size={12} color={isLight ? '#0284c7' : '#38bdf8'} /> : <EyeOff size={12} color={isLight ? '#64748b' : '#94a3b8'} />}
-                    <Text style={[styles.allFilesToggleBtnText, showAllFiles && styles.allFilesToggleBtnTextActive, isLight && styles.allFilesToggleBtnTextLight, showAllFiles && isLight && styles.allFilesToggleBtnTextActiveLight]}>
-                      {showAllFiles ? 'Display All: ON' : 'Display All: OFF'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={[styles.cachePill, isLight && styles.cachePillLight]}
-                  onPress={() => fetchData(false)}
-                  title="Click to sync with database"
-                >
-                  <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
-                  <Text style={[styles.cachePillText, isLight && styles.cachePillTextLight]}>
-                    {isSyncing ? 'Syncing...' : (cacheSyncLabel ? `Cached • ${cacheSyncLabel}` : 'Live Cache')}
-                  </Text>
-                </TouchableOpacity>
-
+                {/* Total Count Pill */}
                 <View style={[styles.countBadge, isLight && styles.countBadgeLight]}>
-                  <Text style={[styles.countBadgeText, isLight && styles.countBadgeTextLight]}>{filteredItems.length} records</Text>
+                  <Text style={[styles.countBadgeText, isLight && styles.countBadgeTextLight]}>
+                    {filteredItems.length} {filteredItems.length === 1 ? 'record' : 'records'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -2931,15 +3279,35 @@ export default function App() {
               </View>
             ) : (
               <View style={styles.emptyContainer}>
-                <Layers size={48} color="#334155" />
-                <Text style={styles.emptyTitle}>
-                  {items.length === 0 ? 'No files or documents currently in system' : 'No records found in this category'}
+                <Layers size={44} color={isLight ? '#cbd5e1' : '#334155'} />
+                <Text style={[styles.emptyTitle, isLight && styles.emptyTitleLight]}>
+                  {searchQuery ? 'No documents match your search' : items.length === 0 ? 'No files or documents currently in system' : `No records found in ${activeNav.label}`}
                 </Text>
-                <Text style={styles.emptySubtitle}>
-                  {items.length === 0
-                    ? 'Your inventory database is currently empty. Tap "Add Document" to add records.'
-                    : 'Select another category or year/month to view documents.'}
+                <Text style={[styles.emptySubtitle, isLight && styles.emptySubtitleLight]}>
+                  {searchQuery
+                    ? 'Try searching with a different store name, invoice number, or amount.'
+                    : items.length === 0
+                      ? 'Your inventory database is currently empty. Tap "Scan Receipt" to add your first record.'
+                      : 'You can tap "Scan Receipt" to add a new document, or choose another category from the tabs above.'}
                 </Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {searchQuery ? (
+                    <TouchableOpacity
+                      style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
+                      onPress={() => setSearchQuery('')}
+                    >
+                      <X size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                      <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>Clear Search</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  <TouchableOpacity
+                    style={styles.heroScanBtn}
+                    onPress={openAddModal}
+                  >
+                    <Camera size={15} color="#ffffff" />
+                    <Text style={styles.heroScanBtnText}>Scan New Receipt</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )
           ) : isMobile ? (
@@ -3980,6 +4348,21 @@ export default function App() {
           </View>
         </View>
       </Modal>
+
+      {/* MOBILE FLOATING ACTION BUTTON (SCAN RECEIPT) */}
+      {isMobile && (
+        <View style={styles.mobileFloatingBar}>
+          <TouchableOpacity
+            style={styles.mobileFloatingBtn}
+            onPress={openAddModal}
+            activeOpacity={0.85}
+            title="Scan receipt with camera"
+          >
+            <Camera size={20} color="#ffffff" />
+            <Text style={styles.mobileFloatingBtnText}>Scan Receipt</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -3993,6 +4376,492 @@ function createStyles(isLight) {
     flexDirection: 'column',
     height: '100%',
     width: '100%'
+  },
+
+  // TOP PROFESSIONAL HEADER BAR
+  topHeader: {
+    height: 64,
+    backgroundColor: '#0c1322',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    gap: 16,
+    zIndex: 100
+  },
+  topHeaderLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#e2e8f0'
+  },
+  topHeaderMobile: {
+    height: 56,
+    paddingHorizontal: 12,
+    gap: 8
+  },
+  topHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  sidebarToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155'
+  },
+  sidebarToggleBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  sidebarToggleBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#38bdf8'
+  },
+  sidebarToggleBtnTextLight: {
+    color: '#0284c7'
+  },
+  brandContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  brandBadge: {
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6
+  },
+  brandBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5
+  },
+  brandTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#f8fafc',
+    letterSpacing: 0.5
+  },
+  brandTitleLight: {
+    color: '#0f172a'
+  },
+  brandSub: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  brandSubLight: {
+    color: '#94a3b8'
+  },
+
+  // Header Search Box
+  headerSearchBox: {
+    flex: 1,
+    maxWidth: 420,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 38
+  },
+  headerSearchBoxLight: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#cbd5e1'
+  },
+  headerSearchInput: {
+    flex: 1,
+    fontSize: 12,
+    color: '#f8fafc',
+    outlineStyle: 'none'
+  },
+  headerSearchInputLight: {
+    color: '#0f172a'
+  },
+
+  // Header Actions
+  topHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  heroScanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: '#059669',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    boxShadow: '0 2px 10px rgba(5, 150, 105, 0.35)'
+  },
+  heroScanBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  heroExportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155'
+  },
+  heroExportBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  heroExportBtnText: {
+    color: '#34d399',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  heroExportBtnTextLight: {
+    color: '#059669'
+  },
+  headerIconBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155'
+  },
+  headerIconBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  headerSyncPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)'
+  },
+  headerSyncPillLight: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0'
+  },
+  headerSyncText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#34d399'
+  },
+  headerSyncTextLight: {
+    color: '#059669'
+  },
+  headerUserBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 4
+  },
+  headerUserAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#0284c7',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  headerUserAvatarLight: {
+    backgroundColor: '#0284c7'
+  },
+  headerUserInitial: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  headerLogoutBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.2)'
+  },
+  headerLogoutBtnLight: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca'
+  },
+
+  // 1. STATS OVERVIEW GRID (AT-A-GLANCE METRICS)
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4
+  },
+  statsGridMobile: {
+    flexDirection: 'column',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 14,
+    gap: 4,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+  },
+  statCardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+  },
+  statCardActive: {
+    borderColor: '#38bdf8',
+    backgroundColor: '#111e38'
+  },
+  statCardActiveLight: {
+    borderColor: '#0284c7',
+    backgroundColor: '#f0f9ff'
+  },
+  statCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  statCardLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748b',
+    letterSpacing: 0.5
+  },
+  statCardLabelLight: {
+    color: '#64748b'
+  },
+  statIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  statCardValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5
+  },
+  statCardSub: {
+    fontSize: 11,
+    color: '#94a3b8'
+  },
+  statCardSubLight: {
+    color: '#64748b'
+  },
+
+  // 2. HORIZONTAL CATEGORY NAVIGATION TABS
+  categoryNavBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b'
+  },
+  categoryNavBarLight: {
+    borderBottomColor: '#e2e8f0'
+  },
+  categoryNavScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  categoryTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#1e293b'
+  },
+  categoryTabLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  categoryTabActive: {
+    backgroundColor: '#1e293b',
+    borderColor: '#38bdf8'
+  },
+  categoryTabActiveLight: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#0284c7'
+  },
+  categoryTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8'
+  },
+  categoryTabTextLight: {
+    color: '#475569'
+  },
+  categoryTabTextActive: {
+    color: '#38bdf8',
+    fontWeight: '700'
+  },
+  categoryTabTextActiveLight: {
+    color: '#0284c7',
+    fontWeight: '700'
+  },
+  categoryTabBadge: {
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10
+  },
+  categoryTabBadgeLight: {
+    backgroundColor: '#f1f5f9'
+  },
+  categoryTabBadgeActive: {
+    backgroundColor: '#0284c7'
+  },
+  categoryTabBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94a3b8'
+  },
+  categoryTabBadgeTextActive: {
+    color: '#ffffff'
+  },
+  categoryTabBadgeTextLight: {
+    color: '#64748b'
+  },
+
+  // 3. CONTEXTUAL SUB-FILTER CHIPS
+  subFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#0b1324',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    flexWrap: 'wrap'
+  },
+  subFilterRowLight: {
+    backgroundColor: '#f8fafc',
+    borderBottomColor: '#e2e8f0'
+  },
+  subFilterHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748b',
+    marginRight: 4
+  },
+  subFilterHeadingLight: {
+    color: '#64748b'
+  },
+  subFilterChip: {
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155'
+  },
+  subFilterChipLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#cbd5e1'
+  },
+  subFilterChipActive: {
+    backgroundColor: '#0284c7',
+    borderColor: '#38bdf8'
+  },
+  subFilterChipActiveLight: {
+    backgroundColor: '#0284c7',
+    borderColor: '#0284c7'
+  },
+  subFilterChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#cbd5e1'
+  },
+  subFilterChipTextLight: {
+    color: '#334155'
+  },
+  subFilterChipTextActive: {
+    color: '#ffffff',
+    fontWeight: '700'
+  },
+
+  // Clear Filter Action
+  clearFilterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    marginLeft: 6
+  },
+  clearFilterBtnLight: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca'
+  },
+  clearFilterBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#f87171'
+  },
+  clearFilterBtnTextLight: {
+    color: '#dc2626'
+  },
+
+  // Mobile Floating Action Button
+  mobileFloatingBar: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 9999
+  },
+  mobileFloatingBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#059669',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 30,
+    boxShadow: '0 8px 24px rgba(5, 150, 105, 0.5)',
+    borderWidth: 1,
+    borderColor: '#34d399'
+  },
+  mobileFloatingBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3
   },
 
   // Toast
