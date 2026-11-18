@@ -1890,8 +1890,12 @@ export default function App() {
         <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }, isLight && styles.authCardLight]}>
           {/* Top Brand & Security Tag */}
           <View style={styles.authHeader}>
-            <View style={styles.authShieldIconBox}>
-              <ShieldCheck size={28} color="#34d399" />
+            <View style={{ alignItems: 'center', marginBottom: 10 }}>
+              <Image
+                source={{ uri: '/km100-logo.png' }}
+                style={{ width: 64, height: 64, borderRadius: 32 }}
+                resizeMode="contain"
+              />
             </View>
             <View style={styles.authBadgePill}>
               <Text style={styles.authBadgePillText}>SUPABASE CLOUD AUTH</Text>
@@ -2077,6 +2081,11 @@ export default function App() {
           </TouchableOpacity>
 
           <View style={styles.brandContainer}>
+            <Image
+              source={{ uri: '/km100-logo.png' }}
+              style={{ width: isSmallMobile ? 24 : 28, height: isSmallMobile ? 24 : 28, borderRadius: 14 }}
+              resizeMode="contain"
+            />
             <View style={styles.brandBadge}>
               <Text style={styles.brandBadgeText}>KM100</Text>
             </View>
