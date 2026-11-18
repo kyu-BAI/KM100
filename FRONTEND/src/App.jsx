@@ -197,6 +197,7 @@ export default function App() {
     }
   });
   const isLight = theme === 'light';
+  const styles = useMemo(() => createStyles(isLight), [isLight]);
 
   const toggleTheme = () => {
     setTheme(prev => {
@@ -1490,7 +1491,7 @@ export default function App() {
               <View
                 style={[
                   styles.treeItem,
-                  activeNav.type === 'all' && styles.treeItemActive,
+                  activeNav.type === 'all' && (isLight ? styles.treeItemActiveLight : styles.treeItemActive),
                   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }
                 ]}
               >
@@ -1504,8 +1505,8 @@ export default function App() {
                     label: 'All Inventory Files'
                   })}
                 >
-                  <Layers size={17} color={activeNav.type === 'all' ? '#38bdf8' : '#94a3b8'} />
-                  <Text style={[styles.treeText, activeNav.type === 'all' && styles.treeTextActive]} numberOfLines={1}>
+                  <Layers size={17} color={activeNav.type === 'all' ? (isLight ? '#0284c7' : '#38bdf8') : (isLight ? '#64748b' : '#94a3b8')} />
+                  <Text style={[styles.treeText, isLight && styles.treeTextLight, activeNav.type === 'all' && (isLight ? styles.treeTextActiveLight : styles.treeTextActive)]} numberOfLines={1}>
                     All Inventory Files ({items.length})
                   </Text>
                 </TouchableOpacity>
@@ -2056,7 +2057,7 @@ export default function App() {
 
             {/* Logged-in Admin Profile & Logout */}
             {currentUser && (
-              <View style={styles.sidebarAdminBox}>
+              <View style={[styles.sidebarAdminBox, isLight && styles.sidebarAdminBoxLight]}>
                 <View style={styles.sidebarAdminRow}>
                   <View style={styles.adminAvatarCircle}>
                     <Text style={styles.adminAvatarInitials}>
@@ -2064,15 +2065,15 @@ export default function App() {
                     </Text>
                   </View>
                   <View style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
-                    <Text style={styles.adminNameText} numberOfLines={1}>
+                    <Text style={[styles.adminNameText, isLight && styles.adminNameTextLight]} numberOfLines={1}>
                       {currentUser.fullName || 'Admin User'}
                     </Text>
-                    <Text style={styles.adminEmailText} numberOfLines={1}>
+                    <Text style={[styles.adminEmailText, isLight && styles.adminEmailTextLight]} numberOfLines={1}>
                       {currentUser.email}
                     </Text>
                   </View>
-                  <View style={styles.adminBadgePill}>
-                    <Text style={styles.adminBadgePillText}>ADMIN</Text>
+                  <View style={[styles.adminBadgePill, isLight && styles.adminBadgePillLight]}>
+                    <Text style={[styles.adminBadgePillText, isLight && styles.adminBadgePillTextLight]}>ADMIN</Text>
                   </View>
                 </View>
 
@@ -2091,7 +2092,7 @@ export default function App() {
           <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
             <View style={styles.controlBarLeft}>
               <TouchableOpacity
-                style={[styles.burgerToggleBtn, isMobile && { display: 'none' }]}
+                style={[styles.burgerToggleBtn, isMobile && { display: 'none' }, isLight && styles.burgerToggleBtnLight]}
                 onPress={() => setSidebarOpen(prev => !prev)}
                 title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
               >
@@ -2302,7 +2303,11 @@ export default function App() {
                   {filteredItems.map((item, idx) => (
                     <TouchableOpacity
                       key={item.id}
-                      style={[styles.tableRow, idx % 2 === 1 && (isLight ? styles.tableRowAltLight : styles.tableRowAlt), isLight && styles.tableRowLight]}
+                      style={[
+                        styles.tableRow,
+                        isLight && styles.tableRowLight,
+                        idx % 2 === 1 && (isLight ? styles.tableRowAltLight : styles.tableRowAlt)
+                      ]}
                       onPress={() => setViewItem(item)}
                     >
                       <Text style={[styles.td, { width: 45, color: '#64748b' }]}>{idx + 1}</Text>
@@ -2328,20 +2333,30 @@ export default function App() {
                           styles.statusTag,
                           item.status === 'Low Stock' ? styles.statusTagDanger :
                             item.status === 'Completed' || item.status === 'Audited' || item.status === 'Paid & Reconciled' ? styles.statusTagSuccess :
-                              styles.statusTagInfo
+                              styles.statusTagInfo,
+                          isLight && styles.statusTagLight
                         ]}>
-                          <Text style={styles.statusTagText}>{item.status}</Text>
+                          <Text style={[
+                            styles.statusTagText,
+                            isLight && (
+                              item.status === 'Low Stock' ? { color: '#dc2626' } :
+                                item.status === 'Completed' || item.status === 'Audited' || item.status === 'Paid & Reconciled' ? { color: '#16a34a' } :
+                                  { color: '#0284c7' }
+                            )
+                          ]}>
+                            {item.status}
+                          </Text>
                         </View>
                       </View>
                       <View style={{ width: 90, flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
                         <TouchableOpacity
-                          style={styles.btnTableAction}
+                          style={[styles.btnTableAction, isLight && styles.btnTableActionLight]}
                           onPress={() => setViewItem(item)}
                         >
                           <Eye size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={styles.btnTableAction}
+                          style={[styles.btnTableAction, isLight && styles.btnTableActionLight]}
                           onPress={() => handleDeleteItem(item.id, item.fileName)}
                         >
                           <Trash2 size={15} color="#f87171" />
@@ -3050,7 +3065,8 @@ export default function App() {
 }
 
 // STYLES
-const styles = StyleSheet.create({
+function createStyles(isLight) {
+  return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#090d16',
@@ -3150,7 +3166,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   treeItemActive: {
-    backgroundColor: '#1e293b'
+    backgroundColor: isLight ? '#e0f2fe' : '#1e293b'
   },
   iconToggle: {
     padding: 2
@@ -3158,15 +3174,15 @@ const styles = StyleSheet.create({
   treeCategoryTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#cbd5e1'
+    color: isLight ? '#0f172a' : '#cbd5e1'
   },
   treeText: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: isLight ? '#334155' : '#94a3b8',
     fontWeight: '500'
   },
   treeTextActive: {
-    color: '#38bdf8',
+    color: isLight ? '#0284c7' : '#38bdf8',
     fontWeight: '700'
   },
   treeChildren: {
@@ -3183,7 +3199,7 @@ const styles = StyleSheet.create({
   },
   treeSubText: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: isLight ? '#475569' : '#94a3b8',
     fontWeight: '500'
   },
   monthPillRow: {
@@ -3239,9 +3255,9 @@ const styles = StyleSheet.create({
   burgerToggleBtn: {
     padding: 6,
     borderRadius: 6,
-    backgroundColor: '#1e293b',
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isLight ? '#cbd5e1' : '#334155',
     cursor: 'pointer',
     alignItems: 'center',
     justifyContent: 'center'
@@ -3414,20 +3430,22 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-    backgroundColor: '#0f172a'
+    borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+    backgroundColor: isLight ? '#ffffff' : '#0f172a'
   },
   tableRowAlt: {
-    backgroundColor: '#131d31'
+    backgroundColor: isLight ? '#f8fafc' : '#131d31'
   },
   td: {
     fontSize: 12,
-    color: '#cbd5e1'
+    color: isLight ? '#1e293b' : '#cbd5e1'
   },
   btnTableAction: {
     padding: 6,
     borderRadius: 4,
-    backgroundColor: '#1e293b'
+    backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+    borderWidth: isLight ? 1 : 0,
+    borderColor: isLight ? '#e2e8f0' : 'transparent'
   },
   statusTag: {
     paddingHorizontal: 8,
@@ -4654,9 +4672,9 @@ const styles = StyleSheet.create({
   // Sidebar Admin User Styles
   sidebarAdminBox: {
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: isLight ? '#e2e8f0' : '#1e293b',
     padding: 12,
-    backgroundColor: '#0b1120',
+    backgroundColor: isLight ? '#f8fafc' : '#0b1120',
     gap: 8
   },
   sidebarAdminRow: {
@@ -4668,24 +4686,24 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1e293b',
+    backgroundColor: isLight ? '#e0f2fe' : '#1e293b',
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: isLight ? '#0284c7' : '#38bdf8',
     alignItems: 'center',
     justifyContent: 'center'
   },
   adminAvatarInitials: {
-    color: '#38bdf8',
+    color: isLight ? '#0284c7' : '#38bdf8',
     fontSize: 13,
     fontWeight: '800'
   },
   adminNameText: {
-    color: '#f8fafc',
+    color: isLight ? '#0f172a' : '#f8fafc',
     fontSize: 12,
     fontWeight: '700'
   },
   adminEmailText: {
-    color: '#64748b',
+    color: isLight ? '#64748b' : '#64748b',
     fontSize: 10
   },
   adminBadgePill: {
@@ -4907,7 +4925,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9'
   },
   treeItemActiveLight: {
-    backgroundColor: 'rgba(2, 132, 199, 0.08)'
+    backgroundColor: '#e0f2fe'
+  },
+  treeCategoryTitleLight: {
+    color: '#0f172a'
   },
   treeTextLight: {
     color: '#334155'
@@ -5008,6 +5029,7 @@ const styles = StyleSheet.create({
     color: '#475569'
   },
   tableRowLight: {
+    backgroundColor: '#ffffff',
     borderBottomColor: '#e2e8f0'
   },
   tableRowAltLight: {
@@ -5015,6 +5037,18 @@ const styles = StyleSheet.create({
   },
   tdLight: {
     color: '#1e293b'
+  },
+  burgerToggleBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1'
+  },
+  btnTableActionLight: {
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0'
+  },
+  statusTagLight: {
+    borderColor: 'transparent'
   },
   mobileTopBarLight: {
     backgroundColor: '#ffffff',
@@ -5156,4 +5190,5 @@ const styles = StyleSheet.create({
   optionDescriptionLight: {
     color: '#475569'
   }
-});
+  });
+}
