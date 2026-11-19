@@ -166,48 +166,6 @@ const RECEIPT_TYPES = [
 export default function App() {
   const { width, height } = useWindowDimensions();
 
-  // Route & Portal state: 'admin' | 'employee'
-  const [authPortal, setAuthPortal] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase();
-      const search = window.location.search.toLowerCase();
-      const path = window.location.pathname.toLowerCase();
-      if (hash.includes('employee') || search.includes('employee') || path.includes('/employee')) {
-        return 'employee';
-      }
-    }
-    return 'admin';
-  });
-
-  const switchAuthPortal = (portal) => {
-    setAuthPortal(portal);
-    setAuthError('');
-    if (typeof window !== 'undefined') {
-      window.location.hash = portal === 'employee' ? 'employee' : 'admin';
-    }
-  };
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.toLowerCase();
-      if (hash.includes('employee')) {
-        setAuthPortal('employee');
-      } else if (hash.includes('admin')) {
-        setAuthPortal('admin');
-      }
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  // Employee Profile Modal state for logged-in employees
-  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
-
-  useEffect(() => {
-    if (currentUser?.role === 'employee' && currentPage === 'admin') {
-      setCurrentPage('inventory');
-    }
-  }, [currentUser, currentPage]);
   const isSmallMobile = width < 480;            // Compact smartphones (320px - 480px, e.g. iPhone SE, small Androids)
   const isMobile = width < 768;                 // All smartphones (< 768px)
   const isTablet = width >= 768 && width < 1024;// Tablets (768px - 1023px, iPad portrait, foldables)
@@ -600,6 +558,49 @@ export default function App() {
 
   // Current active main view / page: 'inventory' | 'admin'
   const [currentPage, setCurrentPage] = useState('inventory');
+
+  // Route & Portal state: 'admin' | 'employee'
+  const [authPortal, setAuthPortal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      const path = window.location.pathname.toLowerCase();
+      if (hash.includes('employee') || search.includes('employee') || path.includes('/employee')) {
+        return 'employee';
+      }
+    }
+    return 'admin';
+  });
+
+  const switchAuthPortal = (portal) => {
+    setAuthPortal(portal);
+    setAuthError('');
+    if (typeof window !== 'undefined') {
+      window.location.hash = portal === 'employee' ? 'employee' : 'admin';
+    }
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.includes('employee')) {
+        setAuthPortal('employee');
+      } else if (hash.includes('admin')) {
+        setAuthPortal('admin');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Employee Profile Modal state for logged-in employees
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.role === 'employee' && currentPage === 'admin') {
+      setCurrentPage('inventory');
+    }
+  }, [currentUser, currentPage]);
 
   // Employee Accounts Directory & Creation State
   const [employees, setEmployees] = useState(() => {
