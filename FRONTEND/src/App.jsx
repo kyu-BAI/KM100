@@ -452,6 +452,30 @@ export default function App() {
           setAuthConfirmPassword('');
         }
       } else {
+        // Direct Employee login verification from provisioned accounts
+        const savedEmps = (() => {
+          try {
+            return JSON.parse(localStorage.getItem('petc_employee_accounts') || '[]');
+          } catch { return []; }
+        })();
+        const matchedEmp = savedEmps.find(
+          e => e.email.toLowerCase() === authEmail.trim().toLowerCase() && e.password === authPassword
+        );
+        if (matchedEmp) {
+          const user = {
+            id: matchedEmp.id,
+            email: matchedEmp.email,
+            fullName: matchedEmp.fullName,
+            role: matchedEmp.role || 'employee',
+            department: matchedEmp.department
+          };
+          localStorage.setItem('petc_admin_user', JSON.stringify(user));
+          setCurrentUser(user);
+          showNotice(`Authenticated as ${user.fullName} (${matchedEmp.role})`);
+          fetchData();
+          return;
+        }
+
         // Direct Supabase Auth for Admin Sign-In
         const { data, error } = await supabase.auth.signInWithPassword({
           email: authEmail.trim(),
@@ -498,10 +522,164 @@ export default function App() {
     localStorage.removeItem('petc_admin_token');
     clearCachedItems();
     setCurrentUser(null);
+    setCurrentPage('inventory');
     setAuthEmail('');
     setAuthPassword('');
     setAuthConfirmPassword('');
     showNotice('You have been signed out.');
+  };
+
+  // Current active main view / page: 'inventory' | 'admin'
+  const [currentPage, setCurrentPage] = useState('inventory');
+
+  // Employee Accounts Directory & Creation State
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const raw = localStorage.getItem('petc_employee_accounts');
+      if (raw) return JSON.parse(raw);
+    } catch { }
+    return [
+      {
+        id: 'emp-101',
+        fullName: 'Maria Santos',
+        email: 'maria.santos@km100.ph',
+        password: 'password123',
+        role: 'Staff / Data Encoder',
+        department: 'PETC Sales & Income',
+        createdAt: '2026-11-15',
+        status: 'Active'
+      },
+      {
+        id: 'emp-102',
+        fullName: 'Carlos Reyes',
+        email: 'carlos.reyes@km100.ph',
+        password: 'password123',
+        role: 'Cashier & Billing',
+        department: 'Expenses (Knoah Mari / Red Goose)',
+        createdAt: '2026-11-16',
+        status: 'Active'
+      },
+      {
+        id: 'emp-103',
+        fullName: 'Ana Lim',
+        email: 'ana.lim@km100.ph',
+        password: 'password123',
+        role: 'Inventory Auditor',
+        department: 'Consumables & Office Supplies',
+        createdAt: '2026-11-17',
+        status: 'Active'
+      }
+    ];
+  });
+
+  const [empFullName, setEmpFullName] = useState('');
+  const [empEmail, setEmpEmail] = useState('');
+  const [empPassword, setEmpPassword] = useState('');
+  const [empConfirmPassword, setEmpConfirmPassword] = useState('');
+  const [empRole, setEmpRole] = useState('Staff / Data Encoder');
+  const [empDepartment, setEmpDepartment] = useState('All Branches & Categories');
+  const [showEmpPassword, setShowEmpPassword] = useState(false);
+  const [empLoading, setEmpLoading] = useState(false);
+  const [empError, setEmpError] = useState('');
+
+  const EMPLOYEE_ROLES = [
+    'Staff / Data Encoder',
+    'Cashier & Billing',
+    'Inventory Auditor',
+    'Branch Supervisor'
+  ];
+
+  const EMPLOYEE_DEPARTMENTS = [
+    'All Branches & Categories',
+    'PETC Sales & Income',
+    'Expenses (Knoah Mari / Red Goose / PETC)',
+    'Consumables & Office Supplies',
+    'Insurance (CTPL)'
+  ];
+
+  // Employee Account Creation Handler
+  const handleCreateEmployee = async () => {
+    setEmpError('');
+    if (!empFullName.trim()) {
+      setEmpError('Please enter the employee full name.');
+      return;
+    }
+    if (!empEmail.trim() || !empEmail.includes('@')) {
+      setEmpError('Please enter a valid email address.');
+      return;
+    }
+    if (!empPassword || empPassword.length < 6) {
+      setEmpError('Initial password must be at least 6 characters.');
+      return;
+    }
+    if (empPassword !== empConfirmPassword) {
+      setEmpError('Passwords do not match.');
+      return;
+    }
+
+    setEmpLoading(true);
+    try {
+      let authUserId = null;
+      try {
+        const { data: authData } = await supabase.auth.signUp({
+          email: empEmail.trim(),
+          password: empPassword,
+          options: {
+            data: {
+              full_name: empFullName.trim(),
+              role: 'employee',
+              employee_role: empRole,
+              department: empDepartment,
+              is_admin: false,
+              created_by: currentUser?.email || 'admin'
+            }
+          }
+        });
+        if (authData && authData.user) {
+          authUserId = authData.user.id;
+        }
+      } catch (authEx) {
+        console.warn('Supabase Auth signUp note:', authEx);
+      }
+
+      const newEmp = {
+        id: authUserId || 'emp-' + Date.now(),
+        fullName: empFullName.trim(),
+        email: empEmail.trim(),
+        password: empPassword,
+        role: empRole,
+        department: empDepartment,
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'Active'
+      };
+
+      const updated = [newEmp, ...employees.filter(e => e.email.toLowerCase() !== newEmp.email.toLowerCase())];
+      setEmployees(updated);
+      try {
+        localStorage.setItem('petc_employee_accounts', JSON.stringify(updated));
+      } catch { }
+
+      setEmpFullName('');
+      setEmpEmail('');
+      setEmpPassword('');
+      setEmpConfirmPassword('');
+      showNotice(`Employee account successfully created for ${newEmp.fullName}!`);
+    } catch (err) {
+      setEmpError(err.message || 'Failed to create employee account.');
+    } finally {
+      setEmpLoading(false);
+    }
+  };
+
+  const handleDeleteEmployee = (id, name) => {
+    if (window.confirm(`Are you sure you want to deactivate and remove employee account for "${name}"?`)) {
+      const updated = employees.filter(e => e.id !== id);
+      setEmployees(updated);
+      try {
+        localStorage.setItem('petc_employee_accounts', JSON.stringify(updated));
+      } catch { }
+      showNotice(`Employee account for "${name}" removed.`);
+    }
   };
 
   const ALL_RECEIPT_TABLES = [
@@ -968,7 +1146,7 @@ export default function App() {
       const totalAmount = folderItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
       const summaryRowIdx = aoa.length;
       aoa.push([
-        '', '', '', '', '', '', '', '', 'GRAND TOTAL SUM (PHP):', totalAmount, '', ''
+        '', '', '', '', '', '', '', '', 'TOTAL SUM (PHP):', totalAmount, '', ''
       ]);
 
       // 4. Generate worksheet from matrix
@@ -1561,7 +1739,7 @@ export default function App() {
       const description = (ocrDescription || fallbackDesc).trim();
       const amt = parseFloat(ocrAmount) || 0;
       const refCode = (ocrOrNumber || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
-      
+
       let rawCustomName = (ocrReceiptName || '').trim();
       let receiptFileName = '';
       let receiptTitle = '';
@@ -2203,22 +2381,38 @@ export default function App() {
             </TouchableOpacity>
           )}
 
-          {/* User Profile / Logout */}
+          {/* User Profile / Admin Management Redirect */}
           {currentUser && (
-            <View style={[styles.headerUserBlock, isSmallMobile && { marginLeft: 0 }]}>
+            <TouchableOpacity
+              style={[
+                styles.headerUserBlock,
+                currentPage === 'admin' && {
+                  borderColor: '#38bdf8',
+                  backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                  boxShadow: '0 0 10px rgba(56, 189, 248, 0.35)'
+                },
+                isSmallMobile && { marginLeft: 0 }
+              ]}
+              onPress={() => setCurrentPage(prev => (prev === 'admin' ? 'inventory' : 'admin'))}
+              title="Click to open Admin Portal, Logout & Employee Account Creation"
+              accessibilityLabel="Admin Profile and Employee Management"
+            >
               <View style={[styles.headerUserAvatar, isSmallMobile && { width: 26, height: 26 }, isLight && styles.headerUserAvatarLight]}>
                 <Text style={[styles.headerUserInitial, isSmallMobile && { fontSize: 11 }]}>
-                  {(currentUser.name || currentUser.email || 'A').charAt(0).toUpperCase()}
+                  {(currentUser.fullName || currentUser.name || currentUser.email || 'A').charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.headerLogoutBtn, isSmallMobile && { padding: 5 }, isLight && styles.headerLogoutBtnLight]}
-                onPress={handleLogout}
-                title="Sign Out"
-              >
-                <LogOut size={isSmallMobile ? 12 : 14} color="#f87171" />
-              </TouchableOpacity>
-            </View>
+              {!isSmallMobile && (
+                <View style={{ gap: 1, paddingRight: 4 }}>
+                  <Text style={[styles.headerUserName, isLight && styles.headerUserNameLight]} numberOfLines={1}>
+                    {currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'Admin'}
+                  </Text>
+                  <Text style={[styles.headerUserRole, isLight && styles.headerUserRoleLight]}>
+                    {currentUser.role ? currentUser.role.toUpperCase() : 'ADMIN'}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -2995,9 +3189,20 @@ export default function App() {
               </View>
             </ScrollView>
 
-            {/* Logged-in Admin Profile & Logout */}
+            {/* Logged-in Admin Profile Card (Pressable to open Admin & Staff Portal) */}
             {currentUser && (
-              <View style={[styles.sidebarAdminBox, isLight && styles.sidebarAdminBoxLight]}>
+              <TouchableOpacity
+                style={[
+                  styles.sidebarAdminBox,
+                  currentPage === 'admin' && {
+                    borderColor: '#38bdf8',
+                    backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)'
+                  },
+                  isLight && styles.sidebarAdminBoxLight
+                ]}
+                onPress={() => setCurrentPage(prev => (prev === 'admin' ? 'inventory' : 'admin'))}
+                title="Click to open Admin Portal & Employee Creation"
+              >
                 <View style={styles.sidebarAdminRow}>
                   <View style={styles.adminAvatarCircle}>
                     <Text style={styles.adminAvatarInitials}>
@@ -3016,18 +3221,355 @@ export default function App() {
                     <Text style={[styles.adminBadgePillText, isLight && styles.adminBadgePillTextLight]}>ADMIN</Text>
                   </View>
                 </View>
-
-                <TouchableOpacity style={styles.sidebarLogoutBtn} onPress={handleLogout}>
-                  <LogOut size={13} color="#f87171" />
-                  <Text style={styles.sidebarLogoutBtnText}>Sign Out</Text>
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             )}
           </View>
         )}
 
         {/* MAIN VIEWING AREA */}
-        <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
+        {currentPage === 'admin' ? (
+          <ScrollView
+            style={[styles.contentArea, isLight && styles.contentAreaLight]}
+            contentContainerStyle={{ padding: isMobile ? 14 : 26, gap: 22, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Top Navigation Bar of Admin Page */}
+            <View style={[styles.adminPortalHeader, isLight && styles.adminPortalHeaderLight]}>
+              <View style={{ gap: 4, flex: 1, minWidth: 260 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={24} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  <Text style={[styles.adminPortalTitle, isLight && styles.adminPortalTitleLight]}>
+                    Administrator & Staff Management
+                  </Text>
+                </View>
+                <Text style={[styles.adminPortalSub, isLight && styles.adminPortalSubLight]}>
+                  Manage admin credentials, sign out securely, and register employee staff accounts.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.adminBackBtn, isLight && styles.adminBackBtnLight]}
+                onPress={() => setCurrentPage('inventory')}
+                title="Return to documents inventory"
+              >
+                <ArrowLeft size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <Text style={[styles.adminBackBtnText, isLight && styles.adminBackBtnTextLight]}>
+                  Back to Inventory Records
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Top Grid: Admin Account Info on Left + Employee Creation Form on Right */}
+            <View style={[styles.adminGrid, isMobile && { flexDirection: 'column' }]}>
+              {/* Card 1: Admin Profile & Secure Logout */}
+              <View style={[styles.adminProfileCard, isLight && styles.adminProfileCardLight]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View style={styles.adminLargeAvatarCircle}>
+                    <Text style={styles.adminLargeAvatarInitials}>
+                      {(currentUser?.fullName || currentUser?.email || 'A').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                    <Text style={[styles.adminProfileName, isLight && styles.adminProfileNameLight]} numberOfLines={1}>
+                      {currentUser?.fullName || 'System Administrator'}
+                    </Text>
+                    <Text style={[styles.adminProfileEmail, isLight && styles.adminProfileEmailLight]} numberOfLines={1}>
+                      {currentUser?.email}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <View style={[styles.adminBadgePill, isLight && styles.adminBadgePillLight]}>
+                        <Text style={[styles.adminBadgePillText, isLight && styles.adminBadgePillTextLight]}>
+                          {currentUser?.role ? currentUser.role.toUpperCase() : 'ADMINISTRATOR'}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#10b981' }} />
+                        <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '700' }}>Active</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+
+                {/* System Privileges Box */}
+                <View style={[styles.adminPrivilegesBox, isLight && styles.adminPrivilegesBoxLight]}>
+                  <Text style={[styles.adminPrivilegesHeading, isLight && styles.adminPrivilegesHeadingLight]}>
+                    ADMINISTRATOR PRIVILEGES
+                  </Text>
+                  <View style={{ gap: 8, marginTop: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CheckCircle2 size={14} color="#10b981" />
+                      <Text style={[styles.privilegeItemText, isLight && styles.privilegeItemTextLight]}>
+                        Full Document CRUD & Supabase Sync
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CheckCircle2 size={14} color="#10b981" />
+                      <Text style={[styles.privilegeItemText, isLight && styles.privilegeItemTextLight]}>
+                        Executive Excel (.xlsx) Audit Reports
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CheckCircle2 size={14} color="#10b981" />
+                      <Text style={[styles.privilegeItemText, isLight && styles.privilegeItemTextLight]}>
+                        AI Optical Character Recognition (OCR)
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <CheckCircle2 size={14} color="#10b981" />
+                      <Text style={[styles.privilegeItemText, isLight && styles.privilegeItemTextLight]}>
+                        Staff Account Provisioning & Roles
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* The Secure Logout Option */}
+                <View style={{ marginTop: 'auto', paddingTop: 14 }}>
+                  <Text style={{ fontSize: 11, color: isLight ? '#94a3b8' : '#64748b', marginBottom: 8 }}>
+                    Session Security:
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.adminLogoutBtn, isLight && styles.adminLogoutBtnLight]}
+                    onPress={handleLogout}
+                    title="End your session and sign out"
+                  >
+                    <LogOut size={16} color="#ef4444" />
+                    <Text style={styles.adminLogoutBtnText}>Log Out of Administrator Account</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Card 2: Employee Account Creation System */}
+              <View style={[styles.employeeFormCard, isLight && styles.employeeFormCardLight]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 4 }}>
+                  <View style={[styles.empIconBadge, { backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)' }]}>
+                    <UserPlus size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardTitle, isLight && styles.cardTitleLight]}>
+                      Register New Employee Account
+                    </Text>
+                    <Text style={[styles.cardSubtitle, isLight && styles.cardSubtitleLight]}>
+                      Add credentials and assign access branches for staff members.
+                    </Text>
+                  </View>
+                </View>
+
+                {empError ? (
+                  <View style={styles.authErrorBox}>
+                    <AlertTriangle size={15} color="#ef4444" />
+                    <Text style={styles.authErrorText}>{empError}</Text>
+                  </View>
+                ) : null}
+
+                <View style={{ gap: 12 }}>
+                  {/* Name Input */}
+                  <View style={{ gap: 4 }}>
+                    <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>EMPLOYEE FULL NAME</Text>
+                    <View style={[styles.formInputWrapper, isLight && styles.formInputWrapperLight]}>
+                      <User size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                      <TextInput
+                        style={[styles.formFieldInput, isLight && styles.formFieldInputLight]}
+                        placeholder="e.g. Maria Santos"
+                        placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                        value={empFullName}
+                        onChangeText={setEmpFullName}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Email Input */}
+                  <View style={{ gap: 4 }}>
+                    <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>EMPLOYEE EMAIL ADDRESS</Text>
+                    <View style={[styles.formInputWrapper, isLight && styles.formInputWrapperLight]}>
+                      <Mail size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                      <TextInput
+                        style={[styles.formFieldInput, isLight && styles.formFieldInputLight]}
+                        placeholder="employee@km100.ph"
+                        placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        value={empEmail}
+                        onChangeText={setEmpEmail}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Password & Confirm Inputs */}
+                  <View style={[styles.passwordGridRow, isMobile && { flexDirection: 'column', gap: 10 }]}>
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>INITIAL PASSWORD</Text>
+                      <View style={[styles.formInputWrapper, isLight && styles.formInputWrapperLight]}>
+                        <Lock size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                        <TextInput
+                          style={[styles.formFieldInput, isLight && styles.formFieldInputLight, { paddingRight: 32 }]}
+                          placeholder="Min. 6 chars"
+                          placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          secureTextEntry={!showEmpPassword}
+                          value={empPassword}
+                          onChangeText={setEmpPassword}
+                        />
+                        <TouchableOpacity
+                          style={{ position: 'absolute', right: 8 }}
+                          onPress={() => setShowEmpPassword(p => !p)}
+                        >
+                          {showEmpPassword ? <EyeOff size={14} color="#94a3b8" /> : <Eye size={14} color="#94a3b8" />}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>CONFIRM PASSWORD</Text>
+                      <View style={[styles.formInputWrapper, isLight && styles.formInputWrapperLight]}>
+                        <Lock size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                        <TextInput
+                          style={[styles.formFieldInput, isLight && styles.formFieldInputLight]}
+                          placeholder="Re-enter password"
+                          placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          secureTextEntry={!showEmpPassword}
+                          value={empConfirmPassword}
+                          onChangeText={setEmpConfirmPassword}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Role Selector */}
+                  <View style={{ gap: 6 }}>
+                    <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>ASSIGNED ROLE</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {EMPLOYEE_ROLES.map(role => (
+                        <TouchableOpacity
+                          key={role}
+                          style={[
+                            styles.empRoleChip,
+                            isLight && styles.empRoleChipLight,
+                            empRole === role && styles.empRoleChipActive
+                          ]}
+                          onPress={() => setEmpRole(role)}
+                        >
+                          <Text style={[
+                            styles.empRoleChipText,
+                            isLight && styles.empRoleChipTextLight,
+                            empRole === role && styles.empRoleChipTextActive
+                          ]}>
+                            {role}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Department Assignment */}
+                  <View style={{ gap: 6 }}>
+                    <Text style={[styles.formFieldLabel, isLight && styles.formFieldLabelLight]}>ASSIGNED BRANCH / DEPARTMENT</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {EMPLOYEE_DEPARTMENTS.map(dept => (
+                        <TouchableOpacity
+                          key={dept}
+                          style={[
+                            styles.empRoleChip,
+                            isLight && styles.empRoleChipLight,
+                            empDepartment === dept && styles.empRoleChipActive
+                          ]}
+                          onPress={() => setEmpDepartment(dept)}
+                        >
+                          <Text style={[
+                            styles.empRoleChipText,
+                            isLight && styles.empRoleChipTextLight,
+                            empDepartment === dept && styles.empRoleChipTextActive
+                          ]}>
+                            {dept}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Submit Button */}
+                  <TouchableOpacity
+                    style={[styles.btnCreateEmployee, empLoading && { opacity: 0.6 }]}
+                    onPress={handleCreateEmployee}
+                    disabled={empLoading}
+                  >
+                    {empLoading ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <UserPlus size={16} color="#ffffff" />
+                        <Text style={styles.btnCreateEmployeeText}>Create Employee Account</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Bottom Card: Registered Employee Accounts Directory */}
+            <View style={[styles.accountsListCard, isLight && styles.accountsListCardLight]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                <View style={{ gap: 2 }}>
+                  <Text style={[styles.cardTitle, isLight && styles.cardTitleLight]}>
+                    Employee Staff Directory ({employees.length})
+                  </Text>
+                  <Text style={[styles.cardSubtitle, isLight && styles.cardSubtitleLight]}>
+                    Active staff members with granted portal access credentials.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 8, marginTop: 4 }}>
+                {employees.map(emp => (
+                  <View key={emp.id} style={[styles.employeeRowCard, isLight && styles.employeeRowCardLight]}>
+                    <View style={styles.empAvatarCircle}>
+                      <Text style={styles.empAvatarInitials}>
+                        {emp.fullName ? emp.fullName.charAt(0).toUpperCase() : 'E'}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, minWidth: 150, gap: 2 }}>
+                      <Text style={[styles.empNameText, isLight && styles.empNameTextLight]}>
+                        {emp.fullName}
+                      </Text>
+                      <Text style={[styles.empEmailText, isLight && styles.empEmailTextLight]}>
+                        {emp.email}
+                      </Text>
+                    </View>
+
+                    <View style={{ gap: 3, minWidth: 140 }}>
+                      <View style={[styles.empRoleBadge, isLight && styles.empRoleBadgeLight]}>
+                        <Text style={[styles.empRoleBadgeText, isLight && styles.empRoleBadgeTextLight]}>
+                          {emp.role}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 10, color: isLight ? '#64748b' : '#94a3b8' }}>
+                        {emp.department}
+                      </Text>
+                    </View>
+
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10b981' }} />
+                        <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '700' }}>Active</Text>
+                      </View>
+                      <Text style={{ fontSize: 10, color: isLight ? '#94a3b8' : '#64748b' }}>
+                        Joined {emp.createdAt}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.empDeleteBtn}
+                      onPress={() => handleDeleteEmployee(emp.id, emp.fullName)}
+                      title={`Revoke account for ${emp.fullName}`}
+                    >
+                      <Trash2 size={14} color="#f87171" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+        ) : (
+          <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
 
           {/* 1. CORE METRICS OVERVIEW (AT-A-GLANCE SUMMARY CARDS) */}
           <View style={[styles.statsGrid, isMobile && styles.statsGridMobile]}>
@@ -3579,6 +4121,7 @@ export default function App() {
             </ScrollView>
           )}
         </View>
+        )}
       </View>
 
       {/* ======================================================== */}
@@ -4492,6 +5035,388 @@ function createStyles(isLight) {
       height: '100%',
       width: '100%'
     },
+    // HEADER USER NAME & ROLE
+    headerUserName: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: isLight ? '#0f172a' : '#f8fafc'
+    },
+    headerUserNameLight: {
+      color: '#0f172a'
+    },
+    headerUserRole: {
+      fontSize: 9,
+      fontWeight: '800',
+      color: isLight ? '#0284c7' : '#38bdf8',
+      letterSpacing: 0.5
+    },
+    headerUserRoleLight: {
+      color: '#0284c7'
+    },
+
+    // ADMIN PORTAL STYLES
+    adminPortalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 12,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+    },
+    adminPortalHeaderLight: {
+      borderBottomColor: '#e2e8f0'
+    },
+    adminPortalTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: isLight ? '#0f172a' : '#f8fafc',
+      letterSpacing: -0.4
+    },
+    adminPortalTitleLight: {
+      color: '#0f172a'
+    },
+    adminPortalSub: {
+      fontSize: 13,
+      color: isLight ? '#64748b' : '#94a3b8'
+    },
+    adminPortalSubLight: {
+      color: '#64748b'
+    },
+    adminBackBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 8,
+      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      borderWidth: 1,
+      borderColor: isLight ? '#cbd5e1' : '#334155',
+      cursor: 'pointer',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+    },
+    adminBackBtnLight: {
+      backgroundColor: '#f1f5f9',
+      borderColor: '#cbd5e1'
+    },
+    adminBackBtnText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: isLight ? '#0284c7' : '#38bdf8'
+    },
+    adminBackBtnTextLight: {
+      color: '#0284c7'
+    },
+    adminGrid: {
+      flexDirection: 'row',
+      gap: 20
+    },
+    adminProfileCard: {
+      flex: 1,
+      minWidth: 320,
+      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      borderRadius: 12,
+      padding: 22,
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      gap: 16,
+      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+    },
+    adminProfileCardLight: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0'
+    },
+    adminLargeAvatarCircle: {
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      backgroundColor: '#0284c7',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: '#f97316',
+      boxShadow: '0 3px 10px rgba(249, 115, 22, 0.3)'
+    },
+    adminLargeAvatarInitials: {
+      color: '#ffffff',
+      fontSize: 22,
+      fontWeight: '800'
+    },
+    adminProfileName: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: isLight ? '#0f172a' : '#f8fafc'
+    },
+    adminProfileNameLight: {
+      color: '#0f172a'
+    },
+    adminProfileEmail: {
+      fontSize: 12,
+      color: isLight ? '#64748b' : '#94a3b8'
+    },
+    adminProfileEmailLight: {
+      color: '#64748b'
+    },
+    adminPrivilegesBox: {
+      backgroundColor: isLight ? '#f8fafc' : '#0c1322',
+      borderRadius: 8,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+    },
+    adminPrivilegesBoxLight: {
+      backgroundColor: '#f8fafc',
+      borderColor: '#e2e8f0'
+    },
+    adminPrivilegesHeading: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: isLight ? '#475569' : '#94a3b8',
+      letterSpacing: 0.8
+    },
+    adminPrivilegesHeadingLight: {
+      color: '#475569'
+    },
+    privilegeItemText: {
+      fontSize: 12,
+      color: isLight ? '#334155' : '#cbd5e1',
+      fontWeight: '500'
+    },
+    privilegeItemTextLight: {
+      color: '#334155'
+    },
+    adminLogoutBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.12)',
+      borderWidth: 1,
+      borderColor: isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.3)',
+      paddingVertical: 12,
+      borderRadius: 8,
+      cursor: 'pointer'
+    },
+    adminLogoutBtnLight: {
+      backgroundColor: '#fee2e2',
+      borderColor: '#fca5a5'
+    },
+    adminLogoutBtnText: {
+      color: isLight ? '#dc2626' : '#f87171',
+      fontSize: 13,
+      fontWeight: '700'
+    },
+    employeeFormCard: {
+      flex: 1.6,
+      minWidth: 320,
+      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      borderRadius: 12,
+      padding: 22,
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      gap: 14,
+      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+    },
+    employeeFormCardLight: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0'
+    },
+    empIconBadge: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: isLight ? '#0f172a' : '#f8fafc'
+    },
+    cardTitleLight: {
+      color: '#0f172a'
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      color: isLight ? '#64748b' : '#94a3b8'
+    },
+    cardSubtitleLight: {
+      color: '#64748b'
+    },
+    formFieldLabel: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: isLight ? '#475569' : '#94a3b8',
+      letterSpacing: 0.5
+    },
+    formFieldLabelLight: {
+      color: '#475569'
+    },
+    formInputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isLight ? '#f8fafc' : '#0c1322',
+      borderWidth: 1,
+      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      gap: 8,
+      position: 'relative'
+    },
+    formInputWrapperLight: {
+      backgroundColor: '#f8fafc',
+      borderColor: '#cbd5e1'
+    },
+    formFieldInput: {
+      flex: 1,
+      paddingVertical: 10,
+      fontSize: 13,
+      color: isLight ? '#0f172a' : '#f8fafc',
+      outlineStyle: 'none'
+    },
+    formFieldInputLight: {
+      color: '#0f172a'
+    },
+    passwordGridRow: {
+      flexDirection: 'row',
+      gap: 12
+    },
+    empRoleChip: {
+      paddingHorizontal: 11,
+      paddingVertical: 6,
+      borderRadius: 7,
+      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      borderWidth: 1,
+      borderColor: isLight ? '#cbd5e1' : '#334155',
+      cursor: 'pointer'
+    },
+    empRoleChipLight: {
+      backgroundColor: '#f1f5f9',
+      borderColor: '#cbd5e1'
+    },
+    empRoleChipActive: {
+      backgroundColor: '#0284c7',
+      borderColor: '#0284c7'
+    },
+    empRoleChipText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: isLight ? '#475569' : '#94a3b8'
+    },
+    empRoleChipTextLight: {
+      color: '#475569'
+    },
+    empRoleChipTextActive: {
+      color: '#ffffff',
+      fontWeight: '700'
+    },
+    btnCreateEmployee: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: '#059669',
+      paddingVertical: 12,
+      borderRadius: 8,
+      cursor: 'pointer',
+      marginTop: 4,
+      boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)'
+    },
+    btnCreateEmployeeText: {
+      color: '#ffffff',
+      fontSize: 13,
+      fontWeight: '700'
+    },
+    accountsListCard: {
+      width: '100%',
+      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      borderRadius: 12,
+      padding: 22,
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      gap: 14,
+      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+    },
+    accountsListCardLight: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0'
+    },
+    employeeRowCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      borderRadius: 8,
+      backgroundColor: isLight ? '#f8fafc' : '#0c1322',
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      gap: 12,
+      flexWrap: 'wrap'
+    },
+    employeeRowCardLight: {
+      backgroundColor: '#f8fafc',
+      borderColor: '#e2e8f0'
+    },
+    empAvatarCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: '#0284c7',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    empAvatarInitials: {
+      color: '#ffffff',
+      fontSize: 14,
+      fontWeight: '700'
+    },
+    empNameText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: isLight ? '#0f172a' : '#f8fafc'
+    },
+    empNameTextLight: {
+      color: '#0f172a'
+    },
+    empEmailText: {
+      fontSize: 11,
+      color: isLight ? '#64748b' : '#94a3b8'
+    },
+    empEmailTextLight: {
+      color: '#64748b'
+    },
+    empRoleBadge: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)',
+      borderWidth: 1,
+      borderColor: isLight ? '#bae6fd' : 'rgba(2, 132, 199, 0.3)'
+    },
+    empRoleBadgeLight: {
+      backgroundColor: '#e0f2fe',
+      borderColor: '#bae6fd'
+    },
+    empRoleBadgeText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: isLight ? '#0284c7' : '#38bdf8'
+    },
+    empRoleBadgeTextLight: {
+      color: '#0284c7'
+    },
+    empDeleteBtn: {
+      padding: 7,
+      borderRadius: 6,
+      backgroundColor: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.1)',
+      borderWidth: 1,
+      borderColor: isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.25)',
+      cursor: 'pointer'
+    },
+
     // TOP PROFESSIONAL HEADER BAR
     topHeader: {
       height: 64,
@@ -5639,9 +6564,9 @@ function createStyles(isLight) {
       backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
     },
     viewerBody: {
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
+      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
       padding: 24,
       backgroundColor: isLight ? '#ffffff' : '#0f172a'
     },
@@ -5821,9 +6746,9 @@ function createStyles(isLight) {
       marginTop: 2
     },
     modalBody: {
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
+      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
       padding: 20,
       backgroundColor: isLight ? '#ffffff' : '#0f172a'
     },
@@ -5840,9 +6765,9 @@ function createStyles(isLight) {
     },
     // Options Screen (The Two Cards)
     optionsBody: {
-    flex: 1,
-    flexGrow: 1,
-    flexShrink: 1,
+      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
       padding: 24,
       gap: 16
     },
@@ -6224,15 +7149,15 @@ function createStyles(isLight) {
       letterSpacing: 0.5
     },
     cameraActionRow: {
-    position: 'absolute',
-    bottom: 12,
-    left: 0,
-    right: 0,
-    justifyContent: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10
-  },
+      position: 'absolute',
+      bottom: 12,
+      left: 0,
+      right: 0,
+      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10
+    },
     btnCaptureShutter: {
       flexDirection: 'row',
       alignItems: 'center',
