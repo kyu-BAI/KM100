@@ -67,7 +67,7 @@ export default function AdminPortalPage({
 
         <TouchableOpacity
           style={[styles.adminBackBtn, isLight && styles.adminBackBtnLight]}
-          onPress={() => setCurrentPage('inventory')}
+          onPress={onBackToInventory}
           title="Return to documents inventory"
         >
           <ArrowLeft size={16} color={isLight ? '#0284c7' : '#38bdf8'} />

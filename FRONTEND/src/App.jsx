@@ -324,7 +324,7 @@ export default function App() {
       if (!saved) return null;
       const parsed = JSON.parse(saved);
       // Strictly enforce: ONLY accounts with role === 'admin' and NO branch department have admin privileges
-      const isActuallyAdmin = parsed.role === 'admin' && parsed.isAdmin !== false && !parsed.department;
+      const isActuallyAdmin = parsed.role === 'admin' && parsed.isAdmin === true && !parsed.department && !parsed.assignedBranch;
       if (!isActuallyAdmin) {
         return {
           ...parsed,
@@ -461,7 +461,8 @@ export default function App() {
         // STRICT rule: Employee portal logins OR any provisioned employee email match = always employee, never admin.
         const isEmployeeLogin = authPortal === 'employee' || !!matchedEmpRecord ||
           data.user.user_metadata?.role === 'employee' ||
-          data.user.user_metadata?.is_admin === false;
+          data.user.user_metadata?.is_admin === false ||
+          !!data.user.user_metadata?.department;
 
         const user = {
           id: data.user.id,
@@ -474,10 +475,10 @@ export default function App() {
             ? (data.user.user_metadata?.employee_role || matchedEmpRecord?.role || 'Staff / Data Encoder')
             : undefined,
           department: isEmployeeLogin
-            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'Knoah Mari')
+            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'PETC')
             : null,
           assignedBranch: isEmployeeLogin
-            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'Knoah Mari')
+            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'PETC')
             : null,
         };
         localStorage.setItem('petc_admin_user', JSON.stringify(user));
@@ -571,7 +572,7 @@ export default function App() {
 
   useEffect(() => {
     // If not an admin, ALWAYS force page to 'inventory'
-    const isUserAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin !== false && !currentUser?.department;
+    const isUserAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin === true && !currentUser?.department && !currentUser?.assignedBranch;
     if (!isUserAdmin && currentPage === 'admin') {
       setCurrentPage('inventory');
     }
@@ -590,7 +591,7 @@ export default function App() {
   const [empEmail, setEmpEmail] = useState('');
   const [empPassword, setEmpPassword] = useState('');
   const [empConfirmPassword, setEmpConfirmPassword] = useState('');
-  const [empRole, setEmpRole] = useState('Staff');
+  const [empRole, setEmpRole] = useState('Staff / Data Encoder');
   const [empDepartment, setEmpDepartment] = useState('Knoah Mari');
   const [showEmpPassword, setShowEmpPassword] = useState(false);
   const [empLoading, setEmpLoading] = useState(false);
@@ -867,13 +868,13 @@ export default function App() {
   };
 
   // Absolute Admin vs Employee Role & Store Access Control
-  const isAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin !== false && !currentUser?.department;
+  const isAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin === true && !currentUser?.department && !currentUser?.assignedBranch;
   const isEmployee = !isAdmin && !!currentUser;
   const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
 
   const isKnoahEmployee = isEmployee && (userDept.includes('knoah') || userDept === 'knoah mari');
   const isRedGooseEmployee = isEmployee && (userDept.includes('red-goose') || userDept.includes('red goose') || (userDept.includes('red') && !userDept.includes('all')));
-  const isPetcEmployee = isEmployee && userDept.includes('petc') && !userDept.includes('all') && !userDept.includes('sales') && !userDept.includes('income');
+  const isPetcEmployee = isEmployee && (userDept === 'petc' || (userDept.includes('petc') && !userDept.includes('all') && !userDept.includes('sales') && !userDept.includes('income')));
   const isConsumablesEmployee = isEmployee && (userDept.includes('consumable') || userDept.includes('supplies') || userDept.includes('office'));
   const isSalesIncomeEmployee = isEmployee && (userDept.includes('sales') || userDept.includes('income'));
 
@@ -1914,9 +1915,13 @@ export default function App() {
           expandedNodes={expandedNodes}
           toggleNode={toggleNode}
           currentUser={currentUser}
+          isAdmin={isAdmin}
           isEmployee={isEmployee}
           isKnoahEmployee={isKnoahEmployee}
           isRedGooseEmployee={isRedGooseEmployee}
+          isPetcEmployee={isPetcEmployee}
+          isConsumablesEmployee={isConsumablesEmployee}
+          isSalesIncomeEmployee={isSalesIncomeEmployee}
           isLight={isLight}
           styles={styles}
         />
@@ -2182,6 +2187,13 @@ export default function App() {
         saveVerifiedReceiptToDatabase={saveVerifiedReceiptToDatabase}
         captureCameraSnapshotAndAutoSave={captureCameraSnapshotAndAutoSave}
         handleReceiptPhotoSelect={handleReceiptPhotoSelect}
+        isAdmin={isAdmin}
+        isKnoahEmployee={isKnoahEmployee}
+        isRedGooseEmployee={isRedGooseEmployee}
+        isPetcEmployee={isPetcEmployee}
+        isConsumablesEmployee={isConsumablesEmployee}
+        isSalesIncomeEmployee={isSalesIncomeEmployee}
+        currentUser={currentUser}
         isLight={isLight}
         isMobile={isMobile}
         styles={styles}

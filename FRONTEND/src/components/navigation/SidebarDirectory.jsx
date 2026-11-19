@@ -34,12 +34,18 @@ export default function SidebarDirectory({
   expandedNodes,
   toggleNode,
   currentUser,
+  isAdmin,
   isEmployee,
   isKnoahEmployee,
   isRedGooseEmployee,
+  isPetcEmployee,
+  isConsumablesEmployee,
+  isSalesIncomeEmployee,
   isLight,
   styles
 }) {
+  const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
+  const hasAllBranchesScope = userDept.includes('all');
   return (
     <>
       {/* Backdrop for Drawer on Mobile & Tablet */}
@@ -149,7 +155,7 @@ export default function SidebarDirectory({
                 >
                   <Layers size={17} color={activeNav.type === 'all' ? (isLight ? '#0284c7' : '#38bdf8') : (isLight ? '#64748b' : '#94a3b8')} />
                   <Text style={[styles.treeText, isLight && styles.treeTextLight, activeNav.type === 'all' && (isLight ? styles.treeTextActiveLight : styles.treeTextActive)]} numberOfLines={1}>
-                    All Inventory Files ({items.length})
+                    All Inventory Files ({isEmployee ? filteredItems.length : items.length})
                   </Text>
                 </TouchableOpacity>
 
@@ -192,7 +198,7 @@ export default function SidebarDirectory({
               <View style={styles.separator} />
 
               {/* 2. PETC SALES */}
-              {(!isKnoahEmployee && !isRedGooseEmployee) && (
+              {(isAdmin || isPetcEmployee || isSalesIncomeEmployee || hasAllBranchesScope) && (
               <View style={styles.categoryBlock}>
                 <View
                   style={[
@@ -336,7 +342,7 @@ export default function SidebarDirectory({
                             )}
 
               {/* 3. PETC INCOME */}
-              {(!isKnoahEmployee && !isRedGooseEmployee) && (
+              {(isAdmin || isPetcEmployee || isSalesIncomeEmployee || hasAllBranchesScope) && (
               <View style={styles.categoryBlock}>
                 <View
                   style={[
@@ -531,9 +537,11 @@ export default function SidebarDirectory({
                       { id: 'knoah-mari-2026', label: 'Knoah Mari Expenses 2026' },
                     ]
                     .filter(branch => {
+                      if (isAdmin || hasAllBranchesScope) return true;
                       if (isKnoahEmployee) return branch.id === 'knoah-mari-2026';
                       if (isRedGooseEmployee) return branch.id === 'red-goose-2026';
-                      return true;
+                      if (isPetcEmployee) return branch.id === 'expenses-2026-petc';
+                      return false;
                     })
                     .map(branch => (
                       <TouchableOpacity
@@ -560,6 +568,7 @@ export default function SidebarDirectory({
               </View>
 
               {/* 5. CONSUMABLES */}
+              {(isAdmin || isConsumablesEmployee || hasAllBranchesScope) && (
               <View style={styles.categoryBlock}>
                 <View
                   style={[
@@ -633,9 +642,10 @@ export default function SidebarDirectory({
                   </View>
                 )}
               </View>
+              )}
 
               {/* 6. VOUCHERS */}
-              {(!isKnoahEmployee && !isRedGooseEmployee) && (
+              {isAdmin && (
               <View style={styles.categoryBlock}>
                 <View
                   style={[
@@ -713,7 +723,7 @@ export default function SidebarDirectory({
               )}
 
               {/* 7. PETC INSURANCE */}
-              {(!isKnoahEmployee && !isRedGooseEmployee) && (
+              {(isAdmin || isPetcEmployee || hasAllBranchesScope) && (
               <View style={styles.categoryBlock}>
                 <View
                   style={[

@@ -67,10 +67,19 @@ export default function AddDocumentModal({
   saveVerifiedReceiptToDatabase,
   captureCameraSnapshotAndAutoSave,
   handleReceiptPhotoSelect,
+  isAdmin,
+  isKnoahEmployee,
+  isRedGooseEmployee,
+  isPetcEmployee,
+  isConsumablesEmployee,
+  isSalesIncomeEmployee,
+  currentUser,
   isLight,
   isMobile,
   styles
 }) {
+  const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
+  const hasAllBranchesScope = userDept.includes('all');
   return (
       <Modal visible={showAddModal} transparent animationType="fade">
         <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
@@ -281,7 +290,15 @@ export default function AddDocumentModal({
                     1. CHOOSE RECEIPT CLASSIFICATION:
                   </Text>
                   <View style={styles.receiptTypeGrid}>
-                    {RECEIPT_TYPES.filter(rt => !isKnoahEmployee || rt.entity === 'Knoah Mari' || rt.id.includes('knoah') || rt.id === 'consumables-delivery').map(rt => {
+                    {RECEIPT_TYPES.filter(rt => {
+                      if (isAdmin || hasAllBranchesScope) return true;
+                      if (isKnoahEmployee) return rt.entity === 'Knoah Mari' || rt.id.includes('knoah');
+                      if (isRedGooseEmployee) return rt.entity === 'Red Goose' || rt.id.includes('red');
+                      if (isPetcEmployee) return rt.entity === 'PETC' || rt.id.includes('petc');
+                      if (isConsumablesEmployee) return rt.id === 'consumables-delivery' || rt.category === 'Consumables';
+                      if (isSalesIncomeEmployee) return rt.category === 'PETC Sales' || rt.category === 'PETC Income';
+                      return false;
+                    }).map(rt => {
                       const isSelected = selectedReceiptType.id === rt.id;
                       return (
                         <TouchableOpacity
