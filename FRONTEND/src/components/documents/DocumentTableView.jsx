@@ -13,6 +13,7 @@ export default function DocumentTableView({
   onViewItem,
   onRenameItem,
   onDeleteItem,
+  isAdmin,
   isLight,
   styles
 }) {
@@ -83,16 +84,18 @@ export default function DocumentTableView({
                 >
                   <Edit3 size={14} color={isLight ? '#0284c7' : '#38bdf8'} />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.btnActionIcon, isLight && styles.btnActionIconLight]}
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    onDeleteItem(item.id, item.fileName);
-                  }}
-                  title="Delete Document"
-                >
-                  <Trash2 size={14} color="#f87171" />
-                </TouchableOpacity>
+                {isAdmin && (
+                  <TouchableOpacity
+                    style={[styles.btnActionIcon, isLight && styles.btnActionIconLight]}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      onDeleteItem(item.id, item.fileName);
+                    }}
+                    title="Delete Document (Admin Only)"
+                  >
+                    <Trash2 size={14} color="#f87171" />
+                  </TouchableOpacity>
+                )}
               </View>
             </TouchableOpacity>
           ))}

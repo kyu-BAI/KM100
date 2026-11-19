@@ -217,16 +217,13 @@ export default function App() {
   const [expandedNodes, setExpandedNodes] = useState({
     'petc-sales': true,
     'petc-sales-2026': false,
-    'petc-sales-2027': false,
     'petc-income': true,
     'petc-income-2026': false,
-    'petc-income-2027': false,
     'expenses': true,
     'consumables': true,
     'vouchers': true,
     'petc-insurance': true,
     'petc-insurance-2026': false,
-    'petc-insurance-2027': false
   });
 
   // Document Viewer Modal State
@@ -555,51 +552,18 @@ export default function App() {
       const raw = localStorage.getItem('petc_employee_accounts');
       if (raw) return JSON.parse(raw);
     } catch { }
-    return [
-      {
-        id: 'emp-101',
-        fullName: 'Maria Santos',
-        email: 'maria.santos@km100.ph',
-        password: 'password123',
-        role: 'Staff / Data Encoder',
-        department: 'PETC Sales & Income',
-        createdAt: '2026-11-15',
-        status: 'Active'
-      },
-      {
-        id: 'emp-102',
-        fullName: 'Carlos Reyes',
-        email: 'carlos.reyes@km100.ph',
-        password: 'password123',
-        role: 'Cashier & Billing',
-        department: 'Expenses (Knoah Mari / Red Goose)',
-        createdAt: '2026-11-16',
-        status: 'Active'
-      },
-      {
-        id: 'emp-103',
-        fullName: 'Ana Lim',
-        email: 'ana.lim@km100.ph',
-        password: 'password123',
-        role: 'Inventory Auditor',
-        department: 'Consumables & Office Supplies',
-        createdAt: '2026-11-17',
-        status: 'Active'
-      }
-    ];
+    return [];
   });
 
   const [empFullName, setEmpFullName] = useState('');
   const [empEmail, setEmpEmail] = useState('');
   const [empPassword, setEmpPassword] = useState('');
   const [empConfirmPassword, setEmpConfirmPassword] = useState('');
-  const [empRole, setEmpRole] = useState('Staff / Data Encoder');
-  const [empDepartment, setEmpDepartment] = useState('All Branches & Categories');
+  const [empRole, setEmpRole] = useState('Staff');
+  const [empDepartment, setEmpDepartment] = useState('Knoah Mari');
   const [showEmpPassword, setShowEmpPassword] = useState(false);
   const [empLoading, setEmpLoading] = useState(false);
   const [empError, setEmpError] = useState('');
-
-
 
   // Employee Account Creation Handler
   const handleCreateEmployee = async () => {
@@ -1744,8 +1708,12 @@ export default function App() {
     }
   };
 
-  // Delete Item
+  // Delete Item (Strictly restricted to Admin accounts only)
   const handleDeleteItem = async (id, name) => {
+    if (!isAdmin) {
+      showNotice('Access Denied: Only administrators have permission to delete receipts.', 'error');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete "${name}"?`)) return;
     try {
       const itemToDelete = items.find(i => i.id === id);
@@ -1954,153 +1922,155 @@ export default function App() {
         ) : (
           <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
 
-          {/* 4. CLEAN SEARCH & FILTER ACTION BAR */}
-          <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
-            <View style={[styles.controlBarLeft, isMobile && { width: '100%', justifyContent: 'space-between', gap: 8 }]}>
-              <View style={[styles.breadcrumbs, { flex: 1, minWidth: 0 }]}>
-                <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Records</Text>
-                <ChevronRight size={14} color={isLight ? '#94a3b8' : '#64748b'} />
-                <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]} numberOfLines={1}>{activeNav.label}</Text>
-              </View>
-
-              {(activeNav.type !== 'all' || activeNav.year || activeNav.subCategory || searchQuery) && (
-                <TouchableOpacity
-                  style={[styles.clearFilterBtn, isLight && styles.clearFilterBtnLight]}
-                  onPress={() => {
-                    setActiveNav({ type: 'all', year: null, month: null, subCategory: null, label: 'All Inventory Files' });
-                    setSearchQuery('');
-                  }}
-                >
-                  <X size={12} color={isLight ? '#ef4444' : '#f87171'} />
-                  <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <View style={[styles.controlBarRight, isMobile && { width: '100%', flexDirection: 'column', gap: 8, alignItems: 'stretch' }]}>
-              {/* Search input for screens < 960px where it is not in the top header */}
-              {width < 960 && (
-                <View style={[styles.searchBox, { width: '100%' }, isLight && styles.searchBoxLight]}>
-                  <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
-                  <TextInput
-                    style={[styles.searchInput, isLight && styles.searchInputLight]}
-                    placeholder="Search store, invoice #, amount..."
-                    placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
-                  {searchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setSearchQuery('')}>
-                      <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
-                    </TouchableOpacity>
-                  )}
+            {/* 4. CLEAN SEARCH & FILTER ACTION BAR */}
+            <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
+              <View style={[styles.controlBarLeft, isMobile && { width: '100%', justifyContent: 'space-between', gap: 8 }]}>
+                <View style={[styles.breadcrumbs, { flex: 1, minWidth: 0 }]}>
+                  <Text style={[styles.breadcrumbItem, isLight && styles.breadcrumbItemLight]}>Records</Text>
+                  <ChevronRight size={14} color={isLight ? '#94a3b8' : '#64748b'} />
+                  <Text style={[styles.breadcrumbActive, isLight && styles.breadcrumbActiveLight]} numberOfLines={1}>{activeNav.label}</Text>
                 </View>
-              )}
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'space-between' : 'flex-end', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-                {/* Export Excel Button */}
-                <TouchableOpacity
-                  style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
-                  onPress={() => exportFolderToExcel(activeNav)}
-                  title={`Export "${activeNav.label}" into formal Excel spreadsheet`}
-                >
-                  <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
-                  <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
-                    Export Excel
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Total Count Pill */}
-                <View style={[styles.countBadge, isLight && styles.countBadgeLight]}>
-                  <Text style={[styles.countBadgeText, isLight && styles.countBadgeTextLight]}>
-                    {filteredItems.length} {filteredItems.length === 1 ? 'record' : 'records'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* ITEM DISPLAY */}
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#38bdf8" />
-              <Text style={styles.loadingText}>Loading inventory records</Text>
-            </View>
-          ) : filteredItems.length === 0 ? (
-            activeNav.type === 'all' && !showAllFiles ? (
-              <View style={styles.emptyContainer}>
-                <EyeOff size={48} color="#64748b" />
-                <Text style={styles.emptyTitle}>All Files Display is Hidden</Text>
-                <Text style={styles.emptySubtitle}>
-                  You have toggled off displaying all {items.length} files. You can turn it back on anytime using the toggle button, or select a specific category folder from the sidebar.
-                </Text>
-                <TouchableOpacity
-                  style={styles.btnToggleEmptyOn}
-                  onPress={handleToggleShowAll}
-                >
-                  <Eye size={15} color="#0f172a" />
-                  <Text style={styles.btnToggleEmptyOnText}>Show All Files ({items.length})</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Layers size={44} color={isLight ? '#cbd5e1' : '#334155'} />
-                <Text style={[styles.emptyTitle, isLight && styles.emptyTitleLight]}>
-                  {searchQuery ? 'No documents match your search' : items.length === 0 ? 'No files or documents currently in system' : `No records found in ${activeNav.label}`}
-                </Text>
-                <Text style={[styles.emptySubtitle, isLight && styles.emptySubtitleLight]}>
-                  {searchQuery
-                    ? 'Try searching with a different store name, invoice number, or amount.'
-                    : items.length === 0
-                      ? 'Your inventory database is currently empty. Tap "Scan Receipt" to add your first record.'
-                      : 'You can tap "Scan Receipt" to add a new document, or choose another category from the tabs above.'}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  {searchQuery ? (
-                    <TouchableOpacity
-                      style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
-                      onPress={() => setSearchQuery('')}
-                    >
-                      <X size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
-                      <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>Clear Search</Text>
-                    </TouchableOpacity>
-                  ) : null}
+                {(activeNav.type !== 'all' || activeNav.year || activeNav.subCategory || searchQuery) && (
                   <TouchableOpacity
-                    style={styles.heroScanBtn}
-                    onPress={openAddModal}
+                    style={[styles.clearFilterBtn, isLight && styles.clearFilterBtnLight]}
+                    onPress={() => {
+                      setActiveNav({ type: 'all', year: null, month: null, subCategory: null, label: 'All Inventory Files' });
+                      setSearchQuery('');
+                    }}
                   >
-                    <Camera size={15} color="#ffffff" />
-                    <Text style={styles.heroScanBtnText}>Scan New Receipt</Text>
+                    <X size={12} color={isLight ? '#ef4444' : '#f87171'} />
+                    <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={[styles.controlBarRight, isMobile && { width: '100%', flexDirection: 'column', gap: 8, alignItems: 'stretch' }]}>
+                {/* Search input for screens < 960px where it is not in the top header */}
+                {width < 960 && (
+                  <View style={[styles.searchBox, { width: '100%' }, isLight && styles.searchBoxLight]}>
+                    <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+                    <TextInput
+                      style={[styles.searchInput, isLight && styles.searchInputLight]}
+                      placeholder="Search store, invoice #, amount..."
+                      placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                    />
+                    {searchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'space-between' : 'flex-end', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
+                  {/* Export Excel Button */}
+                  <TouchableOpacity
+                    style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
+                    onPress={() => exportFolderToExcel(activeNav)}
+                    title={`Export "${activeNav.label}" into formal Excel spreadsheet`}
+                  >
+                    <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
+                    <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
+                      Export Excel
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Total Count Pill */}
+                  <View style={[styles.countBadge, isLight && styles.countBadgeLight]}>
+                    <Text style={[styles.countBadgeText, isLight && styles.countBadgeTextLight]}>
+                      {filteredItems.length} {filteredItems.length === 1 ? 'record' : 'records'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* ITEM DISPLAY */}
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#38bdf8" />
+                <Text style={styles.loadingText}>Loading inventory records</Text>
+              </View>
+            ) : filteredItems.length === 0 ? (
+              activeNav.type === 'all' && !showAllFiles ? (
+                <View style={styles.emptyContainer}>
+                  <EyeOff size={48} color="#64748b" />
+                  <Text style={styles.emptyTitle}>All Files Display is Hidden</Text>
+                  <Text style={styles.emptySubtitle}>
+                    You have toggled off displaying all {items.length} files. You can turn it back on anytime using the toggle button, or select a specific category folder from the sidebar.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.btnToggleEmptyOn}
+                    onPress={handleToggleShowAll}
+                  >
+                    <Eye size={15} color="#0f172a" />
+                    <Text style={styles.btnToggleEmptyOnText}>Show All Files ({items.length})</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            )
-          ) : useCardsView ? (
-            <DocumentCardsView
-              filteredItems={filteredItems}
-              onViewItem={(item) => setViewItem(item)}
-              onRenameItem={(item) => {
-                setRenameItem(item);
-                setRenameNewName(item?.fileName || '');
-              }}
-              onDeleteItem={handleDeleteItem}
-              isLight={isLight}
-              styles={styles}
-            />
-          ) : (
-            <DocumentTableView
-              filteredItems={filteredItems}
-              onViewItem={(item) => setViewItem(item)}
-              onRenameItem={(item) => {
-                setRenameItem(item);
-                setRenameNewName(item?.fileName || '');
-              }}
-              onDeleteItem={handleDeleteItem}
-              isLight={isLight}
-              styles={styles}
-            />
-          )}
-        </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Layers size={44} color={isLight ? '#cbd5e1' : '#334155'} />
+                  <Text style={[styles.emptyTitle, isLight && styles.emptyTitleLight]}>
+                    {searchQuery ? 'No documents match your search' : items.length === 0 ? 'No files or documents currently in system' : `No records found in ${activeNav.label}`}
+                  </Text>
+                  <Text style={[styles.emptySubtitle, isLight && styles.emptySubtitleLight]}>
+                    {searchQuery
+                      ? 'Try searching with a different store name, invoice number, or amount.'
+                      : items.length === 0
+                        ? 'Your inventory database is currently empty. Tap "Scan Receipt" to add your first record.'
+                        : 'You can tap "Scan Receipt" to add a new document, or choose another category from the tabs above.'}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {searchQuery ? (
+                      <TouchableOpacity
+                        style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
+                        onPress={() => setSearchQuery('')}
+                      >
+                        <X size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>Clear Search</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    <TouchableOpacity
+                      style={styles.heroScanBtn}
+                      onPress={openAddModal}
+                    >
+                      <Camera size={15} color="#ffffff" />
+                      <Text style={styles.heroScanBtnText}>Scan New Receipt</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )
+            ) : useCardsView ? (
+              <DocumentCardsView
+                filteredItems={filteredItems}
+                onViewItem={(item) => setViewItem(item)}
+                onRenameItem={(item) => {
+                  setRenameItem(item);
+                  setRenameNewName(item?.fileName || '');
+                }}
+                onDeleteItem={handleDeleteItem}
+                isAdmin={isAdmin}
+                isLight={isLight}
+                styles={styles}
+              />
+            ) : (
+              <DocumentTableView
+                filteredItems={filteredItems}
+                onViewItem={(item) => setViewItem(item)}
+                onRenameItem={(item) => {
+                  setRenameItem(item);
+                  setRenameNewName(item?.fileName || '');
+                }}
+                onDeleteItem={handleDeleteItem}
+                isAdmin={isAdmin}
+                isLight={isLight}
+                styles={styles}
+              />
+            )}
+          </View>
         )}
       </View>
 
@@ -2199,7 +2169,7 @@ export default function App() {
         styles={styles}
       />
 
-      
+
 
       {/* MOBILE FLOATING ACTION BUTTON (SCAN RECEIPT) */}
       {isMobile && (
