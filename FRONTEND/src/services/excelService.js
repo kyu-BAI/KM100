@@ -1,17 +1,17 @@
 import XLSX from 'xlsx-js-style';
 
 /**
- * Generates and downloads a formal, executive audit Excel report (.xlsx)
- * with corporate KM100 headers, column styling, summary calculations, and audit stamps.
+ * Generates and downloads a clean, executive, and professional Excel report (.xlsx)
+ * without folder paths or clutter, highlighting essential receipt & financial information.
  *
  * @param {Object} options
- * @param {string} options.folderLabel - Name of the active folder/scope
- * @param {Array} options.folderItems - Array of inventory item objects to export
+ * @param {string} options.folderLabel - Active folder/branch name (used only to identify scope)
+ * @param {Array} options.folderItems - Array of receipt items to export
  * @param {Function} options.showNotice - Notification callback (text, type)
  */
 export function exportRecordsToExcel({ folderLabel = 'Inventory Records', folderItems = [], showNotice }) {
   if (!folderItems || folderItems.length === 0) {
-    if (showNotice) showNotice(`No records found in "${folderLabel}" to export.`, 'error');
+    if (showNotice) showNotice('No records available to export.', 'error');
     return;
   }
 
@@ -21,150 +21,187 @@ export function exportRecordsToExcel({ folderLabel = 'Inventory Records', folder
     const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // 1. Prepare raw matrix with Title and Subtitle Block
+    // Derive a clean, human-readable report title without folder arrows (e.g. "Knoah Mari Expenses" instead of "Expenses > Knoah Mari Expenses 2026")
+    const cleanScope = folderLabel
+      .split('>')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .pop() || 'Inventory Records';
+
+    const reportTitle = cleanScope.toUpperCase() + ' - AUDIT REPORT';
+
+    // Calculate total sum
+    const totalAmount = folderItems.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0);
+    const totalFormatted = '₱' + totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // 1. Prepare clean array of arrays (AOA)
     const aoa = [
-      ['KM100 SKILLS & TRAINING CENTER, INC. - ' + folderLabel.toUpperCase() + ' AUDIT REPORT'],
-      ['COMPANY: KM100 SKILLS AND TRAINING CENTER, INC.   |   FOLDER: ' + folderLabel + '   |   EXPORT DATE: ' + dateStr + ' ' + timeStr + '   |   AUDIT STATUS: OFFICIAL VERIFIED INVENTORY'],
-      [], // Spacer row
-      ['No.', 'File Name', 'Document Title', 'Establishment / Store', 'Category', 'Sub-Category', 'Entity / Branch', 'Receipt Date', 'Date Scanned / Recorded', 'Amount (PHP)', 'Invoice / OR No.', 'Audit Status']
+      // Row 0: Company Header Banner
+      ['KM100 SKILLS & TRAINING CENTER, INC.'],
+      // Row 1: Report Title Banner
+      [reportTitle],
+      // Row 2: Metadata Summary Bar
+      [`EXPORT DATE: ${dateStr} • ${timeStr}     |     TOTAL RECORDS: ${folderItems.length}     |     TOTAL AMOUNT: ${totalFormatted}     |     STATUS: VERIFIED INVENTORY`],
+      // Row 3: Spacer Row
+      [],
+      // Row 4: Clean, Essential Table Column Headers (NO folder/category clutter)
+      ['No.', 'Document Title', 'Establishment / Store', 'Invoice / OR No.', 'Branch', 'Receipt Date', 'Date Recorded', 'Amount (PHP)', 'Status']
     ];
 
     // 2. Map and clean each item row
     folderItems.forEach((item, index) => {
       const num = index + 1;
-      const fileName = item.fileName || '-';
       const docTitle = item.title || item.fileName || '-';
-      const store = item.store || item.establishment || '-';
-      const category = item.category || '-';
-      const subCategory = item.subCategory || '-';
-      const entity = item.entity || '-';
-      const receiptDate = item.receiptDate || (item.year ? `${item.year} ${item.month || ''}`.trim() : '-');
-      const scannedDate = item.scannedDate || item.createdAt || '-';
-      const amount = parseFloat(item.amount) || 0;
+      const store = item.establishment || item.store || '-';
       const invoiceOr = item.referenceNumber || item.orNumber || item.invoiceNumber || '-';
+      const branch = item.entity || item.subCategory || '-';
+      const receiptDate = item.receiptDate || (item.year ? `${item.year} ${item.month || ''}`.trim() : '-');
+      const recordedDate = item.scannedDate || item.createdAt || '-';
+      const amount = parseFloat(item.amount) || 0;
       const status = item.status || 'Verified';
 
       aoa.push([
         num,
-        fileName,
         docTitle,
         store,
-        category,
-        subCategory,
-        entity,
-        receiptDate,
-        scannedDate,
-        amount,
         invoiceOr,
+        branch,
+        receiptDate,
+        recordedDate,
+        amount,
         status
       ]);
     });
 
-    // 3. Summary Footer Rows
-    const dataStartRow = 4; // Row index 4 (0-based) is first item
+    const dataStartRow = 5; // Row index 5 is first item
     const dataEndRow = dataStartRow + folderItems.length - 1;
-    const totalAmount = folderItems.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0);
 
-    aoa.push([]); // Spacer
+    // 3. Summary Footer Rows
+    aoa.push([]); // Spacer row
     aoa.push([
-      'TOTAL RECORDS AUDITED:',
-      folderItems.length,
+      'TOTAL AMOUNT (PHP):', // Merged col 0-6
       '',
       '',
       '',
       '',
       '',
       '',
-      'TOTAL EXPENSE / REVENUE:',
-      totalAmount,
-      '',
-      'KM100 VERIFIED'
+      totalAmount,          // Col 7: Total Sum
+      'KM100 VERIFIED'      // Col 8: Verified badge
     ]);
     aoa.push([
-      'REPORT GENERATED BY KM100 EMISSION & TRAINING DOCUMENT MANAGEMENT SYSTEM'
+      'KM100 EMISSION & TRAINING DOCUMENT MANAGEMENT SYSTEM • OFFICIAL AUDIT COPY'
     ]);
 
-    // 4. Create Worksheet from Array of Arrays
+    // 4. Create Worksheet
     const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-    // 5. Apply Column Auto-Widths
+    // 5. Optimized Column Widths (breathing room for all data)
     ws['!cols'] = [
-      { wch: 6 },  // No.
-      { wch: 34 }, // File Name
-      { wch: 28 }, // Document Title
-      { wch: 24 }, // Establishment / Store
-      { wch: 18 }, // Category
-      { wch: 24 }, // Sub-Category
-      { wch: 18 }, // Entity / Branch
-      { wch: 14 }, // Receipt Date
-      { wch: 20 }, // Date Scanned
-      { wch: 16 }, // Amount (PHP)
-      { wch: 18 }, // Invoice / OR No.
-      { wch: 14 }  // Audit Status
+      { wch: 6 },  // 0: No.
+      { wch: 28 }, // 1: Document Title
+      { wch: 32 }, // 2: Establishment / Store
+      { wch: 20 }, // 3: Invoice / OR No.
+      { wch: 18 }, // 4: Branch
+      { wch: 15 }, // 5: Receipt Date
+      { wch: 16 }, // 6: Date Recorded
+      { wch: 20 }, // 7: Amount (PHP)
+      { wch: 15 }  // 8: Status
     ];
 
-    // 6. Merged Header Regions
+    // 6. Merged Regions
+    const totalRowIdx = dataEndRow + 2;
+    const footerRowIdx = totalRowIdx + 1;
+
     ws['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }, // Title across full table
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }, // Subtitle metadata across full table
-      { s: { r: dataEndRow + 3, c: 0 }, e: { r: dataEndRow + 3, c: 11 } } // Footer watermark
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }, // Title across 9 columns
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } }, // Subtitle banner across 9 columns
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } }, // Metadata bar across 9 columns
+      { s: { r: totalRowIdx, c: 0 }, e: { r: totalRowIdx, c: 6 } }, // Total label merged A-G
+      { s: { r: footerRowIdx, c: 0 }, e: { r: footerRowIdx, c: 8 } } // System watermark merged A-I
     ];
 
-    // 7. Executive Palette & Cell Styling
-    const brandNavyFill = { fgColor: { rgb: '0F172A' } };
-    const brandNavyLightFill = { fgColor: { rgb: '1E293B' } };
-    const headerFill = { fgColor: { rgb: 'F1F5F9' } };
+    // Row heights for executive spacing
+    ws['!rows'] = [
+      { hpt: 30 }, // Row 0: Company
+      { hpt: 22 }, // Row 1: Subtitle
+      { hpt: 20 }, // Row 2: Metadata
+      { hpt: 10 }, // Row 3: Spacer
+      { hpt: 25 }  // Row 4: Column Headers
+    ];
+
+    // 7. Styling Palette
+    const brandNavy = { fgColor: { rgb: '0F172A' } };
+    const brandBlue = { fgColor: { rgb: '0284C7' } };
+    const metadataFill = { fgColor: { rgb: 'F1F5F9' } };
+    const headerFill = { fgColor: { rgb: 'E2E8F0' } };
     const altRowFill = { fgColor: { rgb: 'F8FAFC' } };
-    const summaryFill = { fgColor: { rgb: 'E2E8F0' } };
+    const summaryFill = { fgColor: { rgb: 'E0F2FE' } };
+
     const thinBorder = {
-      top: { style: 'thin', color: { rgb: 'CBD5E1' } },
-      bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+      top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+      bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
       left: { style: 'thin', color: { rgb: 'E2E8F0' } },
       right: { style: 'thin', color: { rgb: 'E2E8F0' } }
     };
+
+    const headerBorder = {
+      top: { style: 'medium', color: { rgb: '0284C7' } },
+      bottom: { style: 'medium', color: { rgb: '0284C7' } },
+      left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+      right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+    };
+
     const doubleBottomBorder = {
-      top: { style: 'thin', color: { rgb: '94A3B8' } },
+      top: { style: 'thin', color: { rgb: '0284C7' } },
       bottom: { style: 'double', color: { rgb: '0F172A' } },
       left: { style: 'thin', color: { rgb: 'CBD5E1' } },
       right: { style: 'thin', color: { rgb: 'CBD5E1' } }
     };
 
-    // Style Title Row (Row 0)
-    const titleCell = ws[encodeCell(0, 0)];
-    if (titleCell) {
-      titleCell.s = {
+    // Style Row 0: Company Header
+    const cellA1 = ws[encodeCell(0, 0)];
+    if (cellA1) {
+      cellA1.s = {
         font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: 'FFFFFF' } },
-        fill: brandNavyFill,
-        alignment: { horizontal: 'center', vertical: 'center' }
-      };
-    }
-    ws['!rows'] = [{ hpt: 30 }, { hpt: 20 }, { hpt: 10 }, { hpt: 24 }];
-
-    // Style Subtitle Row (Row 1)
-    const subCell = ws[encodeCell(1, 0)];
-    if (subCell) {
-      subCell.s = {
-        font: { name: 'Calibri', sz: 9, italic: true, color: { rgb: 'CBD5E1' } },
-        fill: brandNavyLightFill,
+        fill: brandNavy,
         alignment: { horizontal: 'center', vertical: 'center' }
       };
     }
 
-    // Style Table Headers (Row 3)
-    for (let c = 0; c < 12; c++) {
-      const cell = ws[encodeCell(3, c)];
+    // Style Row 1: Report Title
+    const cellA2 = ws[encodeCell(1, 0)];
+    if (cellA2) {
+      cellA2.s = {
+        font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+        fill: brandBlue,
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+    }
+
+    // Style Row 2: Metadata Bar
+    const cellA3 = ws[encodeCell(2, 0)];
+    if (cellA3) {
+      cellA3.s = {
+        font: { name: 'Calibri', sz: 9, bold: true, color: { rgb: '334155' } },
+        fill: metadataFill,
+        border: {
+          bottom: { style: 'thin', color: { rgb: 'CBD5E1' } }
+        },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+    }
+
+    // Style Row 4: Column Headers
+    for (let c = 0; c < 9; c++) {
+      const cell = ws[encodeCell(4, c)];
       if (cell) {
         cell.s = {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1E293B' } },
+          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
           fill: headerFill,
-          border: {
-            top: { style: 'medium', color: { rgb: '0284C7' } },
-            bottom: { style: 'medium', color: { rgb: '0284C7' } },
-            left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-            right: { style: 'thin', color: { rgb: 'CBD5E1' } }
-          },
+          border: headerBorder,
           alignment: {
-            horizontal: c === 0 ? 'center' : c === 9 ? 'right' : c === 11 ? 'center' : 'left',
+            horizontal: c === 0 || c === 3 || c === 4 || c === 5 || c === 6 || c === 8 ? 'center' : c === 7 ? 'right' : 'left',
             vertical: 'center'
           }
         };
@@ -174,61 +211,77 @@ export function exportRecordsToExcel({ folderLabel = 'Inventory Records', folder
     // Style Data Rows
     for (let r = dataStartRow; r <= dataEndRow; r++) {
       const isAlt = (r - dataStartRow) % 2 === 1;
-      for (let c = 0; c < 12; c++) {
+      for (let c = 0; c < 9; c++) {
         const cell = ws[encodeCell(r, c)];
         if (cell) {
           const s = {
-            font: { name: 'Calibri', sz: 9.5, color: { rgb: '0F172A' } },
+            font: { name: 'Calibri', sz: 9.5, color: { rgb: '1E293B' } },
             border: thinBorder,
             alignment: { vertical: 'center' }
           };
 
           if (isAlt) s.fill = altRowFill;
-          if (c === 0) s.alignment.horizontal = 'center';
-          if (c === 1) s.font.bold = true;
-          if (c === 7 || c === 8) s.alignment.horizontal = 'center';
-          if (c === 9) {
+          if (c === 0 || c === 3 || c === 4 || c === 5 || c === 6) {
+            s.alignment.horizontal = 'center';
+          } else if (c === 7) {
             s.alignment.horizontal = 'right';
             s.font.bold = true;
             s.numFmt = '₱#,##0.00;[Red](₱#,##0.00);"-"';
-          }
-          if (c === 11) {
+          } else if (c === 8) {
             s.alignment.horizontal = 'center';
-            s.font.color = { rgb: '059669' };
             s.font.bold = true;
+            s.font.color = { rgb: '059669' };
+          } else {
+            s.alignment.horizontal = 'left';
+            if (c === 1) s.font.bold = true;
           }
+
           cell.s = s;
         }
       }
     }
 
-    // Style Summary Row
-    const summaryRowIdx = dataEndRow + 2;
-    for (let c = 0; c < 12; c++) {
-      const cell = ws[encodeCell(summaryRowIdx, c)];
+    // Style Summary Row (Total Amount)
+    for (let c = 0; c < 9; c++) {
+      const cell = ws[encodeCell(totalRowIdx, c)];
       if (cell) {
         cell.s = {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
+          font: { name: 'Calibri', sz: 10.5, bold: true, color: { rgb: '0F172A' } },
           fill: summaryFill,
           border: doubleBottomBorder,
           alignment: {
-            horizontal: c === 1 || c === 11 ? 'center' : c === 8 || c === 9 ? 'right' : 'left',
+            horizontal: c === 7 ? 'right' : c === 8 ? 'center' : 'right',
             vertical: 'center'
           }
         };
-        if (c === 9) {
+        if (c === 7) {
           cell.s.numFmt = '₱#,##0.00;[Red](₱#,##0.00);"-"';
-          cell.s.font.sz = 11;
+          cell.s.font.sz = 11.5;
+        }
+        if (c === 8) {
+          cell.s.font.color = { rgb: '059669' };
         }
       }
     }
 
-    // 8. Create Workbook and Download
+    // Style Footer Watermark Row
+    const footerCell = ws[encodeCell(footerRowIdx, 0)];
+    if (footerCell) {
+      footerCell.s = {
+        font: { name: 'Calibri', sz: 8.5, italic: true, color: { rgb: '94A3B8' } },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+    }
+
+    // 8. Create Workbook and Export Clean File
     const wb = XLSX.utils.book_new();
-    const safeSheetName = folderLabel.replace(/[\\/?*[\]:]/g, ' ').substring(0, 31) || 'Records';
+    const safeSheetName = (cleanScope.replace(/[\\/?*[\]:]/g, ' ').substring(0, 31).trim()) || 'Audit Report';
     XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
 
-    const safeFileName = `KM100_${folderLabel.replace(/[^a-zA-Z0-9_-]/g, '_')}_Audit_${now.toISOString().split('T')[0]}.xlsx`;
+    // Clean, short, professional file name: e.g. "KM100_Knoah_Mari_Expenses_Audit_2026-11-19.xlsx"
+    const cleanFileScope = cleanScope.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const safeFileName = `KM100_${cleanFileScope || 'Audit'}_${now.toISOString().split('T')[0]}.xlsx`;
+
     XLSX.writeFile(wb, safeFileName);
 
     if (showNotice) {

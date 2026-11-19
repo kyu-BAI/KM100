@@ -293,29 +293,7 @@ export default function App() {
   const [renameNewName, setRenameNewName] = useState('');
   const [isRenaming, setIsRenaming] = useState(false);
 
-  // Seed default Knoah Mari demo employee if empty or missing
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('petc_employee_accounts') || '[]');
-      const hasKnoah = saved.some(e => e.email.toLowerCase() === 'knoahmari@km100.ph');
-      if (!hasKnoah) {
-        const demoEmp = {
-          id: 'emp-demo-knoahmari',
-          fullName: 'Maria Santos (Staff)',
-          email: 'knoahmari@km100.ph',
-          password: 'knoahmari123',
-          role: 'Staff / Data Encoder',
-          department: 'Knoah Mari',
-          createdAt: new Date().toISOString(),
-          active: true
-        };
-        saved.push(demoEmp);
-        localStorage.setItem('petc_employee_accounts', JSON.stringify(saved));
-      }
-    } catch (e) {
-      console.warn('Seed employee note:', e);
-    }
-  }, []);
+
 
   // Current logged in user (Admin or Employee)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -400,10 +378,10 @@ export default function App() {
           };
           localStorage.setItem('petc_admin_user', JSON.stringify(user));
           setAuthEmail('');
-        setAuthPassword('');
-        setAuthConfirmPassword('');
-        setAuthFullName('');
-        localStorage.setItem('petc_admin_token', data.session.access_token);
+          setAuthPassword('');
+          setAuthConfirmPassword('');
+          setAuthFullName('');
+          localStorage.setItem('petc_admin_token', data.session.access_token);
           setCurrentUser(user);
           showNotice(`Admin account created! Welcome, ${user.fullName}`);
           fetchData();
