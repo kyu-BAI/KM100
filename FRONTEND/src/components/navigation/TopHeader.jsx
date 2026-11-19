@@ -1,0 +1,229 @@
+import React from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import {
+  Menu,
+  Search,
+  X,
+  Camera,
+  FileSpreadsheet,
+  Sun,
+  Moon,
+  RefreshCw
+} from 'lucide-react';
+
+export default function TopHeader({
+  sidebarOpen,
+  setSidebarOpen,
+  searchQuery,
+  setSearchQuery,
+  openAddModal,
+  exportFolderToExcel,
+  activeNav,
+  toggleTheme,
+  fetchData,
+  isSyncing,
+  currentUser,
+  isAdmin,
+  isEmployee,
+  currentPage,
+  setCurrentPage,
+  setShowEmployeeModal,
+  width,
+  isDesktop,
+  isMobile,
+  isSmallMobile,
+  isLight,
+  styles
+}) {
+  // GLOBAL PROFESSIONAL TOP HEADER BAR
+  return (
+    <View style={[
+        styles.topHeader,
+        isMobile && styles.topHeaderMobile,
+        isSmallMobile && styles.topHeaderSmallMobile,
+        isLight && styles.topHeaderLight
+      ]}>
+        <View style={[styles.topHeaderLeft, isSmallMobile && { gap: 6 }]}>
+          <TouchableOpacity
+            style={[
+              styles.sidebarToggleBtn,
+              isSmallMobile && { paddingHorizontal: 7, paddingVertical: 6 },
+              isLight && styles.sidebarToggleBtnLight
+            ]}
+            onPress={() => setSidebarOpen(prev => !prev)}
+            title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
+          >
+            <Menu size={isSmallMobile ? 16 : 18} color={isLight ? '#0284c7' : '#38bdf8'} />
+            {!isMobile && (
+              <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
+                {sidebarOpen ? 'Hide' : 'Folders'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.brandContainer}>
+            <View style={{
+              width: isSmallMobile ? 30 : 36,
+              height: isSmallMobile ? 30 : 36,
+              borderRadius: isSmallMobile ? 15 : 18,
+              backgroundColor: '#ffffff',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: '#f97316',
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)',
+              flexShrink: 0
+            }}>
+              <Image
+                source={{ uri: '/km100-logo.png' }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={{ gap: 1, minWidth: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                  KM100
+                </Text>
+                {width >= 620 && (
+                  <View style={styles.brandBadge}>
+                    <Text style={styles.brandBadgeText}>INVENTORY</Text>
+                  </View>
+                )}
+              </View>
+              {isDesktop && (
+                <Text style={[styles.brandSub, isLight && styles.brandSubLight]} numberOfLines={1}>
+                  Skills & Training Center, Inc. • Emission Testing Portal
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Center Search Bar on Desktop & Large Tablet */}
+        {width >= 960 && (
+          <View style={[styles.headerSearchBox, isLight && styles.headerSearchBoxLight]}>
+            <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+            <TextInput
+              style={[styles.headerSearchInput, isLight && styles.headerSearchInputLight]}
+              placeholder="Search store, receipt title, invoice #, amount..."
+              placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Right Header Action Cluster */}
+        <View style={[styles.topHeaderRight, isSmallMobile && { gap: 5 }]}>
+          {/* PRIMARY HERO BUTTON: SCAN RECEIPT */}
+          <TouchableOpacity
+            style={[styles.heroScanBtn, isSmallMobile && { paddingHorizontal: 9, paddingVertical: 7, gap: 5 }]}
+            onPress={openAddModal}
+            title="Scan physical receipt or upload document"
+          >
+            <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
+            <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
+              {width < 440 ? 'Scan' : 'Scan Receipt'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* SECONDARY ACTION: EXPORT EXCEL (Desktop & Tablet) */}
+          {width >= 1180 && (
+            <TouchableOpacity
+              style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
+              onPress={() => exportFolderToExcel(activeNav)}
+              title="Download formal Excel spreadsheet (.xlsx)"
+            >
+              <FileSpreadsheet size={15} color={isLight ? '#059669' : '#34d399'} />
+              <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>
+                Export Excel
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Theme Toggle Button */}
+          <TouchableOpacity
+            style={[styles.headerIconBtn, isSmallMobile && { padding: 6 }, isLight && styles.headerIconBtnLight]}
+            onPress={toggleTheme}
+            title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+          >
+            {isLight ? <Moon size={isSmallMobile ? 14 : 16} color="#6366f1" /> : <Sun size={isSmallMobile ? 14 : 16} color="#f59e0b" />}
+          </TouchableOpacity>
+
+          {/* Live Sync Pill (Desktop & Tablet only) */}
+          {width >= 1280 && (
+            <TouchableOpacity
+              style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
+              onPress={() => fetchData(false)}
+              title="Click to sync with database"
+            >
+              <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+              <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
+                {isSyncing ? 'Syncing...' : 'Sync'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* User Profile / Admin & Employee Session Management */}
+          {currentUser && (
+            <TouchableOpacity
+              style={[
+                styles.headerUserBlock,
+                currentPage === 'admin' && {
+                  borderColor: '#38bdf8',
+                  backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                  boxShadow: '0 0 10px rgba(56, 189, 248, 0.35)'
+                },
+                isEmployee && {
+                  borderColor: isLight ? '#a7f3d0' : '#065f46',
+                  backgroundColor: isLight ? '#f0fdf4' : 'rgba(16, 185, 129, 0.12)'
+                },
+                isSmallMobile && { marginLeft: 0 }
+              ]}
+              onPress={() => {
+                if (isEmployee) {
+                  setShowEmployeeModal(true);
+                } else {
+                  setCurrentPage(prev => (prev === 'admin' ? 'inventory' : 'admin'));
+                }
+              }}
+              title={isEmployee ? "Click to view Employee Profile & Logout" : "Click to open Admin Portal, Logout & Employee Creation"}
+              accessibilityLabel="User Profile Management"
+            >
+              <View style={[
+                styles.headerUserAvatar,
+                isEmployee && { backgroundColor: '#10b981' },
+                isSmallMobile && { width: 26, height: 26 },
+                isLight && !isEmployee && styles.headerUserAvatarLight
+              ]}>
+                <Text style={[styles.headerUserInitial, isSmallMobile && { fontSize: 11 }]}>
+                  {(currentUser.fullName || currentUser.name || currentUser.email || 'A').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              {!isSmallMobile && (
+                <View style={{ gap: 1, paddingRight: 4 }}>
+                  <Text style={[styles.headerUserName, isLight && styles.headerUserNameLight]} numberOfLines={1}>
+                    {currentUser.fullName ? currentUser.fullName.split(' ')[0] : (isEmployee ? 'Staff' : 'Admin')}
+                  </Text>
+                  <Text style={[
+                    styles.headerUserRole,
+                    isEmployee && { color: isLight ? '#047857' : '#34d399', fontWeight: '800' },
+                    isLight && !isEmployee && styles.headerUserRoleLight
+                  ]}>
+                    {isEmployee ? (currentUser.department ? `${currentUser.department.toUpperCase()} • STAFF` : 'STAFF') : (currentUser.role ? currentUser.role.toUpperCase() : 'ADMIN')}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+  );
+}
