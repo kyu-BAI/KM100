@@ -458,17 +458,27 @@ export default function App() {
         }
 
         const matchedEmpRecord = savedEmps.find(e => e.email.toLowerCase() === authEmail.trim().toLowerCase());
-        const isEmployeeLogin = authPortal === 'employee' || !!matchedEmpRecord || data.user.user_metadata?.role === 'employee' || data.user.user_metadata?.is_admin === false;
+        // STRICT rule: Employee portal logins OR any provisioned employee email match = always employee, never admin.
+        const isEmployeeLogin = authPortal === 'employee' || !!matchedEmpRecord ||
+          data.user.user_metadata?.role === 'employee' ||
+          data.user.user_metadata?.is_admin === false;
 
         const user = {
           id: data.user.id,
           email: data.user.email,
           fullName: data.user.user_metadata?.full_name || matchedEmpRecord?.fullName || (isEmployeeLogin ? 'Staff Member' : 'Administrator'),
+          // FORCE role and isAdmin — employee logins NEVER get admin access regardless of Supabase metadata
           role: isEmployeeLogin ? 'employee' : 'admin',
-          employeeRole: data.user.user_metadata?.employee_role || matchedEmpRecord?.role || 'Staff / Data Encoder',
-          department: data.user.user_metadata?.department || matchedEmpRecord?.department || (isEmployeeLogin ? 'Knoah Mari' : null),
-          assignedBranch: data.user.user_metadata?.department || matchedEmpRecord?.department || (isEmployeeLogin ? 'Knoah Mari' : null),
-          isAdmin: !isEmployeeLogin
+          isAdmin: isEmployeeLogin ? false : true,
+          employeeRole: isEmployeeLogin
+            ? (data.user.user_metadata?.employee_role || matchedEmpRecord?.role || 'Staff / Data Encoder')
+            : undefined,
+          department: isEmployeeLogin
+            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'Knoah Mari')
+            : null,
+          assignedBranch: isEmployeeLogin
+            ? (data.user.user_metadata?.department || matchedEmpRecord?.department || 'Knoah Mari')
+            : null,
         };
         localStorage.setItem('petc_admin_user', JSON.stringify(user));
         setAuthEmail('');
@@ -477,7 +487,11 @@ export default function App() {
         setAuthFullName('');
         localStorage.setItem('petc_admin_token', data.session.access_token);
         setCurrentUser(user);
-        showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
+        if (isEmployeeLogin) {
+          showNotice(`Authenticated as ${user.fullName || user.email} (${user.employeeRole || 'Staff'} - ${user.department || 'Branch'})`);
+        } else {
+          showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
+        }
         fetchData();
       }
     } catch (err) {
@@ -632,8 +646,10 @@ export default function App() {
         fullName: empFullName.trim(),
         email: empEmail.trim(),
         password: empPassword,
-        role: empRole,
+        role: empRole,          // employee role title (e.g. 'Cashier & Billing')
+        isAdmin: false,         // ALWAYS false for employee accounts
         department: empDepartment,
+        assignedBranch: empDepartment,
         createdAt: new Date().toISOString().split('T')[0],
         status: 'Active'
       };
