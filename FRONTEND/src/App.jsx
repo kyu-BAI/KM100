@@ -399,7 +399,11 @@ export default function App() {
             role: 'admin'
           };
           localStorage.setItem('petc_admin_user', JSON.stringify(user));
-          localStorage.setItem('petc_admin_token', data.session.access_token);
+          setAuthEmail('');
+        setAuthPassword('');
+        setAuthConfirmPassword('');
+        setAuthFullName('');
+        localStorage.setItem('petc_admin_token', data.session.access_token);
           setCurrentUser(user);
           showNotice(`Admin account created! Welcome, ${user.fullName}`);
           fetchData();
@@ -467,6 +471,10 @@ export default function App() {
           isAdmin: !isEmployeeLogin
         };
         localStorage.setItem('petc_admin_user', JSON.stringify(user));
+        setAuthEmail('');
+        setAuthPassword('');
+        setAuthConfirmPassword('');
+        setAuthFullName('');
         localStorage.setItem('petc_admin_token', data.session.access_token);
         setCurrentUser(user);
         showNotice(`Authenticated as Administrator (${user.fullName || user.email})`);
@@ -495,6 +503,11 @@ export default function App() {
     setAuthEmail('');
     setAuthPassword('');
     setAuthConfirmPassword('');
+    setAuthFullName('');
+    setEmpFullName('');
+    setEmpEmail('');
+    setEmpPassword('');
+    setEmpConfirmPassword('');
     showNotice('You have been signed out.');
   };
 
@@ -517,6 +530,10 @@ export default function App() {
   const switchAuthPortal = (portal) => {
     setAuthPortal(portal);
     setAuthError('');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    setAuthFullName('');
     if (typeof window !== 'undefined') {
       window.location.hash = portal === 'employee' ? 'employee' : 'admin';
     }
@@ -1956,6 +1973,9 @@ export default function App() {
                       placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
+                      autoComplete="off"
+                      autoCorrect={false}
+                      spellCheck={false}
                     />
                     {searchQuery.length > 0 && (
                       <TouchableOpacity onPress={() => setSearchQuery('')}>

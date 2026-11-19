@@ -229,6 +229,9 @@ export default function AuthPortalView({
                   placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                   value={authFullName}
                   onChangeText={setAuthFullName}
+                  autoComplete="off"
+                  autoCorrect={false}
+                  spellCheck={false}
                 />
               </View>
             </View>
@@ -247,6 +250,9 @@ export default function AuthPortalView({
                 placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect={false}
+                spellCheck={false}
                 value={authEmail}
                 onChangeText={setAuthEmail}
               />
@@ -263,6 +269,10 @@ export default function AuthPortalView({
                 placeholder="Enter your password"
                 placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                 secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
                 value={authPassword}
                 onChangeText={setAuthPassword}
               />
@@ -287,6 +297,10 @@ export default function AuthPortalView({
                   placeholder="Re-enter password"
                   placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                   secureTextEntry={!showPassword}
+                  autoComplete="new-password"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  spellCheck={false}
                   value={authConfirmPassword}
                   onChangeText={setAuthConfirmPassword}
                 />

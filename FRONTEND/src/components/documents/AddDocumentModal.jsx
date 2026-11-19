@@ -482,6 +482,9 @@ export default function AddDocumentModal({
                             onChangeText={setOcrReceiptName}
                             placeholder="e.g. Scanned_REC_1001 or Custom Receipt Name"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
 
@@ -497,6 +500,9 @@ export default function AddDocumentModal({
                             onChangeText={setOcrEstablishment}
                             placeholder="e.g. Store or Business Name"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
 
@@ -512,6 +518,9 @@ export default function AddDocumentModal({
                             onChangeText={setOcrReceiptDate}
                             placeholder="YYYY-MM-DD"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
 
@@ -527,6 +536,9 @@ export default function AddDocumentModal({
                             onChangeText={setOcrDescription}
                             placeholder="e.g. Service or Item Details"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
 
@@ -543,6 +555,9 @@ export default function AddDocumentModal({
                             placeholder="0.00"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                             keyboardType="numeric"
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
 
@@ -558,6 +573,9 @@ export default function AddDocumentModal({
                             onChangeText={setOcrOrNumber}
                             placeholder="e.g. OR-2026-001"
                             placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                            autoComplete="off"
+                            autoCorrect={false}
+                            spellCheck={false}
                           />
                         </View>
                       </View>

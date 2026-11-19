@@ -190,6 +190,9 @@ export default function AdminPortalPage({
                   style={[styles.formFieldInput, isLight && styles.formFieldInputLight]}
                   placeholder="e.g. Maria Santos"
                   placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                  autoComplete="off"
+                  autoCorrect={false}
+                  spellCheck={false}
                   value={empFullName}
                   onChangeText={setEmpFullName}
                 />
@@ -207,6 +210,9 @@ export default function AdminPortalPage({
                   placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoComplete="off"
+                  autoCorrect={false}
+                  spellCheck={false}
                   value={empEmail}
                   onChangeText={setEmpEmail}
                 />
@@ -224,6 +230,10 @@ export default function AdminPortalPage({
                     placeholder="Min. 6 chars"
                     placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                     secureTextEntry={!showEmpPassword}
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={empPassword}
                     onChangeText={setEmpPassword}
                   />
@@ -245,6 +255,10 @@ export default function AdminPortalPage({
                     placeholder="Re-enter password"
                     placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                     secureTextEntry={!showEmpPassword}
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
                     value={empConfirmPassword}
                     onChangeText={setEmpConfirmPassword}
                   />

@@ -111,6 +111,9 @@ export default function TopHeader({
               placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoComplete="off"
+              autoCorrect={false}
+              spellCheck={false}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>

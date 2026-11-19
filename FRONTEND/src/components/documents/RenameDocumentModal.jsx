@@ -41,6 +41,9 @@ export default function RenameDocumentModal({
                 onChangeText={setRenameNewName}
                 placeholder="Enter new file name..."
                 placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                autoComplete="off"
+                autoCorrect={false}
+                spellCheck={false}
                 autoFocus
                 selectTextOnFocus
               />
