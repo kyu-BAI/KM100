@@ -59,8 +59,9 @@ export default function DocumentViewerModal({
                 <TouchableOpacity
                   style={[styles.btnOutline, isMobile && { paddingHorizontal: 8, paddingVertical: 6 }]}
                   onPress={() => {
-                    setRenameItem(viewItem);
-                    setRenameNewName(viewItem?.fileName || '');
+                    if (onRename && viewItem) {
+                      onRename(viewItem);
+                    }
                   }}
                   title="Rename Document"
                 >
@@ -71,13 +72,14 @@ export default function DocumentViewerModal({
                 <TouchableOpacity
                   style={[styles.btnOutline, isMobile && { paddingHorizontal: 8, paddingVertical: 6 }]}
                   onPress={() => {
+                    if (!viewItem) return;
                     const blob = new Blob([JSON.stringify(viewItem, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = viewItem?.fileName || 'document.json';
                     a.click();
-                    showNotice('Document exported!');
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
                   }}
                   title="Export Data"
                 >
@@ -87,7 +89,7 @@ export default function DocumentViewerModal({
 
                 <TouchableOpacity
                   style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}
-                  onPress={() => setViewItem(null)}
+                  onPress={onClose}
                 >
                   <X size={20} color={isLight ? '#475569' : '#94a3b8'} />
                 </TouchableOpacity>

@@ -2121,8 +2121,6 @@ export default function App() {
       <DocumentViewerModal
         viewItem={viewItem}
         onClose={() => setViewItem(null)}
-        onPrint={printSingleDocument}
-        onDownload={downloadSingleDocument}
         onRename={(item) => {
           setRenameItem(item);
           setRenameNewName(item?.fileName || '');
