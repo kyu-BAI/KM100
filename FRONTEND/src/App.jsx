@@ -10,7 +10,7 @@ import AuthPortalView from './components/auth/AuthPortalView';
 import EmployeeSessionModal from './components/employee/EmployeeSessionModal';
 import { exportRecordsToExcel } from './services/excelService';
 import { RECEIPT_TYPES } from './constants/receiptTypes';
-import { EMPLOYEE_ROLES, EMPLOYEE_DEPARTMENTS, DEFAULT_DEMO_EMPLOYEE } from './constants/employeeConfig';
+import { EMPLOYEE_ROLES, EMPLOYEE_DEPARTMENTS } from './constants/employeeConfig';
 import { SHORT_MONTHS as months } from './constants/calendar';
 import { createStyles } from './styles/themeStyles';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
