@@ -3189,40 +3189,7 @@ export default function App() {
               </View>
             </ScrollView>
 
-            {/* Logged-in Admin Profile Card (Pressable to open Admin & Staff Portal) */}
-            {currentUser && (
-              <TouchableOpacity
-                style={[
-                  styles.sidebarAdminBox,
-                  currentPage === 'admin' && {
-                    borderColor: '#38bdf8',
-                    backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)'
-                  },
-                  isLight && styles.sidebarAdminBoxLight
-                ]}
-                onPress={() => setCurrentPage(prev => (prev === 'admin' ? 'inventory' : 'admin'))}
-                title="Click to open Admin Portal & Employee Creation"
-              >
-                <View style={styles.sidebarAdminRow}>
-                  <View style={styles.adminAvatarCircle}>
-                    <Text style={styles.adminAvatarInitials}>
-                      {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : 'A'}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
-                    <Text style={[styles.adminNameText, isLight && styles.adminNameTextLight]} numberOfLines={1}>
-                      {currentUser.fullName || 'Admin User'}
-                    </Text>
-                    <Text style={[styles.adminEmailText, isLight && styles.adminEmailTextLight]} numberOfLines={1}>
-                      {currentUser.email}
-                    </Text>
-                  </View>
-                  <View style={[styles.adminBadgePill, isLight && styles.adminBadgePillLight]}>
-                    <Text style={[styles.adminBadgePillText, isLight && styles.adminBadgePillTextLight]}>ADMIN</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
+
           </View>
         )}
 
