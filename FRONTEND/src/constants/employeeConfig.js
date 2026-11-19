@@ -17,12 +17,10 @@ export const EMPLOYEE_DEPARTMENTS = [
 ];
 
 export const DEFAULT_DEMO_EMPLOYEE = {
-  id: 'emp-demo-knoahmari',
-  fullName: 'Maria Santos (Staff)',
-  email: 'knoahmari@km100.ph',
-  password: 'knoahmari123',
-  role: 'Staff / Data Encoder',
+  id: 'emp-demo-knoah',
+  fullName: 'Knoah Mari Staff',
+  email: 'knoahmari@gmail.com',
+  role: 'Cashier & Billing',
   department: 'Knoah Mari',
-  createdAt: '2026-01-15T08:30:00.000Z',
   active: true
 };
