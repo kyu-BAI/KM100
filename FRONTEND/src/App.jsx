@@ -4121,43 +4121,111 @@ export default function App() {
         onRequestClose={() => setShowEmployeeModal(false)}
       >
         <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
-          <View style={[styles.modalCard, { maxWidth: 440, width: '92%', padding: 22, borderRadius: 14 }, isLight && styles.modalCardLight]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: isLight ? '#e2e8f0' : '#1e293b' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <UserCheck size={20} color="#10b981" />
+          <View style={[
+            styles.modalCard,
+            {
+              maxWidth: 440,
+              width: '92%',
+              padding: 24,
+              borderRadius: 18,
+              backgroundColor: isLight ? '#ffffff' : '#0f172a',
+              borderColor: isLight ? '#e2e8f0' : '#1e293b',
+              borderWidth: 1,
+              boxShadow: isLight
+                ? '0 25px 60px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.08)'
+                : '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            },
+            isLight && styles.modalCardLight
+          ]}>
+            {/* Modal Header */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <UserCheck size={18} color="#10b981" />
+                </View>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }}>
                   Employee Staff Session
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setShowEmployeeModal(false)} style={{ padding: 4 }}>
-                <X size={18} color={isLight ? '#64748b' : '#94a3b8'} />
+              <TouchableOpacity
+                onPress={() => setShowEmployeeModal(false)}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 15,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+                }}
+              >
+                <X size={16} color={isLight ? '#475569' : '#94a3b8'} />
               </TouchableOpacity>
             </View>
 
-            <View style={{ gap: 16, paddingTop: 16 }}>
+            <View style={{ gap: 16, paddingTop: 18 }}>
               {/* Profile Card */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={[styles.adminLargeAvatarCircle, { backgroundColor: '#10b981' }]}>
-                  <Text style={styles.adminLargeAvatarInitials}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <View style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 27,
+                  backgroundColor: '#10b981',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                  flexShrink: 0
+                }}>
+                  <Text style={{ fontSize: 22, fontWeight: '800', color: '#ffffff' }}>
                     {(currentUser?.fullName || 'E').charAt(0).toUpperCase()}
                   </Text>
                 </View>
-                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                  <Text style={[styles.adminProfileName, isLight && styles.adminProfileNameLight]} numberOfLines={1}>
+                <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                  <Text style={{ fontSize: 17, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
                     {currentUser?.fullName}
                   </Text>
-                  <Text style={[styles.adminProfileEmail, isLight && styles.adminProfileEmailLight]} numberOfLines={1}>
+                  <Text style={{ fontSize: 13, color: isLight ? '#475569' : '#94a3b8', fontWeight: '500' }} numberOfLines={1}>
                     {currentUser?.email}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                    <View style={[styles.adminBadgePill, { backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981' }]}>
-                      <Text style={[styles.adminBadgePillText, { color: isLight ? '#047857' : '#34d399' }]}>
+                    <View style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                      backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                      borderWidth: 1,
+                      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                    }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>
                         {currentUser?.employeeRole || 'STAFF'}
                       </Text>
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#10b981' }} />
-                      <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '700' }}>Active</Text>
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      paddingHorizontal: 7,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                      backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)',
+                      borderWidth: 1,
+                      borderColor: isLight ? '#bbf7d0' : 'rgba(16, 185, 129, 0.25)'
+                    }}>
+                      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#10b981' }} />
+                      <Text style={{ fontSize: 11, color: isLight ? '#15803d' : '#34d399', fontWeight: '700' }}>Active</Text>
                     </View>
                   </View>
                 </View>
@@ -4168,32 +4236,45 @@ export default function App() {
                 backgroundColor: isLight ? '#f0fdf4' : 'rgba(16, 185, 129, 0.08)',
                 borderWidth: 1,
                 borderColor: isLight ? '#bbf7d0' : 'rgba(16, 185, 129, 0.25)',
-                borderRadius: 10,
-                padding: 12,
+                borderRadius: 12,
+                padding: 14,
                 gap: 6
               }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Building2 size={15} color="#10b981" />
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#15803d' : '#34d399' }}>
-                    ASSIGNED SCOPE: {(currentUser?.department || 'ALL BRANCHES').toUpperCase()}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                  <Building2 size={16} color="#059669" />
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#166534' : '#34d399', letterSpacing: 0.5 }}>
+                    ASSIGNED SCOPE: {(currentUser?.department || 'KNOAH MARI').toUpperCase()}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 11, color: isLight ? '#166534' : '#a7f3d0', lineHeight: 16 }}>
-                  Access Level: Limited strictly to {(currentUser?.department || 'your assigned branch')} records. Administrative tools and employee creation are restricted.
+                <Text style={{ fontSize: 12, color: isLight ? '#166534' : '#a7f3d0', lineHeight: 18 }}>
+                  Access Level: Limited strictly to {(currentUser?.department || 'Knoah Mari')} records. Administrative tools and employee creation are restricted.
                 </Text>
               </View>
 
               {/* Logout Button */}
-              <View style={{ paddingTop: 8 }}>
+              <View style={{ paddingTop: 4 }}>
                 <TouchableOpacity
-                  style={[styles.adminLogoutBtn, isLight && styles.adminLogoutBtnLight]}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    paddingVertical: 12,
+                    borderRadius: 10,
+                    backgroundColor: isLight ? '#fee2e2' : 'rgba(239, 68, 68, 0.15)',
+                    borderWidth: 1,
+                    borderColor: isLight ? '#fca5a5' : 'rgba(239, 68, 68, 0.3)',
+                    cursor: 'pointer'
+                  }}
                   onPress={() => {
                     setShowEmployeeModal(false);
                     handleLogout();
                   }}
                 >
-                  <LogOut size={16} color="#ef4444" />
-                  <Text style={styles.adminLogoutBtnText}>Log Out of Staff Account</Text>
+                  <LogOut size={16} color="#dc2626" />
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: isLight ? '#dc2626' : '#f87171' }}>
+                    Log Out of Staff Account
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

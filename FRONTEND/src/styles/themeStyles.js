@@ -1457,6 +1457,19 @@ export function createStyles(isLight) {
       fontWeight: '600'
     },
     // Viewer Modal
+    modalCard: {
+      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      boxShadow: isLight ? '0 25px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08)' : '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+      overflow: 'hidden'
+    },
+    modalCardLight: {
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0',
+      boxShadow: '0 25px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08)'
+    },
     modalOverlay: {
       flex: 1,
       backgroundColor: isLight ? 'rgba(15, 23, 42, 0.55)' : 'rgba(0, 0, 0, 0.75)',
