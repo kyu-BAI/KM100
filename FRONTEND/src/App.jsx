@@ -402,7 +402,19 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('petc_admin_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // Strictly enforce: ONLY accounts with role === 'admin' and NO branch department have admin privileges
+      const isActuallyAdmin = parsed.role === 'admin' && parsed.isAdmin !== false && !parsed.department;
+      if (!isActuallyAdmin) {
+        return {
+          ...parsed,
+          role: 'employee',
+          isAdmin: false,
+          employeeRole: parsed.employeeRole || (parsed.role !== 'employee' && parsed.role !== 'admin' ? parsed.role : 'Staff')
+        };
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -493,12 +505,16 @@ export default function App() {
             id: matchedEmp.id,
             email: matchedEmp.email,
             fullName: matchedEmp.fullName,
-            role: matchedEmp.role || 'employee',
-            department: matchedEmp.department
+            role: 'employee',
+            employeeRole: matchedEmp.role || 'Staff',
+            department: matchedEmp.department || 'Knoah Mari',
+            assignedBranch: matchedEmp.department || 'Knoah Mari',
+            isAdmin: false
           };
           localStorage.setItem('petc_admin_user', JSON.stringify(user));
           setCurrentUser(user);
-          showNotice(`Authenticated as ${user.fullName} (${matchedEmp.role})`);
+          setCurrentPage('inventory');
+          showNotice(`Authenticated as ${user.fullName} (${user.employeeRole} - ${user.department})`);
           fetchData();
           return;
         }
@@ -518,11 +534,18 @@ export default function App() {
           return;
         }
 
+        const matchedEmpRecord = savedEmps.find(e => e.email.toLowerCase() === authEmail.trim().toLowerCase());
+        const isEmployeeLogin = authPortal === 'employee' || !!matchedEmpRecord || data.user.user_metadata?.role === 'employee' || data.user.user_metadata?.is_admin === false;
+
         const user = {
           id: data.user.id,
           email: data.user.email,
-          fullName: data.user.user_metadata?.full_name || 'Administrator',
-          role: 'admin'
+          fullName: data.user.user_metadata?.full_name || matchedEmpRecord?.fullName || (isEmployeeLogin ? 'Staff Member' : 'Administrator'),
+          role: isEmployeeLogin ? 'employee' : 'admin',
+          employeeRole: data.user.user_metadata?.employee_role || matchedEmpRecord?.role || 'Staff / Data Encoder',
+          department: data.user.user_metadata?.department || matchedEmpRecord?.department || (isEmployeeLogin ? 'Knoah Mari' : null),
+          assignedBranch: data.user.user_metadata?.department || matchedEmpRecord?.department || (isEmployeeLogin ? 'Knoah Mari' : null),
+          isAdmin: !isEmployeeLogin
         };
         localStorage.setItem('petc_admin_user', JSON.stringify(user));
         localStorage.setItem('petc_admin_token', data.session.access_token);
@@ -597,7 +620,9 @@ export default function App() {
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
 
   useEffect(() => {
-    if (currentUser?.role === 'employee' && currentPage === 'admin') {
+    // If not an admin, ALWAYS force page to 'inventory'
+    const isUserAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin !== false && !currentUser?.department;
+    if (!isUserAdmin && currentPage === 'admin') {
       setCurrentPage('inventory');
     }
   }, [currentUser, currentPage]);
@@ -936,12 +961,16 @@ export default function App() {
     }));
   };
 
-  // Employee Role & Branch Scoping Detection
-  const isEmployee = currentUser?.role === 'employee';
+  // Absolute Admin vs Employee Role & Store Access Control
+  const isAdmin = currentUser?.role === 'admin' && currentUser?.isAdmin !== false && !currentUser?.department;
+  const isEmployee = !isAdmin && !!currentUser;
   const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
+
   const isKnoahEmployee = isEmployee && (userDept.includes('knoah') || userDept === 'knoah mari');
-  const isRedGooseEmployee = isEmployee && (userDept.includes('red-goose') || userDept.includes('red goose'));
-  const isPetcEmployee = isEmployee && userDept.includes('petc') && !userDept.includes('all');
+  const isRedGooseEmployee = isEmployee && (userDept.includes('red-goose') || userDept.includes('red goose') || (userDept.includes('red') && !userDept.includes('all')));
+  const isPetcEmployee = isEmployee && userDept.includes('petc') && !userDept.includes('all') && !userDept.includes('sales') && !userDept.includes('income');
+  const isConsumablesEmployee = isEmployee && (userDept.includes('consumable') || userDept.includes('supplies') || userDept.includes('office'));
+  const isSalesIncomeEmployee = isEmployee && (userDept.includes('sales') || userDept.includes('income'));
 
   // Filter items strictly based on the left sidebar navigation and employee branch scope
   const filteredItems = useMemo(() => {
@@ -951,7 +980,7 @@ export default function App() {
     }
 
     return items.filter(item => {
-      // 0. STRICT EMPLOYEE BRANCH ACCESS RESTRICTION
+      // 0. STRICT EMPLOYEE STORE & DEPARTMENT ACCESS RESTRICTION
       if (isKnoahEmployee) {
         const itemEntity = (item.entity || '').toLowerCase();
         const itemSub = (item.subCategory || '').toLowerCase();
@@ -970,6 +999,12 @@ export default function App() {
         const itemTitle = (item.title || item.fileName || '').toLowerCase();
         const isPetc = itemEntity.includes('petc') || itemSub.includes('petc') || itemTitle.includes('petc');
         if (!isPetc) return false;
+      } else if (isConsumablesEmployee) {
+        const itemCat = (item.category || item.categoryId || '').toLowerCase();
+        if (!itemCat.includes('consumable')) return false;
+      } else if (isSalesIncomeEmployee) {
+        const itemCat = (item.category || item.categoryId || '').toLowerCase();
+        if (!itemCat.includes('sale') && !itemCat.includes('income') && !itemCat.includes('emission')) return false;
       }
       // 1. Category Filtering
       const activeType = (activeNav.type || '').toLowerCase();
@@ -3537,7 +3572,7 @@ export default function App() {
         )}
 
         {/* MAIN VIEWING AREA */}
-        {currentPage === 'admin' ? (
+        {currentPage === 'admin' && isAdmin ? (
           <ScrollView
             style={[styles.contentArea, isLight && styles.contentAreaLight]}
             contentContainerStyle={{ padding: isMobile ? 14 : 26, gap: 22, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
@@ -4180,6 +4215,94 @@ export default function App() {
         </View>
         )}
       </View>
+
+      {/* EMPLOYEE STAFF PROFILE & LOGOUT MODAL */}
+      <Modal
+        visible={showEmployeeModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowEmployeeModal(false)}
+      >
+        <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
+          <View style={[styles.modalCard, { maxWidth: 440, width: '92%', padding: 22, borderRadius: 14 }, isLight && styles.modalCardLight]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: isLight ? '#e2e8f0' : '#1e293b' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <UserCheck size={20} color="#10b981" />
+                <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }}>
+                  Employee Staff Session
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowEmployeeModal(false)} style={{ padding: 4 }}>
+                <X size={18} color={isLight ? '#64748b' : '#94a3b8'} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ gap: 16, paddingTop: 16 }}>
+              {/* Profile Card */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={[styles.adminLargeAvatarCircle, { backgroundColor: '#10b981' }]}>
+                  <Text style={styles.adminLargeAvatarInitials}>
+                    {(currentUser?.fullName || 'E').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                  <Text style={[styles.adminProfileName, isLight && styles.adminProfileNameLight]} numberOfLines={1}>
+                    {currentUser?.fullName}
+                  </Text>
+                  <Text style={[styles.adminProfileEmail, isLight && styles.adminProfileEmailLight]} numberOfLines={1}>
+                    {currentUser?.email}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <View style={[styles.adminBadgePill, { backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981' }]}>
+                      <Text style={[styles.adminBadgePillText, { color: isLight ? '#047857' : '#34d399' }]}>
+                        {currentUser?.employeeRole || 'STAFF'}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#10b981' }} />
+                      <Text style={{ fontSize: 11, color: '#10b981', fontWeight: '700' }}>Active</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Branch Restriction Scope Card */}
+              <View style={{
+                backgroundColor: isLight ? '#f0fdf4' : 'rgba(16, 185, 129, 0.08)',
+                borderWidth: 1,
+                borderColor: isLight ? '#bbf7d0' : 'rgba(16, 185, 129, 0.25)',
+                borderRadius: 10,
+                padding: 12,
+                gap: 6
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Building2 size={15} color="#10b981" />
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#15803d' : '#34d399' }}>
+                    ASSIGNED SCOPE: {(currentUser?.department || 'ALL BRANCHES').toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11, color: isLight ? '#166534' : '#a7f3d0', lineHeight: 16 }}>
+                  Access Level: Limited strictly to {(currentUser?.department || 'your assigned branch')} records. Administrative tools and employee creation are restricted.
+                </Text>
+              </View>
+
+              {/* Logout Button */}
+              <View style={{ paddingTop: 8 }}>
+                <TouchableOpacity
+                  style={[styles.adminLogoutBtn, isLight && styles.adminLogoutBtnLight]}
+                  onPress={() => {
+                    setShowEmployeeModal(false);
+                    handleLogout();
+                  }}
+                >
+                  <LogOut size={16} color="#ef4444" />
+                  <Text style={styles.adminLogoutBtnText}>Log Out of Staff Account</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* ======================================================== */}
       {/* 1. DOCUMENT VIEWER MODAL                                 */}
