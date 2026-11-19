@@ -148,7 +148,7 @@ export default function AdminPortalPage({
                   </Text>
                   <TouchableOpacity
                     style={[styles.adminLogoutBtn, isLight && styles.adminLogoutBtnLight]}
-                    onPress={handleLogout}
+                    onPress={onLogout}
                     title="End your session and sign out"
                   >
                     <LogOut size={16} color="#ef4444" />

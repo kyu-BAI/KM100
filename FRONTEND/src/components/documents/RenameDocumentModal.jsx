@@ -27,10 +27,7 @@ export default function RenameDocumentModal({
               </View>
               <TouchableOpacity
                 style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}
-                onPress={() => {
-                  setRenameItem(null);
-                  setRenameNewName('');
-                }}
+                onPress={onClose}
               >
                 <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
               </TouchableOpacity>
@@ -55,10 +52,7 @@ export default function RenameDocumentModal({
             <View style={styles.renameModalFooter}>
               <TouchableOpacity
                 style={[styles.btnSecondary, isLight && styles.btnSecondaryLight]}
-                onPress={() => {
-                  setRenameItem(null);
-                  setRenameNewName('');
-                }}
+                onPress={onClose}
                 disabled={isRenaming}
               >
                 <Text style={[styles.btnSecondaryText, isLight && styles.btnSecondaryTextLight]}>Cancel</Text>
@@ -66,7 +60,7 @@ export default function RenameDocumentModal({
 
               <TouchableOpacity
                 style={[styles.btnSaveVerified, isRenaming && { opacity: 0.6 }]}
-                onPress={handleRenameItem}
+                onPress={onSave}
                 disabled={isRenaming}
               >
                 <CheckCircle2 size={16} color="#ffffff" />
