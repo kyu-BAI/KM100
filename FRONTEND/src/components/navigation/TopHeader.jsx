@@ -88,13 +88,13 @@ export default function TopHeader({
                 </Text>
                 {width >= 620 && (
                   <View style={styles.brandBadge}>
-                    <Text style={styles.brandBadgeText}>INVENTORY</Text>
+                    <Text style={styles.brandBadgeText}>MONITORING SYSTEM</Text>
                   </View>
                 )}
               </View>
               {isDesktop && (
                 <Text style={[styles.brandSub, isLight && styles.brandSubLight]} numberOfLines={1}>
-                  Skills & Training Center, Inc. • Emission Testing Portal
+                  Skills & Training Center, Inc.
                 </Text>
               )}
             </View>
@@ -137,19 +137,7 @@ export default function TopHeader({
             </Text>
           </TouchableOpacity>
 
-          {/* SECONDARY ACTION: EXPORT EXCEL (Desktop & Tablet) */}
-          {width >= 1180 && (
-            <TouchableOpacity
-              style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
-              onPress={() => exportFolderToExcel(activeNav)}
-              title="Download formal Excel spreadsheet (.xlsx)"
-            >
-              <FileSpreadsheet size={15} color={isLight ? '#059669' : '#34d399'} />
-              <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>
-                Export Excel
-              </Text>
-            </TouchableOpacity>
-          )}
+        
 
           {/* Theme Toggle Button */}
           <TouchableOpacity

@@ -141,11 +141,11 @@ export default function EmployeeSessionModal({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                 <Building2 size={16} color="#059669" />
                 <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#166534' : '#34d399', letterSpacing: 0.5 }}>
-                  ASSIGNED SCOPE: {(currentUser?.department || 'KNOAH MARI').toUpperCase()}
+                  ASSIGNED SCOPE: {(currentUser?.department)}
                 </Text>
               </View>
               <Text style={{ fontSize: 12, color: isLight ? '#166534' : '#a7f3d0', lineHeight: 18 }}>
-                Access Level: Limited strictly to {(currentUser?.department || 'Knoah Mari')} records. Administrative tools and employee creation are restricted.
+                Access Level: Limited strictly to {(currentUser?.department)} records. Administrative tools and employee creation are restricted.
               </Text>
             </View>
 

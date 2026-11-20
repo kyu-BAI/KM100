@@ -113,7 +113,7 @@ export default function SidebarDirectory({
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Building2 size={14} color="#10b981" />
                   <Text style={{ fontSize: 11, fontWeight: '800', color: isLight ? '#047857' : '#34d399' }}>
-                    BRANCH: {(currentUser.department || 'KNOAH MARI').toUpperCase()}
+                    BRANCH: {(currentUser.department)}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 10, color: isLight ? '#065f46' : '#a7f3d0' }}>
