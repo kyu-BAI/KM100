@@ -66,33 +66,7 @@ export default function SidebarDirectory({
             isDrawerMode && isLight && styles.mobileSidebarDrawerLight
           ]}>
             {/* Top Company Branding Banner in Sidebar */}
-            <View style={[styles.sidebarCompanyHeader, isLight && styles.sidebarCompanyHeaderLight]}>
-              <View style={styles.sidebarLogoBox}>
-                <Image
-                  source={{ uri: '/km100-logo.png' }}
-                  style={{ width: '100%', height: '100%' }}
-                  resizeMode="contain"
-                />
-              </View>
-              <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-                <Text style={[styles.sidebarCompanyName, isLight && styles.sidebarCompanyNameLight]} numberOfLines={1}>
-                  KM100 SKILLS & TRAINING
-                </Text>
-                <Text style={[styles.sidebarCompanySub, isLight && styles.sidebarCompanySubLight]} numberOfLines={1}>
-                  Center, Inc. • Enterprise Portal
-                </Text>
-              </View>
-              {isDrawerMode && (
-                <TouchableOpacity
-                  onPress={() => setSidebarOpen(false)}
-                  style={[styles.sidebarCollapseBtn, isLight && styles.sidebarCollapseBtnLight]}
-                  title="Close sidebar navigation"
-                >
-                  <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
-                </TouchableOpacity>
-              )}
-            </View>
-
+  
             <View style={[styles.sidebarTitleRow, isLight && styles.sidebarTitleRowLight]}>
               <Text style={[styles.sidebarSectionTitle, isLight && styles.sidebarSectionTitleLight]}>DOCUMENT DIRECTORY</Text>
             </View>
