@@ -3,7 +3,6 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import {
   FileSpreadsheet,
   FileText,
-  Eye,
   Edit3,
   Trash2
 } from 'lucide-react';
@@ -75,7 +74,7 @@ export default function DocumentTableView({
                   accessibilityLabel={`View document details for ${item.fileName}`}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Eye size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  <FileText size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.btnActionIcon, isLight && styles.btnActionIconLight, { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }]}
