@@ -2,7 +2,7 @@
 // Exclusively uses Google Gemini Vision API for high-accuracy handwritten & printed receipt recognition.
 
 // Default Embedded Gemini API Key provided for receipt scanning
-const _EMBEDDED_ENC_KEY = 'QVEuQWI4Uk42SWxIMVZiZk1qREp5Ti03b3AxQUExSnlpODZ3NXZJempnaEhnSjdJS2hZSkE=';
+const _EMBEDDED_ENC_KEY = 'QVEuQWI4Uk42TENYdlA4MGNSeC1MZ0tmVTNXWk9IbzVqSGpVZGgyT2Zpa1hYSDZRUlQ5d0E=';
 export const DEFAULT_EMBEDDED_GEMINI_KEY = typeof atob === 'function' ? atob(_EMBEDDED_ENC_KEY) : '';
 
 /**
@@ -46,7 +46,7 @@ export async function testGeminiApiKey(candidateKey) {
     return { ok: false, error: 'No API key provided.' };
   }
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${keyToTest}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -98,8 +98,8 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
 
     if (!base64Data) return null;
 
-    // High availability current vision models
-    const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    // High accuracy vision models (ordered by availability & reliability)
+    const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview', 'gemini-flash-latest'];
 
     const typeContext = receiptType?.name ? `The document is being filed as: "${receiptType.name}" (${receiptType.category || ''}). ` : '';
 
