@@ -31,7 +31,10 @@ import {
   Edit3,
   ChevronDown,
   ChevronUp,
-  ListFilter
+  ListFilter,
+  Plus,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
@@ -98,6 +101,52 @@ export default function AddDocumentModal({
   const [previewZoomed, setPreviewZoomed] = useState(false);
   const [isRotatingPhoto, setIsRotatingPhoto] = useState(false);
   const [isLineItemsExpanded, setIsLineItemsExpanded] = useState(true);
+  const [isEditingLineItems, setIsEditingLineItems] = useState(false);
+
+  // Helper to update a field in a specific line item
+  const handleUpdateLineItem = (index, field, value) => {
+    if (!setOcrLineItems) return;
+    setOcrLineItems(prev => {
+      const updated = [...(prev || [])];
+      const item = { ...(updated[index] || {}) };
+      item[field] = value;
+
+      // Auto-recalculate amount if qty and unitPrice are changed
+      if (field === 'qty' || field === 'unitPrice') {
+        const q = parseFloat(field === 'qty' ? value : item.qty) || 0;
+        const p = parseFloat(field === 'unitPrice' ? value : item.unitPrice) || 0;
+        if (q > 0 && p > 0) {
+          item.amount = Math.round(q * p * 100) / 100;
+        }
+      }
+      updated[index] = item;
+      return updated;
+    });
+  };
+
+  // Helper to add a new blank line item entry
+  const handleAddLineItem = () => {
+    if (!setOcrLineItems) return;
+    setOcrLineItems(prev => [
+      ...(prev || []),
+      { qty: '1', unit: 'PCS', name: '', unitPrice: 0, amount: 0 }
+    ]);
+    if (!isLineItemsExpanded) setIsLineItemsExpanded(true);
+    if (!isEditingLineItems) setIsEditingLineItems(true);
+  };
+
+  // Helper to remove a line item entry
+  const handleRemoveLineItem = (index) => {
+    if (!setOcrLineItems) return;
+    setOcrLineItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Helper to sync line items total sum with receipt total amount field
+  const handleSyncTotalFromLineItems = () => {
+    if (!ocrLineItems || !setOcrAmount) return;
+    const sum = ocrLineItems.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
+    setOcrAmount(sum > 0 ? sum.toFixed(2) : '0.00');
+  };
 
   const handleRotateCapturedPhoto = async (deg) => {
     if (!capturedReceiptPhoto || isRotatingPhoto) return;
@@ -728,54 +777,88 @@ export default function AddDocumentModal({
                       </View>
                     </View>
 
-                    {/* Listed Items / Line Items Dropdown Accordion for Human Verification */}
-                    {ocrLineItems && ocrLineItems.length > 0 && (
-                      <View style={{
-                        marginTop: 12,
-                        marginBottom: 10,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: isLight ? '#cbd5e1' : '#334155',
-                        backgroundColor: isLight ? '#ffffff' : '#0f172a',
-                        overflow: 'hidden'
-                      }}>
-                        {/* Dropdown Header Toggle Button */}
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => setIsLineItemsExpanded(prev => !prev)}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            paddingVertical: 10,
-                            paddingHorizontal: 12,
-                            backgroundColor: isLight ? '#f8fafc' : '#1e293b',
-                            borderBottomWidth: isLineItemsExpanded ? 1 : 0,
-                            borderBottomColor: isLight ? '#e2e8f0' : '#334155'
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel="Toggle listed items in receipt"
-                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                            <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
-                              Listed Items in Receipt
+                    {/* Listed Items / Line Items Dropdown Accordion with Inline Editing */}
+                    <View style={{
+                      marginTop: 12,
+                      marginBottom: 10,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: isLight ? '#cbd5e1' : '#334155',
+                      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Dropdown Header Toggle Button */}
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => setIsLineItemsExpanded(prev => !prev)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          paddingVertical: 10,
+                          paddingHorizontal: 12,
+                          backgroundColor: isLight ? '#f8fafc' : '#1e293b',
+                          borderBottomWidth: isLineItemsExpanded ? 1 : 0,
+                          borderBottomColor: isLight ? '#e2e8f0' : '#334155'
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Toggle listed items in receipt"
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                          <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                            Listed Items in Receipt
+                          </Text>
+                          <View style={{
+                            backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                            paddingHorizontal: 7,
+                            paddingVertical: 2,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                          }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                              {(ocrLineItems || []).length} {(ocrLineItems || []).length === 1 ? 'item' : 'items'}
                             </Text>
-                            <View style={{
-                              backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
-                              paddingHorizontal: 7,
-                              paddingVertical: 2,
-                              borderRadius: 10,
-                              borderWidth: 1,
-                              borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
-                            }}>
-                              <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
-                                {ocrLineItems.length} {ocrLineItems.length === 1 ? 'item' : 'items'}
-                              </Text>
-                            </View>
                           </View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        </View>
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          {/* Edit Mode Toggle Button */}
+                          <TouchableOpacity
+                            onPress={(e) => {
+                              if (e && e.stopPropagation) e.stopPropagation();
+                              setIsEditingLineItems(prev => !prev);
+                              if (!isLineItemsExpanded) setIsLineItemsExpanded(true);
+                            }}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
+                              borderRadius: 5,
+                              backgroundColor: isEditingLineItems ? '#0284c7' : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)'),
+                              borderColor: isEditingLineItems ? '#0284c7' : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)'),
+                              borderWidth: 1
+                            }}
+                            title={isEditingLineItems ? 'Done editing items' : 'Edit item names, quantities, and prices'}
+                          >
+                            {isEditingLineItems ? (
+                              <>
+                                <Check size={11} color="#ffffff" />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#ffffff' }}>Done</Text>
+                              </>
+                            ) : (
+                              <>
+                                <Edit2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>Edit</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 2 }}>
                             <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }}>
                               {isLineItemsExpanded ? 'Hide' : 'Review'}
                             </Text>
@@ -785,61 +868,235 @@ export default function AddDocumentModal({
                               <ChevronDown size={16} color={isLight ? '#64748b' : '#94a3b8'} />
                             )}
                           </View>
-                        </TouchableOpacity>
+                        </View>
+                      </TouchableOpacity>
 
-                        {/* Expanded Breakdown Table */}
-                        {isLineItemsExpanded && (
-                          <View style={{ padding: 10 }}>
-                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginBottom: 8 }}>
-                              Verify the detected entries before saving:
+                      {/* Expanded Breakdown Table & Editor */}
+                      {isLineItemsExpanded && (
+                        <View style={{ padding: 10 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }}>
+                              {isEditingLineItems ? 'Edit item names, quantities, unit prices, or amounts:' : 'Verify or edit detected entries before saving:'}
                             </Text>
+                            {!isEditingLineItems && (
+                              <TouchableOpacity
+                                onPress={() => setIsEditingLineItems(true)}
+                                style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}
+                              >
+                                <Edit2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
+                                <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>
+                                  Edit Items
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+
+                          {(!ocrLineItems || ocrLineItems.length === 0) ? (
+                            <View style={{
+                              padding: 14,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: isLight ? '#f8fafc' : '#1e293b',
+                              borderRadius: 6,
+                              borderWidth: 1,
+                              borderStyle: 'dashed',
+                              borderColor: isLight ? '#cbd5e1' : '#475569',
+                              gap: 6
+                            }}>
+                              <Text style={{ fontSize: 12, color: isLight ? '#64748b' : '#94a3b8' }}>
+                                No itemized entries currently listed.
+                              </Text>
+                              <TouchableOpacity
+                                onPress={handleAddLineItem}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  backgroundColor: '#0284c7',
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 5,
+                                  borderRadius: 5
+                                }}
+                              >
+                                <Plus size={13} color="#ffffff" />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#ffffff' }}>
+                                  Add First Item Entry
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          ) : (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%' }}>
-                              <View style={{ minWidth: isMobile ? 320 : '100%', width: '100%' }}>
+                              <View style={{ minWidth: isMobile ? 360 : '100%', width: '100%' }}>
                                 {/* Table Columns Header */}
                                 <View style={{
                                   flexDirection: 'row',
+                                  alignItems: 'center',
                                   backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
                                   paddingVertical: 6,
                                   paddingHorizontal: 8,
                                   borderRadius: 4,
                                   marginBottom: 4
                                 }}>
-                                  <Text style={{ width: 65, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>QTY & UNIT</Text>
+                                  <Text style={{ width: 85, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>QTY & UNIT</Text>
                                   <Text style={{ flex: 2.2, minWidth: 120, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>ARTICLES / ITEM</Text>
                                   <Text style={{ width: 75, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>UNIT PRICE</Text>
                                   <Text style={{ width: 85, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>AMOUNT</Text>
+                                  {isEditingLineItems && (
+                                    <Text style={{ width: 28, textAlign: 'center', fontSize: 10, fontWeight: '700', color: isLight ? '#94a3b8' : '#64748b' }}></Text>
+                                  )}
                                 </View>
 
-                                {/* Item Rows */}
+                                {/* Item Rows (Editable or Readonly) */}
                                 {ocrLineItems.map((item, idx) => (
                                   <View
                                     key={idx}
                                     style={{
                                       flexDirection: 'row',
                                       alignItems: 'center',
-                                      paddingVertical: 6,
+                                      paddingVertical: isEditingLineItems ? 4 : 6,
                                       paddingHorizontal: 8,
                                       backgroundColor: idx % 2 === 1 ? (isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.4)') : 'transparent',
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isLight ? '#f1f5f9' : '#1e293b'
+                                      borderBottomColor: isLight ? '#f1f5f9' : '#1e293b',
+                                      gap: 4
                                     }}
                                   >
-                                    <Text style={{ width: 65, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
-                                      {item.qty || '1'} {item.unit || ''}
-                                    </Text>
-                                    <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
-                                      {item.name}
-                                    </Text>
-                                    <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
-                                      {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
-                                    </Text>
-                                    <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
-                                      ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </Text>
+                                    {isEditingLineItems ? (
+                                      <>
+                                        {/* Editable Qty & Unit */}
+                                        <View style={{ flexDirection: 'row', gap: 3, width: 85 }}>
+                                          <TextInput
+                                            style={{
+                                              width: 38,
+                                              backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                                              borderColor: isLight ? '#cbd5e1' : '#475569',
+                                              borderWidth: 1,
+                                              borderRadius: 4,
+                                              paddingHorizontal: 4,
+                                              paddingVertical: 3,
+                                              fontSize: 11,
+                                              color: isLight ? '#0f172a' : '#f8fafc',
+                                              textAlign: 'center'
+                                            }}
+                                            value={String(item.qty || '')}
+                                            onChangeText={(val) => handleUpdateLineItem(idx, 'qty', val)}
+                                            placeholder="Qty"
+                                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                                          />
+                                          <TextInput
+                                            style={{
+                                              width: 44,
+                                              backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                                              borderColor: isLight ? '#cbd5e1' : '#475569',
+                                              borderWidth: 1,
+                                              borderRadius: 4,
+                                              paddingHorizontal: 4,
+                                              paddingVertical: 3,
+                                              fontSize: 11,
+                                              color: isLight ? '#0f172a' : '#f8fafc',
+                                              textAlign: 'center'
+                                            }}
+                                            value={String(item.unit || '')}
+                                            onChangeText={(val) => handleUpdateLineItem(idx, 'unit', val)}
+                                            placeholder="Unit"
+                                            placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                                          />
+                                        </View>
+
+                                        {/* Editable Item Name */}
+                                        <TextInput
+                                          style={{
+                                            flex: 2.2,
+                                            minWidth: 120,
+                                            backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                                            borderColor: isLight ? '#cbd5e1' : '#475569',
+                                            borderWidth: 1,
+                                            borderRadius: 4,
+                                            paddingHorizontal: 6,
+                                            paddingVertical: 3,
+                                            fontSize: 11,
+                                            fontWeight: '600',
+                                            color: isLight ? '#0f172a' : '#f8fafc'
+                                          }}
+                                          value={item.name}
+                                          onChangeText={(val) => handleUpdateLineItem(idx, 'name', val)}
+                                          placeholder="Item description"
+                                          placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                                        />
+
+                                        {/* Editable Unit Price */}
+                                        <TextInput
+                                          style={{
+                                            width: 75,
+                                            backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                                            borderColor: isLight ? '#cbd5e1' : '#475569',
+                                            borderWidth: 1,
+                                            borderRadius: 4,
+                                            paddingHorizontal: 4,
+                                            paddingVertical: 3,
+                                            fontSize: 11,
+                                            color: isLight ? '#0f172a' : '#f8fafc',
+                                            textAlign: 'right'
+                                          }}
+                                          value={item.unitPrice !== undefined && item.unitPrice !== null ? String(item.unitPrice) : ''}
+                                          onChangeText={(val) => handleUpdateLineItem(idx, 'unitPrice', val)}
+                                          placeholder="0.00"
+                                          placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                                          keyboardType="numeric"
+                                        />
+
+                                        {/* Editable Amount */}
+                                        <TextInput
+                                          style={{
+                                            width: 85,
+                                            backgroundColor: isLight ? '#ffffff' : '#1e293b',
+                                            borderColor: isLight ? '#cbd5e1' : '#475569',
+                                            borderWidth: 1,
+                                            borderRadius: 4,
+                                            paddingHorizontal: 4,
+                                            paddingVertical: 3,
+                                            fontSize: 11,
+                                            fontWeight: '700',
+                                            color: isLight ? '#0284c7' : '#38bdf8',
+                                            textAlign: 'right'
+                                          }}
+                                          value={item.amount !== undefined && item.amount !== null ? String(item.amount) : ''}
+                                          onChangeText={(val) => handleUpdateLineItem(idx, 'amount', val)}
+                                          placeholder="0.00"
+                                          placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                                          keyboardType="numeric"
+                                        />
+
+                                        {/* Delete Item Button */}
+                                        <TouchableOpacity
+                                          onPress={() => handleRemoveLineItem(idx)}
+                                          style={{ width: 28, height: 26, alignItems: 'center', justifyContent: 'center' }}
+                                          title="Delete entry"
+                                        >
+                                          <Trash2 size={13} color="#ef4444" />
+                                        </TouchableOpacity>
+                                      </>
+                                    ) : (
+                                      <>
+                                        {/* Readonly View Row */}
+                                        <Text style={{ width: 85, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
+                                          {item.qty || '1'} {item.unit || ''}
+                                        </Text>
+                                        <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
+                                          {item.name}
+                                        </Text>
+                                        <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
+                                          {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                        </Text>
+                                        <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
+                                          ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        </Text>
+                                      </>
+                                    )}
                                   </View>
                                 ))}
 
-                                {/* Total Verification Footer Row */}
+                                {/* Total Verification & Subtotal Footer */}
                                 <View style={{
                                   flexDirection: 'row',
                                   justifyContent: 'space-between',
@@ -862,10 +1119,86 @@ export default function AddDocumentModal({
                                 </View>
                               </View>
                             </ScrollView>
-                          </View>
-                        )}
-                      </View>
-                    )}
+                          )}
+
+                          {/* Edit Mode Action Toolbar */}
+                          {isEditingLineItems && (
+                            <View style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginTop: 10,
+                              paddingTop: 8,
+                              borderTopWidth: 1,
+                              borderTopColor: isLight ? '#f1f5f9' : '#1e293b',
+                              flexWrap: 'wrap',
+                              gap: 8
+                            }}>
+                              <TouchableOpacity
+                                onPress={handleAddLineItem}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 5,
+                                  borderRadius: 5,
+                                  backgroundColor: isLight ? '#f0fdf4' : 'rgba(16, 185, 129, 0.15)',
+                                  borderColor: isLight ? '#bbf7d0' : 'rgba(16, 185, 129, 0.3)',
+                                  borderWidth: 1
+                                }}
+                              >
+                                <Plus size={12} color="#10b981" />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#15803d' : '#34d399' }}>
+                                  Add Entry
+                                </Text>
+                              </TouchableOpacity>
+
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <TouchableOpacity
+                                  onPress={handleSyncTotalFromLineItems}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    paddingHorizontal: 9,
+                                    paddingVertical: 5,
+                                    borderRadius: 5,
+                                    backgroundColor: isLight ? '#f0f9ff' : 'rgba(56, 189, 248, 0.15)',
+                                    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)',
+                                    borderWidth: 1
+                                  }}
+                                  title="Sync calculated items sum with Total Amount field"
+                                >
+                                  <RefreshCw size={11} color="#0284c7" />
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                                    Sync Total Amount
+                                  </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  onPress={() => setIsEditingLineItems(false)}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 5,
+                                    borderRadius: 5,
+                                    backgroundColor: '#0284c7'
+                                  }}
+                                >
+                                  <Check size={12} color="#ffffff" />
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#ffffff' }}>
+                                    Done
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
 
                     {/* Actions */}
                     <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>
