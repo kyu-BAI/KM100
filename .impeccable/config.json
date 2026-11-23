@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "FRONTEND/index.html"
+        ],
+        "createdAt": "2026-11-23T05:35:54.937Z",
+        "reason": "Official KM100 parent brand warm-white canvas token from km100-one.vercel.app"
+      }
+    ]
+  }
+}
