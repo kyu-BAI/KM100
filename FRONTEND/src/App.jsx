@@ -1191,8 +1191,8 @@ export default function App() {
       let targetCategoryId = 'petc-sales';
       let targetEntity = 'PETC';
       let targetSubCategory = '';
-      let targetYear = activeNav.year || '2026';
-      let targetMonth = activeNav.month || 'FEB';
+      let targetYear = activeNav.year;
+      let targetMonth = activeNav.month;
 
       if (activeNav.type === 'petc-sales') {
         targetCategory = 'PETC Sales';
@@ -1215,8 +1215,8 @@ export default function App() {
       } else if (activeNav.type === 'vouchers') {
         targetCategory = 'Vouchers';
         targetCategoryId = 'vouchers';
-        targetSubCategory = activeNav.subCategory || 'PETC';
-        targetEntity = activeNav.subCategory || 'PETC';
+        targetSubCategory = activeNav.subCategory;
+        targetEntity = activeNav.subCategory;
       } else if (activeNav.type === 'petc-insurance') {
         targetCategory = 'PETC Insurance';
         targetCategoryId = 'petc-insurance';
@@ -1309,7 +1309,7 @@ export default function App() {
       setCameraActive(true);
     } catch (err) {
       console.warn('Camera access error:', err);
-      showNotice('Camera not accessible. Please allow camera permissions or upload a receipt photo.', 'error');
+      showNotice('Camera not accessible. Please allow camera permissions or upload a receipt photo.');
     }
   };
 
@@ -1372,7 +1372,7 @@ export default function App() {
   const handleProcessReceiptPhoto = async (dataUrl) => {
     setCapturedReceiptPhoto(dataUrl);
     setIsOcrProcessing(true);
-    setOcrStatusText('Analyzing receipt with Gemini Vision AI...');
+    setOcrStatusText('AI Receipt Analyzation..');
     setOcrProgress(0.25);
     stopCamera();
 
@@ -1385,7 +1385,7 @@ export default function App() {
         setIsOcrProcessing(false);
         setIsOcrVerifiedView(false);
         setOcrValidationError(parsed.rejectionReason || 'The scanned image is not a recognized official receipt, invoice, or voucher.');
-        showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.', 'error');
+        showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.');
         return;
       }
 
@@ -1399,7 +1399,7 @@ export default function App() {
         setIsOcrProcessing(false);
         setIsOcrVerifiedView(false);
         setOcrValidationError('Unable to detect any valid receipt data (establishment, amount, or invoice number). Please take a clearer photo of an official receipt.');
-        showNotice('Scan Rejected: No receipt data found in photo.', 'error');
+        showNotice('Scan Rejected: No receipt data found in photo.');
         return;
       }
 
@@ -1521,9 +1521,9 @@ export default function App() {
 
       const scanDateToday = new Date().toISOString().split('T')[0];
       const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-      const currentMonthName = monthNames[new Date().getMonth()] || 'FEB';
+      const currentMonthName = monthNames[new Date().getMonth()];
 
-      const targetYear = activeNav.year || scanDateToday.split('-')[0] || '2026';
+      const targetYear = activeNav.year || scanDateToday.split('-')[0];
       const targetMonth = activeNav.month || currentMonthName;
 
       let targetSubCat = selectedReceiptType.subCategory || 'Receipt Scan';
@@ -1574,7 +1574,6 @@ export default function App() {
             ['Official Ref / Invoice No.', refCode],
             ['Assigned Category', selectedReceiptType.category],
             ['Assigned Entity', selectedReceiptType.entity],
-            ['Target Database Table', `public.${selectedReceiptType.tableName || 'inventory_items'}`],
             ['Scan Timestamp', new Date().toLocaleString()]
           ],
           summary: {
@@ -1985,17 +1984,19 @@ export default function App() {
                 )}
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: isMobile ? 'space-between' : 'flex-end', width: isMobile ? '100%' : 'auto', flexWrap: 'wrap' }}>
-                  {/* Export Excel Button */}
-                  <TouchableOpacity
-                    style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
-                    onPress={() => exportFolderToExcel(activeNav)}
-                    title={`Export "${activeNav.label}" into formal Excel spreadsheet`}
-                  >
-                    <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
-                    <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
-                      Export Excel
-                    </Text>
-                  </TouchableOpacity>
+                  {/* Export Excel Button - only visible when navigated into a sub-folder */}
+                  {(activeNav.year || activeNav.month || activeNav.subCategory) && (
+                    <TouchableOpacity
+                      style={[styles.exportExcelBtn, isLight && styles.exportExcelBtnLight]}
+                      onPress={() => exportFolderToExcel(activeNav)}
+                      title={`Export "${activeNav.label}" into formal Excel spreadsheet`}
+                    >
+                      <FileSpreadsheet size={13} color={isLight ? '#059669' : '#34d399'} />
+                      <Text style={[styles.exportExcelBtnText, isLight && styles.exportExcelBtnTextLight]}>
+                        Export Excel
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                   {/* Total Count Pill */}
                   <View style={[styles.countBadge, isLight && styles.countBadgeLight]}>

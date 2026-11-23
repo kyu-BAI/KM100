@@ -323,11 +323,6 @@ export default function AddDocumentModal({
                           <View style={[styles.receiptEntityBadge, isLight && styles.receiptEntityBadgeLight]}>
                             <Text style={[styles.receiptEntityBadgeText, isLight && styles.receiptEntityBadgeTextLight]}>{rt.category} • {rt.entity}</Text>
                           </View>
-                          <View style={[styles.receiptEntityBadge, isLight ? { backgroundColor: 'rgba(2, 132, 199, 0.1)', borderColor: 'rgba(2, 132, 199, 0.25)' } : { backgroundColor: 'rgba(56, 189, 248, 0.12)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
-                            <Text style={[styles.receiptEntityBadgeText, isLight ? { color: '#0284c7', fontSize: 10, fontFamily: 'monospace' } : { color: '#38bdf8', fontSize: 10, fontFamily: 'monospace' }]}>
-                              📁 {rt.tableName}
-                            </Text>
-                          </View>
                         </View>
                       </TouchableOpacity>
                     );
@@ -477,11 +472,7 @@ export default function AddDocumentModal({
                         <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }} numberOfLines={1}>
                           Classification: <Text style={{ color: isLight ? '#0f172a' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
                         </Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                          <Text style={{ fontSize: 10, color: isLight ? '#059669' : '#34d399', fontFamily: 'monospace', fontWeight: '700' }}>
-                            📁 public.{selectedReceiptType.tableName}
-                          </Text>
-                        </View>
+
                       </View>
                     </View>
 

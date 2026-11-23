@@ -90,7 +90,7 @@ export function exportRecordsToExcel({ folderLabel = 'Inventory Records', folder
       'KM100 VERIFIED'      // Col 8: Verified badge
     ]);
     aoa.push([
-      'KM100 EMISSION & TRAINING DOCUMENT MANAGEMENT SYSTEM • OFFICIAL AUDIT COPY'
+      'KM100 • OFFICIAL AUDIT COPY'
     ]);
 
     // 4. Create Worksheet
