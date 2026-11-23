@@ -26,7 +26,9 @@ import {
   RotateCw,
   RotateCcw,
   Building2,
-  CreditCard
+  CreditCard,
+  Smartphone,
+  Edit3
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
