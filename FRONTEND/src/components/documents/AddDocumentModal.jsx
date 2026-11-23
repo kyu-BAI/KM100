@@ -24,7 +24,9 @@ import {
   Sparkles,
   Maximize2,
   RotateCw,
-  RotateCcw
+  RotateCcw,
+  Building2,
+  CreditCard
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
@@ -622,6 +624,7 @@ export default function AddDocumentModal({
                           onChangeText={setOcrReceiptName}
                           placeholder="e.g. Scanned_REC_1001 or Custom Receipt Name"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          accessibilityLabel="Receipt or file name"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}
@@ -640,6 +643,7 @@ export default function AddDocumentModal({
                           onChangeText={setOcrEstablishment}
                           placeholder="e.g. Store or Business Name"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          accessibilityLabel="Establishment or business name"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}
@@ -658,6 +662,7 @@ export default function AddDocumentModal({
                           onChangeText={setOcrReceiptDate}
                           placeholder="YYYY-MM-DD"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          accessibilityLabel="Receipt issue date"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}
@@ -676,6 +681,7 @@ export default function AddDocumentModal({
                           onChangeText={setOcrDescription}
                           placeholder="e.g. Service or Item Details"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          accessibilityLabel="Description of receipt or items"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}
@@ -685,7 +691,7 @@ export default function AddDocumentModal({
                       {/* 4. Amount */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <DollarSign size={13} color={isLight ? '#059669' : '#34d399'} />
+                          <CreditCard size={13} color={isLight ? '#059669' : '#34d399'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Amount (PHP):</Text>
                         </View>
                         <TextInput
@@ -695,6 +701,7 @@ export default function AddDocumentModal({
                           placeholder="0.00"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                           keyboardType="numeric"
+                          accessibilityLabel="Total receipt amount in Philippine Pesos"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}
@@ -704,15 +711,16 @@ export default function AddDocumentModal({
                       {/* 5. OR Number */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <Receipt size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <CheckCircle2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Invoice / OR No.:</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
                           value={ocrOrNumber}
                           onChangeText={setOcrOrNumber}
-                          placeholder="e.g. OR-2026-001"
+                          placeholder="e.g. 0002254722"
                           placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                          accessibilityLabel="Official receipt or invoice number"
                           autoComplete="off"
                           autoCorrect={false}
                           spellCheck={false}

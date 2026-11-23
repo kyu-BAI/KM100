@@ -70,25 +70,31 @@ export default function DocumentCardsView({
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <TouchableOpacity
-                style={[styles.btnActionIcon, isLight && styles.btnActionIconLight]}
+                style={[styles.btnActionIcon, isLight && styles.btnActionIconLight, { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }]}
                 onPress={(e) => {
                   e.stopPropagation?.();
                   onRenameItem(item);
                 }}
                 title="Rename Document"
+                accessibilityRole="button"
+                accessibilityLabel={`Rename document ${item.fileName}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Edit3 size={14} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <Edit3 size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
               </TouchableOpacity>
               {isAdmin && (
                 <TouchableOpacity
-                  style={styles.mobileBtnDelete}
+                  style={[styles.mobileBtnDelete, { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }]}
                   onPress={(e) => {
                     e.stopPropagation?.();
                     onDeleteItem(item.id, item.fileName);
                   }}
                   title="Delete Document (Admin Only)"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Delete document ${item.fileName}`}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Trash2 size={14} color="#f87171" />
+                  <Trash2 size={15} color="#f87171" />
                 </TouchableOpacity>
               )}
             </View>

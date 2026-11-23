@@ -145,6 +145,9 @@ export default function SidebarDirectory({
                       label: 'All Inventory Files'
                     })}
                     title="Export All Records to Excel (.xlsx)"
+                    accessibilityRole="button"
+                    accessibilityLabel="Export all records to Excel spreadsheet"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <FileSpreadsheet size={12} color={isLight ? '#059669' : '#34d399'} />
                   </TouchableOpacity>
@@ -153,7 +156,9 @@ export default function SidebarDirectory({
                   <TouchableOpacity
                     style={[styles.sidebarToggleSwitch, showAllFiles && styles.sidebarToggleSwitchActive]}
                     onPress={handleToggleShowAll}
+                    accessibilityRole="button"
                     accessibilityLabel={showAllFiles ? "Click to hide all files" : "Click to display all files"}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <View style={[styles.sidebarToggleThumb, showAllFiles && styles.sidebarToggleThumbActive]} />
                   </TouchableOpacity>

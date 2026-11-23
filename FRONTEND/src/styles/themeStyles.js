@@ -907,7 +907,7 @@ export function createStyles(isLight) {
       paddingVertical: 12,
       borderRadius: 8,
       boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-      animation: 'toastSlideIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      animation: 'toastSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
       transition: 'all 0.2s ease'
     },
     toastSuccess: {

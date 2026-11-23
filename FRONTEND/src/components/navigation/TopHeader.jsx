@@ -130,6 +130,8 @@ export default function TopHeader({
             style={[styles.heroScanBtn, isSmallMobile && { paddingHorizontal: 9, paddingVertical: 7, gap: 5 }]}
             onPress={openAddModal}
             title="Scan physical receipt or upload document"
+            accessibilityRole="button"
+            accessibilityLabel="Scan receipt or upload document"
           >
             <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
             <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
@@ -137,13 +139,14 @@ export default function TopHeader({
             </Text>
           </TouchableOpacity>
 
-        
-
           {/* Theme Toggle Button */}
           <TouchableOpacity
-            style={[styles.headerIconBtn, isSmallMobile && { padding: 6 }, isLight && styles.headerIconBtnLight]}
+            style={[styles.headerIconBtn, isSmallMobile && { padding: 6 }, isLight && styles.headerIconBtnLight, { minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }]}
             onPress={toggleTheme}
             title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            accessibilityRole="button"
+            accessibilityLabel={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             {isLight ? <Moon size={isSmallMobile ? 14 : 16} color="#6366f1" /> : <Sun size={isSmallMobile ? 14 : 16} color="#f59e0b" />}
           </TouchableOpacity>
@@ -154,6 +157,8 @@ export default function TopHeader({
               style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
               onPress={() => fetchData(false)}
               title="Click to sync with database"
+              accessibilityRole="button"
+              accessibilityLabel="Sync data with database"
             >
               <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
               <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
