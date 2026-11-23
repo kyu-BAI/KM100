@@ -186,27 +186,34 @@ export default function DocumentViewerModal({
                       ))}
                     </View>
 
-                    {viewItem.previewData.rows?.map((row, rIdx) => (
-                      <View key={rIdx} style={[styles.previewTableRow, rIdx % 2 === 1 && styles.previewTableRowAlt]}>
-                        {row.map((cell, cIdx) => (
-                          <Text key={cIdx} style={[styles.previewTd, { flex: cIdx === 0 ? 1.5 : 1 }]}>
-                            {cell}
-                          </Text>
-                        ))}
-                      </View>
-                    ))}
+                    {viewItem.previewData.rows
+                      ?.filter(row => {
+                        const label = String(row?.[0] || '').toLowerCase();
+                        return !label.includes('target database') && !label.includes('database table');
+                      })
+                      ?.map((row, rIdx) => (
+                        <View key={rIdx} style={[styles.previewTableRow, rIdx % 2 === 1 && styles.previewTableRowAlt]}>
+                          {row.map((cell, cIdx) => (
+                            <Text key={cIdx} style={[styles.previewTd, { flex: cIdx === 0 ? 1.5 : 1 }]}>
+                              {cell}
+                            </Text>
+                          ))}
+                        </View>
+                      ))}
                   </View>
 
                   {viewItem.previewData.summary && (
                     <View style={styles.previewSummaryBox}>
                       <Text style={styles.previewSummaryTitle}>SUMMARY METRICS</Text>
                       <View style={styles.previewSummaryGrid}>
-                        {Object.entries(viewItem.previewData.summary).map(([key, val]) => (
-                          <View key={key} style={styles.previewSummaryItem}>
-                            <Text style={styles.summaryItemKey}>{key}:</Text>
-                            <Text style={styles.summaryItemVal}>{val}</Text>
-                          </View>
-                        ))}
+                        {Object.entries(viewItem.previewData.summary)
+                          .filter(([key]) => !key.toLowerCase().includes('database') && !key.toLowerCase().includes('table'))
+                          .map(([key, val]) => (
+                            <View key={key} style={styles.previewSummaryItem}>
+                              <Text style={styles.summaryItemKey}>{key}:</Text>
+                              <Text style={styles.summaryItemVal}>{val}</Text>
+                            </View>
+                          ))}
                       </View>
                     </View>
                   )}
