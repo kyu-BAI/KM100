@@ -21,7 +21,7 @@ import {
   ArrowLeft,
   Check,
   RefreshCw,
-  Sparkles,
+  Receipt,
   Maximize2,
   RotateCw,
   RotateCcw,
@@ -310,7 +310,7 @@ export default function AddDocumentModal({
               <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                 {/* Step A: Choose what receipt you are about to scan */}
                 <Text style={styles.scanSectionHeading}>
-                  1. CHOOSE RECEIPT CLASSIFICATION:
+                  Receipt Category
                 </Text>
                 <View style={styles.receiptTypeGrid}>
                   {RECEIPT_TYPES.filter(rt => {
@@ -355,14 +355,8 @@ export default function AddDocumentModal({
                 {/* Step B: Intelligent Camera & OCR Capture Triggers */}
                 <View style={{ marginTop: 18, marginBottom: 8 }}>
                   <Text style={[styles.scanSectionHeading, isLight && { color: '#0284c7' }]}>
-                    2. SCAN RECEIPT (AUTO-READS ESTABLISHMENT, DATE, AMOUNT & ITEMS):
+                    Capture Receipt
                   </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: isLight ? '#f1f5f9' : 'rgba(56, 189, 248, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginTop: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : 'rgba(56, 189, 248, 0.2)' }}>
-                    <CheckCircle2 size={14} color={isLight ? '#059669' : '#34d399'} />
-                    <Text style={{ fontSize: 11, color: isLight ? '#475569' : '#94a3b8', flex: 1 }}>
-                      Target Classification: <Text style={{ color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>{selectedReceiptType.name} ({selectedReceiptType.category})</Text>
-                    </Text>
-                  </View>
                 </View>
 
                 {/* Native mobile camera input */}
@@ -389,8 +383,8 @@ export default function AddDocumentModal({
                   <View style={[styles.ocrScanningCard, isLight && { backgroundColor: '#f8fafc', borderColor: '#38bdf8' }]}>
                     <ActivityIndicator size="large" color="#38bdf8" />
                     <View style={{ alignItems: 'center', gap: 4 }}>
-                      <Text style={[styles.ocrScanningTitle, isLight && { color: '#0284c7' }]}>Reading Receipt with Gemini Vision AI...</Text>
-                      <Text style={[styles.ocrScanningSub, isLight && { color: '#64748b' }]}>{ocrStatusText || 'Extracting establishment, date, description & amount...'}</Text>
+                      <Text style={[styles.ocrScanningTitle, isLight && { color: '#0284c7' }]}>Scanning receipt...</Text>
+                      <Text style={[styles.ocrScanningSub, isLight && { color: '#64748b' }]}>{ocrStatusText || 'Extracting receipt details...'}</Text>
                     </View>
                     <View style={styles.ocrProgressBarBg}>
                       <View style={[styles.ocrProgressBarFill, { width: `${Math.round((ocrProgress || 0.4) * 100)}%` }]} />
@@ -430,7 +424,7 @@ export default function AddDocumentModal({
                           {ocrValidationError}
                         </Text>
                         <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginTop: 4 }}>
-                          🚫 Database Protection: Non-receipt images cannot be saved to the inventory.
+                          Only valid receipts can be saved to this category.
                         </Text>
                       </View>
                     </View>
@@ -471,11 +465,11 @@ export default function AddDocumentModal({
                   <View style={[styles.ocrVerificationContainer, isLight && styles.ocrVerificationContainerLight]}>
                     <View style={[styles.ocrVerificationHeader, isLight && { borderBottomColor: '#e2e8f0' }]}>
                       <View style={styles.ocrVerificationTitleRow}>
-                        <Sparkles size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
-                        <Text style={[styles.ocrVerificationTitle, isLight && styles.ocrVerificationTitleLight]}>Extracted Receipt Details</Text>
+                        <Receipt size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <Text style={[styles.ocrVerificationTitle, isLight && styles.ocrVerificationTitleLight]}>Receipt Details</Text>
                       </View>
                       <View style={[styles.receiptEntityBadge, { backgroundColor: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(52, 211, 153, 0.15)', borderColor: isLight ? 'rgba(16, 185, 129, 0.3)' : 'rgba(52, 211, 153, 0.3)', borderWidth: 1 }]}>
-                        <Text style={[styles.receiptEntityBadgeText, { color: isLight ? '#059669' : '#34d399' }]}>OCR Extracted</Text>
+                        <Text style={[styles.receiptEntityBadgeText, { color: isLight ? '#059669' : '#34d399' }]}>Scanned Details</Text>
                       </View>
                     </View>
 
@@ -610,13 +604,13 @@ export default function AddDocumentModal({
                       </View>
                     </View>
 
-                    {/* Form fields: Receipt Name, Establishment, Date, Description, Amount, OR No */}
+                    {/* Form fields: Document Name, Establishment, Date, Description, Amount, OR No */}
                     <View style={styles.ocrFieldsGrid}>
-                      {/* 0. Receipt / File Name (Customizable before saving) */}
+                      {/* Document Name */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <Edit3 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Receipt / File Name (Customizable):</Text>
+                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Document Name:</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight, { fontWeight: '700' }]}
@@ -631,11 +625,11 @@ export default function AddDocumentModal({
                         />
                       </View>
 
-                      {/* 1. Establishment */}
+                      {/* Establishment */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <Building2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Establishment / Store Name:</Text>
+                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Establishment:</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
@@ -650,7 +644,7 @@ export default function AddDocumentModal({
                         />
                       </View>
 
-                      {/* 2. Date */}
+                      {/* Receipt Date */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <Calendar size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
@@ -669,11 +663,11 @@ export default function AddDocumentModal({
                         />
                       </View>
 
-                      {/* 3. Description */}
+                      {/* Description */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <FileText size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Description / Nature of Service:</Text>
+                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Description:</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
@@ -688,11 +682,11 @@ export default function AddDocumentModal({
                         />
                       </View>
 
-                      {/* 4. Amount */}
+                      {/* Amount */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <CreditCard size={13} color={isLight ? '#059669' : '#34d399'} />
-                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Amount (PHP):</Text>
+                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Total Amount (PHP):</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight, { color: isLight ? '#059669' : '#34d399', fontWeight: '700' }]}
@@ -708,11 +702,11 @@ export default function AddDocumentModal({
                         />
                       </View>
 
-                      {/* 5. OR Number */}
+                      {/* Invoice / OR Number */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
                           <CheckCircle2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Invoice / OR No.:</Text>
+                          <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Invoice / OR Number:</Text>
                         </View>
                         <TextInput
                           style={[styles.ocrFieldInput, isLight && styles.ocrFieldInputLight]}
@@ -774,7 +768,6 @@ export default function AddDocumentModal({
                       <View style={styles.scannerCornerTR} />
                       <View style={styles.scannerCornerBL} />
                       <View style={styles.scannerCornerBR} />
-                      <View style={styles.scannerLaserLine} />
                       <Text style={styles.scannerGuideText}>Center receipt inside frame</Text>
                     </View>
 

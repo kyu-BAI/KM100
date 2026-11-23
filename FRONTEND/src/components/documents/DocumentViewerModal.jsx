@@ -10,7 +10,6 @@ import {
   CreditCard,
   Building2,
   Calendar,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   Maximize2,

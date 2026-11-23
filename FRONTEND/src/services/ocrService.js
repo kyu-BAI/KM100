@@ -43,7 +43,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
   if (!GEMINI_API_KEY) return null;
 
   try {
-    if (onProgress) onProgress(0.25, 'Analyzing receipt with Gemini Vision AI...');
+    if (onProgress) onProgress(0.25, 'Scanning receipt text...');
 
     let base64Data = imageSource;
     let mimeType = 'image/jpeg';
@@ -104,7 +104,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
         const controller = new AbortController();
         const fetchTimeout = setTimeout(() => controller.abort(), 7500);
 
-        if (onProgress) onProgress(0.55, 'Gemini AI verifying document & reading text...');
+        if (onProgress) onProgress(0.55, 'Verifying receipt details...');
 
         const res = await fetch(url, {
           method: 'POST',
@@ -172,7 +172,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
             };
           }
 
-          if (onProgress) onProgress(0.95, 'AI receipt verification complete!');
+          if (onProgress) onProgress(0.95, 'Receipt scan complete!');
           return {
             isReceipt: true,
             rejectionReason: '',
@@ -361,9 +361,9 @@ export function parseReceiptData(rawText = '', receiptType = null) {
  */
 export async function runOcrOnImage(imageSource, onProgress, receiptType = null) {
   try {
-    if (onProgress) onProgress(0.1, 'Analyzing receipt image with Gemini Vision AI...');
+    if (onProgress) onProgress(0.1, 'Processing receipt image...');
 
-    // 1. Primary: Use Gemini Vision AI
+    // 1. Primary: Use Gemini Vision API
     const geminiResult = await extractWithGeminiVision(imageSource, onProgress, receiptType);
     if (geminiResult) {
       if (geminiResult.isReceipt === false) {
@@ -371,7 +371,7 @@ export async function runOcrOnImage(imageSource, onProgress, receiptType = null)
         return geminiResult;
       }
       if (geminiResult.isReceipt === true) {
-        if (onProgress) onProgress(1.0, 'Receipt details verified with Gemini AI!');
+        if (onProgress) onProgress(1.0, 'Receipt details extracted!');
         return geminiResult;
       }
     }

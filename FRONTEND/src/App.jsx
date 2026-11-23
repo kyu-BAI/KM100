@@ -69,7 +69,6 @@ import {
   Smartphone,
   Building2,
   DollarSign,
-  Sparkles,
   Receipt,
   Sun,
   Moon,
@@ -1372,7 +1371,7 @@ export default function App() {
   const handleProcessReceiptPhoto = async (dataUrl) => {
     setCapturedReceiptPhoto(dataUrl);
     setIsOcrProcessing(true);
-    setOcrStatusText('AI Receipt Analyzation..');
+    setOcrStatusText('Reading receipt data...');
     setOcrProgress(0.25);
     stopCamera();
 

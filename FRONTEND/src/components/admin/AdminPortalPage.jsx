@@ -129,7 +129,7 @@ export default function AdminPortalPage({
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={14} color="#10b981" />
                 <Text style={[styles.privilegeItemText, isLight && styles.privilegeItemTextLight]}>
-                  AI Optical Character Recognition (OCR)
+                  Optical Character Recognition (OCR)
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

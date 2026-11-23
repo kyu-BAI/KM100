@@ -2113,16 +2113,6 @@ export function createStyles(isLight) {
       borderRightWidth: 3,
       borderColor: '#34d399'
     },
-    scannerLaserLine: {
-      position: 'absolute',
-      left: 8,
-      right: 8,
-      height: 2,
-      backgroundColor: '#38bdf8',
-      boxShadow: '0 0 12px 3px rgba(56, 189, 248, 0.9)',
-      animation: 'scannerLaser 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate',
-      zIndex: 10
-    },
     scannerGuideText: {
       position: 'absolute',
       bottom: 8,
