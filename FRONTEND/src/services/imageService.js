@@ -16,7 +16,8 @@ export function rotateImageDataUrl(dataUrl, degrees = 90, quality = 0.85) {
   return new Promise((resolve, reject) => {
     if (!dataUrl) return resolve(dataUrl);
 
-    const img = new Image();
+    const ImgConstructor = typeof window !== 'undefined' && window.Image ? window.Image : Image;
+    const img = new ImgConstructor();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
@@ -59,7 +60,8 @@ export function autoOrientToPortrait(dataUrl, quality = 0.85) {
   return new Promise((resolve) => {
     if (!dataUrl) return resolve(dataUrl);
 
-    const img = new Image();
+    const ImgConstructor = typeof window !== 'undefined' && window.Image ? window.Image : Image;
+    const img = new ImgConstructor();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       // If image is landscape (wider than tall), rotate 90° clockwise to make it upright portrait

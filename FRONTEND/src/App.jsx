@@ -23,7 +23,6 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
-  Image,
   useWindowDimensions
 } from 'react-native';
 import {
@@ -1310,7 +1309,8 @@ export default function App() {
   // Helper to downscale and compress camera photos to ~80KB for lightning-fast processing
   const compressReceiptImage = (fileOrDataUrl, maxDim = 1000, quality = 0.7) => {
     return new Promise((resolve) => {
-      const img = new Image();
+      const ImgConstructor = typeof window !== 'undefined' && window.Image ? window.Image : Image;
+      const img = new ImgConstructor();
       img.onload = () => {
         let width = img.width;
         let height = img.height;

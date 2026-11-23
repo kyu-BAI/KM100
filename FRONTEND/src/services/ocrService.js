@@ -80,11 +80,13 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
                         '  "rejectionReason": "",\n' +
                         '  "establishment": "Name of the business, store, or vendor at the top",\n' +
                         '  "receiptDate": "YYYY-MM-DD format (if handwritten e.g. 11-11-26, convert to 2026-11-11; if not found, use empty string)",\n' +
-                        '  "description": "Short description of the items or nature of service (e.g. Emission Testing Sales, Daily Income Collection, Supplies, Fuel, Food, Service)",\n' +
+                        '  "description": "Short description of items or service. If there are multiple entries/items, summarize them (e.g. Supplies, Gas & Oil, Multi-item purchase)",\n' +
                         '  "amount": 0.00,\n' +
                         '  "orNumber": "Official Receipt No., Sales Invoice No., or Reference Number"\n' +
                         '}\n' +
-                        'Important: Do NOT hallucinate data. Read the actual text from the image accurately.'
+                        'Important Notes:\n' +
+                        '- For receipts with multiple line items/entries, extract the final TOTAL / GRAND TOTAL / TOTAL AMOUNT DUE / NET DUE as "amount" (sum of all entries), NOT an individual item row.\n' +
+                        '- Do NOT hallucinate data. Read the actual text from the image accurately.'
                 },
                 {
                   inlineData: {
@@ -310,7 +312,7 @@ export function parseReceiptData(rawText = '', receiptType = null) {
   // 5. EXTRACT AMOUNT
   const receiptBodyText = cleanText.split(/printer'?s\s+accreditation|bir\s+authority|date\s+issued|\bbklts\b|\bauthority\b/i)[0] || cleanText;
 
-  const totalKeywords = /(?:total\s+(?:sales|amount|due)|amount\s+due|net\s+of\s+vat|total\s+sales\s+\(vat\s+inclusive\)|total|amount|due|balance|paid|cash)[\s\S]{0,35}?(?:PHP|₱)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/i;
+  const totalKeywords = /(?:grand\s+total|total\s+(?:sales|amount|due)|amount\s+due|net\s+(?:due|amount|of\s+vat)|total\s+sales\s+\(vat\s+inclusive\)|total|amount|due|balance|paid|cash)[\s\S]{0,35}?(?:PHP|₱)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/i;
   const totalMatch = receiptBodyText.match(totalKeywords);
 
   if (totalMatch) {

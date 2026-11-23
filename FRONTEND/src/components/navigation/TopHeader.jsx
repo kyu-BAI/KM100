@@ -96,8 +96,7 @@ export default function TopHeader({
               <Text
                 style={[styles.brandSub, isLight && styles.brandSubLight, isMobile && { fontSize: 11 }]}
                 numberOfLines={1}
-              >
-                Document Management System
+              >Receipt Management System    
               </Text>
             </View>
           </View>
