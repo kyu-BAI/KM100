@@ -37,7 +37,9 @@ export default function TopHeader({
 }) {
   // GLOBAL PROFESSIONAL TOP HEADER BAR
   return (
-    <View style={[
+    <View
+      accessibilityRole="banner"
+      style={[
         styles.topHeader,
         isMobile && styles.topHeaderMobile,
         isSmallMobile && styles.topHeaderSmallMobile,
@@ -52,6 +54,8 @@ export default function TopHeader({
             ]}
             onPress={() => setSidebarOpen(prev => !prev)}
             title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
+            accessibilityRole="button"
+            accessibilityLabel={sidebarOpen ? "Hide directory tree sidebar" : "Show directory tree sidebar"}
           >
             <Menu size={isSmallMobile ? 16 : 18} color={isLight ? '#0284c7' : '#38bdf8'} />
             {!isMobile && (
@@ -77,13 +81,19 @@ export default function TopHeader({
             }}>
               <Image
                 source={{ uri: '/km100-logo.png' }}
+                accessibilityLabel="KM100 Logo"
+                alt="KM100 Logo"
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="contain"
               />
             </View>
             <View style={{ gap: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.brandTitle, isLight && styles.brandTitleLight]}>
+                <Text
+                  style={[styles.brandTitle, isLight && styles.brandTitleLight]}
+                  accessibilityRole="header"
+                  aria-level="1"
+                >
                   KM100
                 </Text>
                 {width >= 620 && (
@@ -111,12 +121,18 @@ export default function TopHeader({
               placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              accessibilityLabel="Search inventory by store, receipt title, invoice number, or amount"
               autoComplete="off"
               autoCorrect={false}
               spellCheck={false}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search input"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
               </TouchableOpacity>
             )}

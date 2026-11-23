@@ -1978,7 +1978,10 @@ export default function App() {
             styles={styles}
           />
         ) : (
-          <View style={[styles.contentArea, isLight && styles.contentAreaLight]}>
+          <View
+            accessibilityRole="main"
+            style={[styles.contentArea, isLight && styles.contentAreaLight]}
+          >
 
             {/* 4. CLEAN SEARCH & FILTER ACTION BAR */}
             <View style={[styles.controlBar, isMobile && styles.controlBarMobile, isLight && styles.controlBarLight]}>
@@ -1996,6 +1999,9 @@ export default function App() {
                       setActiveNav({ type: 'all', year: null, month: null, subCategory: null, label: 'All Inventory Files' });
                       setSearchQuery('');
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reset active category filter and search"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <X size={12} color={isLight ? '#ef4444' : '#f87171'} />
                     <Text style={[styles.clearFilterBtnText, isLight && styles.clearFilterBtnTextLight]}>Reset</Text>
@@ -2014,12 +2020,18 @@ export default function App() {
                       placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
+                      accessibilityLabel="Search inventory by store name, invoice number, or amount"
                       autoComplete="off"
                       autoCorrect={false}
                       spellCheck={false}
                     />
                     {searchQuery.length > 0 && (
-                      <TouchableOpacity onPress={() => setSearchQuery('')}>
+                      <TouchableOpacity
+                        onPress={() => setSearchQuery('')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Clear mobile search query"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
                       </TouchableOpacity>
                     )}

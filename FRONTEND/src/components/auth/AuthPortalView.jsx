@@ -71,7 +71,10 @@ export default function AuthPortalView({
         </View>
       )}
 
-      <View style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }, isLight && styles.authCardLight]}>
+      <View
+        accessibilityRole="main"
+        style={[styles.authCard, isMobile && { padding: 18, borderRadius: 12 }, isLight && styles.authCardLight]}
+      >
         {/* Top Brand Logo */}
         <View style={styles.authHeader}>
           <View style={{ alignItems: 'center', marginBottom: 12 }}>
@@ -89,6 +92,8 @@ export default function AuthPortalView({
             }}>
               <Image
                 source={{ uri: '/km100-logo.png' }}
+                accessibilityLabel="KM100 Skills & Training Center Inc. Logo"
+                alt="KM100 Skills & Training Center Inc. Logo"
                 style={{ width: '100%', height: '100%', borderRadius: 34 }}
                 resizeMode="contain"
               />
@@ -108,11 +113,15 @@ export default function AuthPortalView({
             </Text>
           </View>
 
-          <Text style={[styles.authTitle, isLight && styles.authTitleLight]}>
+          <Text
+            style={[styles.authTitle, isLight && styles.authTitleLight]}
+            accessibilityRole="header"
+            aria-level="1"
+          >
             KM100 Skills & Training Center
           </Text>
 
-          <Text style={[styles.authSubtitle, isLight && styles.authSubtitleLight]}>
+          <Text style={[styles.authSubtitle, isLight && { color: '#475569' }]}>
             {isEmployeePortal
               ? 'Sign in with your employee account to view assigned branch records.'
               : authMode === 'login'
@@ -143,12 +152,15 @@ export default function AuthPortalView({
               boxShadow: !isEmployeePortal ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
             }}
             onPress={() => switchAuthPortal('admin')}
+            accessibilityRole="tab"
+            accessibilityLabel="Switch to Administrator Portal"
+            accessibilityState={{ selected: !isEmployeePortal }}
           >
             <ShieldCheck size={14} color={!isEmployeePortal ? (isLight ? '#0284c7' : '#38bdf8') : '#94a3b8'} />
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : '#94a3b8'
+              color: !isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
             }}>
               Administrator
             </Text>
@@ -167,18 +179,20 @@ export default function AuthPortalView({
               boxShadow: isEmployeePortal ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
             }}
             onPress={() => switchAuthPortal('employee')}
+            accessibilityRole="tab"
+            accessibilityLabel="Switch to Employee Staff Portal"
+            accessibilityState={{ selected: isEmployeePortal }}
           >
             <UserCheck size={14} color={isEmployeePortal ? '#10b981' : '#94a3b8'} />
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : '#94a3b8'
+              color: isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
             }}>
               Employee Staff
             </Text>
           </TouchableOpacity>
         </View>
-
 
         {/* ADMIN PORTAL ONLY: Mode Switch Tabs (Sign In vs Create Admin) */}
         {!isEmployeePortal && (
@@ -189,9 +203,12 @@ export default function AuthPortalView({
                 setAuthMode('login');
                 if (setAuthError) setAuthError('');
               }}
+              accessibilityRole="tab"
+              accessibilityLabel="Admin Sign In Tab"
+              accessibilityState={{ selected: authMode === 'login' }}
             >
-              <LogIn size={15} color={authMode === 'login' ? '#38bdf8' : '#94a3b8'} />
-              <Text style={[styles.authTabText, authMode === 'login' && styles.authTabTextActive]}>Admin Sign In</Text>
+              <LogIn size={15} color={authMode === 'login' ? '#38bdf8' : (isLight ? '#475569' : '#94a3b8')} />
+              <Text style={[styles.authTabText, isLight && { color: '#475569' }, authMode === 'login' && styles.authTabTextActive]}>Admin Sign In</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -200,9 +217,12 @@ export default function AuthPortalView({
                 setAuthMode('register');
                 if (setAuthError) setAuthError('');
               }}
+              accessibilityRole="tab"
+              accessibilityLabel="Create Admin Account Tab"
+              accessibilityState={{ selected: authMode === 'register' }}
             >
-              <UserPlus size={15} color={authMode === 'register' ? '#38bdf8' : '#94a3b8'} />
-              <Text style={[styles.authTabText, authMode === 'register' && styles.authTabTextActive]}>Create Admin</Text>
+              <UserPlus size={15} color={authMode === 'register' ? '#38bdf8' : (isLight ? '#475569' : '#94a3b8')} />
+              <Text style={[styles.authTabText, isLight && { color: '#475569' }, authMode === 'register' && styles.authTabTextActive]}>Create Admin</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -222,13 +242,14 @@ export default function AuthPortalView({
             <View style={styles.authInputGroup}>
               <Text style={[styles.authLabel, isLight && styles.authLabelLight]}>ADMIN FULL NAME</Text>
               <View style={[styles.authInputWrapper, isLight && styles.authInputWrapperLight]}>
-                <User size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                <User size={16} color={isLight ? '#475569' : '#94a3b8'} />
                 <TextInput
                   style={[styles.authInput, isLight && styles.authInputLight]}
                   placeholder="Enter your full name"
-                  placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                  placeholderTextColor={isLight ? '#64748b' : '#94a3b8'}
                   value={authFullName}
                   onChangeText={setAuthFullName}
+                  accessibilityLabel="Admin Full Name"
                   autoComplete="off"
                   autoCorrect={false}
                   spellCheck={false}
@@ -243,11 +264,11 @@ export default function AuthPortalView({
               {isEmployeePortal ? 'EMPLOYEE EMAIL' : 'ADMIN EMAIL'}
             </Text>
             <View style={[styles.authInputWrapper, isLight && styles.authInputWrapperLight]}>
-              <Mail size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+              <Mail size={16} color={isLight ? '#475569' : '#94a3b8'} />
               <TextInput
                 style={[styles.authInput, isLight && styles.authInputLight]}
                 placeholder={isEmployeePortal ? 'knoahmari@km100.ph' : 'admin@km100.ph'}
-                placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                placeholderTextColor={isLight ? '#64748b' : '#94a3b8'}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -255,6 +276,7 @@ export default function AuthPortalView({
                 spellCheck={false}
                 value={authEmail}
                 onChangeText={setAuthEmail}
+                accessibilityLabel={isEmployeePortal ? "Employee Email Address" : "Administrator Email Address"}
               />
             </View>
           </View>
@@ -263,11 +285,11 @@ export default function AuthPortalView({
           <View style={styles.authInputGroup}>
             <Text style={[styles.authLabel, isLight && styles.authLabelLight]}>PASSWORD</Text>
             <View style={[styles.authInputWrapper, isLight && styles.authInputWrapperLight]}>
-              <Lock size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+              <Lock size={16} color={isLight ? '#475569' : '#94a3b8'} />
               <TextInput
                 style={[styles.authInput, isLight && styles.authInputLight, { paddingRight: 36 }]}
                 placeholder="Enter your password"
-                placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                placeholderTextColor={isLight ? '#64748b' : '#94a3b8'}
                 secureTextEntry={!showPassword}
                 autoComplete="new-password"
                 autoCapitalize="none"
@@ -275,11 +297,14 @@ export default function AuthPortalView({
                 spellCheck={false}
                 value={authPassword}
                 onChangeText={setAuthPassword}
+                accessibilityLabel="Account Password"
               />
               <TouchableOpacity
-                style={{ position: 'absolute', right: 10 }}
+                style={{ position: 'absolute', right: 10, minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => setShowPassword(p => !p)}
+                accessibilityRole="button"
                 accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {showPassword ? <EyeOff size={16} color="#94a3b8" /> : <Eye size={16} color="#94a3b8" />}
               </TouchableOpacity>
@@ -291,11 +316,11 @@ export default function AuthPortalView({
             <View style={styles.authInputGroup}>
               <Text style={[styles.authLabel, isLight && styles.authLabelLight]}>CONFIRM PASSWORD</Text>
               <View style={[styles.authInputWrapper, isLight && styles.authInputWrapperLight]}>
-                <Key size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                <Key size={16} color={isLight ? '#475569' : '#94a3b8'} />
                 <TextInput
                   style={[styles.authInput, isLight && styles.authInputLight]}
                   placeholder="Re-enter password"
-                  placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+                  placeholderTextColor={isLight ? '#64748b' : '#94a3b8'}
                   secureTextEntry={!showPassword}
                   autoComplete="new-password"
                   autoCapitalize="none"
@@ -303,6 +328,7 @@ export default function AuthPortalView({
                   spellCheck={false}
                   value={authConfirmPassword}
                   onChangeText={setAuthConfirmPassword}
+                  accessibilityLabel="Confirm Password"
                 />
               </View>
             </View>
@@ -317,6 +343,8 @@ export default function AuthPortalView({
             ]}
             onPress={handleAuthSubmit}
             disabled={authLoading}
+            accessibilityRole="button"
+            accessibilityLabel={isEmployeePortal ? "Sign in to Employee Staff Portal" : (authMode === 'login' ? "Sign in as Administrator" : "Create New Administrator Account")}
           >
             {authLoading ? (
               <ActivityIndicator size="small" color="#ffffff" />
