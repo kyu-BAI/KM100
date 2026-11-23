@@ -104,7 +104,7 @@ export default function TopHeader({
                 style={[styles.brandSub, isLight && styles.brandSubLight, isMobile && { fontSize: 11 }]}
                 numberOfLines={1}
               >
-                Inventory Management System
+                Document Management System
               </Text>
             </View>
           </View>
