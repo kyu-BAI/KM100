@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import {
   FileSpreadsheet,
@@ -12,7 +12,12 @@ import {
   Calendar,
   Sparkles,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Maximize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  RotateCcw
 } from 'lucide-react';
 
 export default function DocumentViewerModal({
@@ -25,6 +30,30 @@ export default function DocumentViewerModal({
   isMobile,
   styles
 }) {
+  const [isImageMaximized, setIsImageMaximized] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [rotation, setRotation] = useState(0);
+
+  const receiptImageUri = (viewItem?.filePath?.startsWith('data:image') || viewItem?.filePath?.startsWith('http') || viewItem?.filePath?.startsWith('blob:'))
+    ? viewItem.filePath
+    : viewItem?.previewData?.image;
+
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(3, +(prev + 0.25).toFixed(2)));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(0.5, +(prev - 0.25).toFixed(2)));
+  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+    setRotation(0);
+  };
+  const handleDownloadImage = () => {
+    if (!receiptImageUri) return;
+    const link = document.createElement('a');
+    link.href = receiptImageUri;
+    link.download = `${viewItem?.fileName || 'receipt'}_photo.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
   return (
     <Modal visible={!!viewItem} transparent animationType="fade">
         <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
@@ -152,21 +181,75 @@ export default function DocumentViewerModal({
               )}
 
               {/* Scanned Physical Receipt Image Attachment */}
-              {(viewItem?.filePath?.startsWith('data:image') || viewItem?.previewData?.image) && (
+              {receiptImageUri && (
                 <View style={styles.viewerSection}>
                   <View style={styles.previewHeaderRow}>
                     <Text style={styles.viewerSectionTitle}>SCANNED PHYSICAL DOCUMENT PHOTO</Text>
-                    <Text style={[styles.previewBadge, { backgroundColor: 'rgba(52, 211, 153, 0.15)', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.3)' }]}>
-                      Verified Capture
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={[styles.previewBadge, { backgroundColor: 'rgba(52, 211, 153, 0.15)', color: '#34d399', borderColor: 'rgba(52, 211, 153, 0.3)' }]}>
+                        Verified Capture
+                      </Text>
+                      <TouchableOpacity
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
+                          borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)',
+                          borderWidth: 1,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderRadius: 6,
+                          cursor: 'pointer'
+                        }}
+                        onPress={() => {
+                          setZoomLevel(1);
+                          setRotation(0);
+                          setIsImageMaximized(true);
+                        }}
+                        title="Maximize receipt image to inspect full quality"
+                      >
+                        <Maximize2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>
+                          Maximize Photo
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.scannedImageViewerBox}>
+
+                  <TouchableOpacity
+                    activeOpacity={0.92}
+                    onPress={() => {
+                      setZoomLevel(1);
+                      setRotation(0);
+                      setIsImageMaximized(true);
+                    }}
+                    style={[styles.scannedImageViewerBox, { position: 'relative', cursor: 'zoom-in' }]}
+                    title="Click image to open in full screen"
+                  >
                     <Image
-                      source={{ uri: viewItem.filePath || viewItem.previewData?.image }}
+                      source={{ uri: receiptImageUri }}
                       style={{ width: '100%', height: 380, borderRadius: 8, backgroundColor: isLight ? '#f8fafc' : '#0c1322' }}
                       resizeMode="contain"
                     />
-                  </View>
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 12,
+                      right: 12,
+                      backgroundColor: 'rgba(15, 23, 42, 0.82)',
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 6,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6
+                    }}>
+                      <Maximize2 size={12} color="#38bdf8" />
+                      <Text style={{ color: '#f8fafc', fontSize: 11, fontWeight: '600' }}>Click to Maximize</Text>
+                    </View>
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -222,6 +305,221 @@ export default function DocumentViewerModal({
             </ScrollView>
           </View>
         </View>
+
+        {/* FULL-SCREEN HIGH-RESOLUTION RECEIPT LIGHTBOX */}
+        {isImageMaximized && receiptImageUri && (
+          <Modal
+            visible={isImageMaximized}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setIsImageMaximized(false)}
+          >
+            <View style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'rgba(2, 6, 23, 0.97)',
+              zIndex: 999999,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {/* Top Controls Bar */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: isMobile ? 12 : 24,
+                paddingVertical: 12,
+                backgroundColor: 'rgba(15, 23, 42, 0.96)',
+                borderBottomWidth: 1,
+                borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+                gap: 12,
+                flexWrap: 'wrap'
+              }}>
+                <View style={{ flex: 1, minWidth: 180 }}>
+                  <Text style={{ color: '#f8fafc', fontSize: isMobile ? 13 : 15, fontWeight: '700' }} numberOfLines={1}>
+                    {viewItem?.fileName || 'Scanned Receipt'}
+                  </Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 11 }}>
+                    {viewItem?.establishment || 'Original Capture'} • High Definition Quality
+                  </Text>
+                </View>
+
+                {/* Toolbar: Zoom Out, Indicator, Zoom In, Rotate, Reset, Download, Close */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {/* Zoom Out */}
+                  <TouchableOpacity
+                    onPress={handleZoomOut}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      cursor: 'pointer'
+                    }}
+                    title="Zoom Out (-25%)"
+                  >
+                    <ZoomOut size={16} color="#f8fafc" />
+                  </TouchableOpacity>
+
+                  {/* Zoom Level Indicator */}
+                  <View style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 6,
+                    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(56, 189, 248, 0.25)',
+                    minWidth: 54,
+                    alignItems: 'center'
+                  }}>
+                    <Text style={{ color: '#38bdf8', fontSize: 12, fontWeight: '700', fontFamily: 'monospace' }}>
+                      {Math.round(zoomLevel * 100)}%
+                    </Text>
+                  </View>
+
+                  {/* Zoom In */}
+                  <TouchableOpacity
+                    onPress={handleZoomIn}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      cursor: 'pointer'
+                    }}
+                    title="Zoom In (+25%)"
+                  >
+                    <ZoomIn size={16} color="#f8fafc" />
+                  </TouchableOpacity>
+
+                  {/* Rotate 90° */}
+                  <TouchableOpacity
+                    onPress={handleRotate}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      cursor: 'pointer'
+                    }}
+                    title="Rotate 90 degrees"
+                  >
+                    <RotateCw size={16} color="#f8fafc" />
+                  </TouchableOpacity>
+
+                  {/* Reset Zoom & Rotation */}
+                  <TouchableOpacity
+                    onPress={handleResetZoom}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.15)',
+                      cursor: 'pointer'
+                    }}
+                    title="Reset to 100%"
+                  >
+                    <RotateCcw size={16} color="#94a3b8" />
+                  </TouchableOpacity>
+
+                  {/* Download Original Photo */}
+                  <TouchableOpacity
+                    onPress={handleDownloadImage}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(52, 211, 153, 0.15)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(52, 211, 153, 0.3)',
+                      cursor: 'pointer'
+                    }}
+                    title="Download Original Uncompressed Image"
+                  >
+                    <Download size={16} color="#34d399" />
+                  </TouchableOpacity>
+
+                  {/* Close Lightbox */}
+                  <TouchableOpacity
+                    onPress={() => setIsImageMaximized(false)}
+                    style={{
+                      padding: 8,
+                      borderRadius: 6,
+                      backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(239, 68, 68, 0.4)',
+                      cursor: 'pointer',
+                      marginLeft: 4
+                    }}
+                    title="Close Full Screen"
+                  >
+                    <X size={18} color="#f87171" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Scrollable & Pannable Viewport */}
+              <View style={{
+                flex: 1,
+                overflow: 'auto',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: isMobile ? 12 : 24
+              }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '100%',
+                    minHeight: '100%',
+                    transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                    transformOrigin: 'center center',
+                    transition: 'transform 0.15s ease-out'
+                  }}
+                >
+                  <img
+                    src={receiptImageUri}
+                    alt={viewItem?.fileName || 'Scanned Receipt'}
+                    style={{
+                      maxWidth: zoomLevel <= 1 ? (isMobile ? '95vw' : '88vw') : 'none',
+                      maxHeight: zoomLevel <= 1 ? (isMobile ? '76vh' : '82vh') : 'none',
+                      objectFit: 'contain',
+                      borderRadius: 6,
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+                      imageRendering: 'auto'
+                    }}
+                  />
+                </div>
+              </View>
+
+              {/* Bottom Info Bar */}
+              <View style={{
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                borderTopWidth: 1,
+                borderTopColor: 'rgba(255, 255, 255, 0.08)',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 12
+              }}>
+                <Text style={{ color: '#94a3b8', fontSize: 11, textAlign: 'center' }}>
+                  🔎 Use the <Text style={{ color: '#38bdf8', fontWeight: '700' }}>Zoom In (+)</Text> and <Text style={{ color: '#38bdf8', fontWeight: '700' }}>Rotate</Text> buttons to inspect serial numbers, line items, and store stamps in crisp original quality.
+                </Text>
+              </View>
+            </View>
+          </Modal>
+        )}
       </Modal>
   );
 }

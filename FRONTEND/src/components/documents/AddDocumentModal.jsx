@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,8 @@ import {
   ArrowLeft,
   Check,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Maximize2
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 
@@ -80,6 +81,7 @@ export default function AddDocumentModal({
 }) {
   const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
   const hasAllBranchesScope = userDept.includes('all');
+  const [previewZoomed, setPreviewZoomed] = useState(false);
   return (
     <Modal visible={showAddModal} transparent animationType="fade">
       <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
@@ -456,14 +458,31 @@ export default function AddDocumentModal({
                       </View>
                     </View>
 
-                    {/* Receipt thumbnail + Target Table info */}
+                    {/* Receipt thumbnail + preview */}
                     <View style={[styles.ocrPreviewRow, isLight && styles.ocrPreviewRowLight]}>
                       {capturedReceiptPhoto && (
-                        <Image
-                          source={{ uri: capturedReceiptPhoto }}
-                          style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : '#334155' }}
-                          resizeMode="cover"
-                        />
+                        <TouchableOpacity
+                          activeOpacity={0.88}
+                          onPress={() => setPreviewZoomed(true)}
+                          style={{ position: 'relative', cursor: 'zoom-in' }}
+                          title="Click to maximize receipt photo"
+                        >
+                          <Image
+                            source={{ uri: capturedReceiptPhoto }}
+                            style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : '#334155' }}
+                            resizeMode="cover"
+                          />
+                          <View style={{
+                            position: 'absolute',
+                            bottom: 2,
+                            right: 2,
+                            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                            borderRadius: 3,
+                            padding: 2
+                          }}>
+                            <Maximize2 size={10} color="#38bdf8" />
+                          </View>
+                        </TouchableOpacity>
                       )}
                       <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                         <Text style={{ fontSize: 13, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
@@ -472,7 +491,17 @@ export default function AddDocumentModal({
                         <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }} numberOfLines={1}>
                           Classification: <Text style={{ color: isLight ? '#0f172a' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
                         </Text>
-
+                        {capturedReceiptPhoto && (
+                          <TouchableOpacity
+                            onPress={() => setPreviewZoomed(true)}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, cursor: 'pointer' }}
+                          >
+                            <Maximize2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
+                              Maximize Photo
+                            </Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
 
@@ -712,6 +741,80 @@ export default function AddDocumentModal({
           )}
         </View>
       </View>
+
+      {/* Fullscreen Photo Lightbox Preview */}
+      {previewZoomed && capturedReceiptPhoto && (
+        <Modal
+          visible={previewZoomed}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewZoomed(false)}
+        >
+          <View style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(2, 6, 23, 0.96)',
+            zIndex: 999999,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: isMobile ? 12 : 24,
+              paddingVertical: 12,
+              backgroundColor: 'rgba(15, 23, 42, 0.96)',
+              borderBottomWidth: 1,
+              borderBottomColor: 'rgba(255, 255, 255, 0.1)'
+            }}>
+              <Text style={{ color: '#f8fafc', fontSize: isMobile ? 13 : 15, fontWeight: '700' }} numberOfLines={1}>
+                {ocrEstablishment || selectedReceiptType.name} — Scanned Receipt Photo
+              </Text>
+              <TouchableOpacity
+                onPress={() => setPreviewZoomed(false)}
+                style={{
+                  padding: 8,
+                  borderRadius: 6,
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(239, 68, 68, 0.4)',
+                  cursor: 'pointer'
+                }}
+                title="Close"
+              >
+                <X size={18} color="#f87171" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{
+              flex: 1,
+              overflow: 'auto',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: isMobile ? 12 : 24
+            }}>
+              <img
+                src={capturedReceiptPhoto}
+                alt="Scanned Receipt Photo"
+                style={{
+                  maxWidth: isMobile ? '95vw' : '90vw',
+                  maxHeight: isMobile ? '82vh' : '85vh',
+                  objectFit: 'contain',
+                  borderRadius: 6,
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+                  imageRendering: 'auto'
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
     </Modal>
   );
 }
