@@ -179,7 +179,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
             return {
               isReceipt: false,
               isApiKeyError: true,
-              rejectionReason: `Gemini API Authentication Error: ${apiMessage}. The bound service account is deleted or disabled. Please update your Gemini API Key in the settings below.`,
+              rejectionReason: `AI Service Error: ${apiMessage}. The Google Cloud service account bound to this key is deleted or disabled.`,
               establishment: '',
               receiptDate: '',
               description: '',

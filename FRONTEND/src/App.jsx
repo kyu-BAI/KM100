@@ -1366,7 +1366,7 @@ export default function App() {
         setIsOcrVerifiedView(false);
         setOcrValidationError(parsed.rejectionReason || 'The scanned image is not a recognized official receipt, invoice, or voucher.');
         if (parsed.isApiKeyError) {
-          showNotice('Gemini Vision API key error: Service account inactive. Please update key.', 'error');
+          showNotice('AI Vision Error: Google Cloud service account is inactive.', 'error');
         } else {
           showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.');
         }

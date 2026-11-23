@@ -31,14 +31,10 @@ import {
   Edit3,
   ChevronDown,
   ChevronUp,
-  ListFilter,
-  Key,
-  Sparkles,
-  ExternalLink
+  ListFilter
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
-import { getGeminiApiKey, setCustomGeminiApiKey, testGeminiApiKey, DEFAULT_EMBEDDED_GEMINI_KEY } from '../../services/ocrService';
 
 export default function AddDocumentModal({
   showAddModal,
@@ -102,10 +98,6 @@ export default function AddDocumentModal({
   const [previewZoomed, setPreviewZoomed] = useState(false);
   const [isRotatingPhoto, setIsRotatingPhoto] = useState(false);
   const [isLineItemsExpanded, setIsLineItemsExpanded] = useState(true);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [customKeyInput, setCustomKeyInput] = useState(() => getGeminiApiKey() || '');
-  const [isTestingKey, setIsTestingKey] = useState(false);
-  const [keyTestStatus, setKeyTestStatus] = useState(null);
 
   const handleRotateCapturedPhoto = async (deg) => {
     if (!capturedReceiptPhoto || isRotatingPhoto) return;
@@ -167,37 +159,9 @@ export default function AddDocumentModal({
               </View>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {addMode === 'scan' && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setCustomKeyInput(getGeminiApiKey() || '');
-                    setKeyTestStatus(null);
-                    setShowApiKeyModal(true);
-                  }}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    paddingHorizontal: 8,
-                    paddingVertical: 5,
-                    borderRadius: 6,
-                    backgroundColor: isLight ? '#f0f9ff' : 'rgba(56, 189, 248, 0.1)',
-                    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)',
-                    borderWidth: 1
-                  }}
-                  title="Configure Google Gemini Vision AI Key"
-                >
-                  <Key size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>
-                    AI Key
-                  </Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity onPress={closeAddModal} style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}>
-                <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={closeAddModal} style={[styles.modalCloseBtn, isLight && styles.modalCloseBtnLight]}>
+              <X size={18} color={isLight ? '#475569' : '#94a3b8'} />
+            </TouchableOpacity>
           </View>
 
           {/* ---------------------------------------------------- */}
@@ -433,234 +397,75 @@ export default function AddDocumentModal({
                     </View>
                   </View>
                 ) : ocrValidationError ? (
-                  (() => {
-                    const isApiKeyIssue = ocrValidationError && (
-                      ocrValidationError.toLowerCase().includes('gemini') ||
-                      ocrValidationError.toLowerCase().includes('api key') ||
-                      ocrValidationError.toLowerCase().includes('authentication') ||
-                      ocrValidationError.toLowerCase().includes('service account') ||
-                      ocrValidationError.toLowerCase().includes('unauthenticated')
-                    );
-
-                    if (isApiKeyIssue) {
-                      return (
-                        <View style={[styles.ocrErrorCard, isLight && styles.ocrErrorCardLight, { borderColor: '#f59e0b', backgroundColor: isLight ? '#fffbeb' : '#1e1b18' }]}>
-                          <View style={styles.ocrErrorHeader}>
-                            <View style={[styles.ocrErrorIconBox, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-                              <Key size={24} color="#f59e0b" />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Text style={[styles.ocrErrorTitle, { color: isLight ? '#b45309' : '#fbbf24' }]}>
-                                Gemini Vision AI Key Required
-                              </Text>
-                              <Text style={[styles.ocrErrorSubtitle, isLight && { color: '#78716c' }]}>
-                                High-accuracy receipt reading and line-item extraction requires an active Gemini API Key.
-                              </Text>
-                            </View>
-                          </View>
-
-                          <View style={{ padding: 12, backgroundColor: isLight ? '#ffffff' : '#0f172a', borderRadius: 8, borderWidth: 1, borderColor: isLight ? '#fed7aa' : '#334155', gap: 10 }}>
-                            <Text style={{ fontSize: 12, color: isLight ? '#9a3412' : '#fdba74', fontWeight: '600' }}>
-                              {ocrValidationError}
-                            </Text>
-                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', lineHeight: 16 }}>
-                              Get a free Gemini API key from Google AI Studio. Paste your key below to immediately scan this receipt with full accuracy:
-                            </Text>
-
-                            <TextInput
-                              style={{
-                                backgroundColor: isLight ? '#f8fafc' : '#1e293b',
-                                borderColor: isLight ? '#cbd5e1' : '#475569',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                paddingHorizontal: 10,
-                                paddingVertical: 8,
-                                fontSize: 12,
-                                color: isLight ? '#0f172a' : '#f8fafc',
-                                fontFamily: 'monospace'
-                              }}
-                              value={customKeyInput}
-                              onChangeText={(txt) => {
-                                setCustomKeyInput(txt);
-                                setKeyTestStatus(null);
-                              }}
-                              placeholder="Paste active Gemini API key (AIzaSy...)"
-                              placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                            />
-
-                            {keyTestStatus && (
-                              <View style={{
-                                padding: 8,
-                                borderRadius: 6,
-                                backgroundColor: keyTestStatus.ok ? (isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)') : (isLight ? '#fef2f2' : 'rgba(239, 68, 68, 0.15)'),
-                                borderColor: keyTestStatus.ok ? '#10b981' : '#ef4444',
-                                borderWidth: 1
-                              }}>
-                                <Text style={{ fontSize: 11, fontWeight: '600', color: keyTestStatus.ok ? '#059669' : '#dc2626' }}>
-                                  {keyTestStatus.msg}
-                                </Text>
-                              </View>
-                            )}
-
-                            <View style={{ flexDirection: isMobile ? 'column' : 'row', gap: 8, marginTop: 4 }}>
-                              <TouchableOpacity
-                                style={{
-                                  flex: 1,
-                                  backgroundColor: '#0284c7',
-                                  paddingVertical: 9,
-                                  paddingHorizontal: 12,
-                                  borderRadius: 6,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexDirection: 'row',
-                                  gap: 6,
-                                  opacity: isTestingKey ? 0.7 : 1
-                                }}
-                                disabled={isTestingKey}
-                                onPress={async () => {
-                                  setIsTestingKey(true);
-                                  setKeyTestStatus({ ok: true, msg: 'Verifying API key with Google Gemini...' });
-                                  const testRes = await testGeminiApiKey(customKeyInput);
-                                  setIsTestingKey(false);
-                                  if (testRes.ok) {
-                                    setCustomGeminiApiKey(customKeyInput);
-                                    setKeyTestStatus({ ok: true, msg: 'Key verified! Scanning receipt...' });
-                                    setOcrValidationError('');
-                                    if (capturedReceiptPhoto && handleProcessReceiptPhoto) {
-                                      handleProcessReceiptPhoto(capturedReceiptPhoto);
-                                    }
-                                  } else {
-                                    setKeyTestStatus({ ok: false, msg: `Key validation failed: ${testRes.error}` });
-                                  }
-                                }}
-                              >
-                                {isTestingKey ? (
-                                  <ActivityIndicator size="small" color="#ffffff" />
-                                ) : (
-                                  <Sparkles size={14} color="#ffffff" />
-                                )}
-                                <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 12 }}>
-                                  {isTestingKey ? 'Verifying...' : 'Save Key & Re-scan Receipt'}
-                                </Text>
-                              </TouchableOpacity>
-
-                              <a
-                                href="https://aistudio.google.com/apikey"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  padding: '9px 12px',
-                                  borderRadius: 6,
-                                  border: isLight ? '1px solid #cbd5e1' : '1px solid #475569',
-                                  backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
-                                  color: isLight ? '#0284c7' : '#38bdf8',
-                                  fontSize: 12,
-                                  fontWeight: '700',
-                                  textDecoration: 'none',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: 6
-                                }}
-                              >
-                                Get Free Key from Google AI Studio ↗
-                              </a>
-                            </View>
-                          </View>
-
-                          <View style={[styles.ocrActionsRow, { marginTop: 10 }]}>
-                            <TouchableOpacity
-                              style={[styles.btnRetakeOcr, isLight && styles.btnRetakeOcrLight, { flex: 1 }]}
-                              onPress={() => {
-                                setOcrValidationError('');
-                                setCapturedReceiptPhoto(null);
-                                startCamera();
-                              }}
-                            >
-                              <Camera size={14} color={isLight ? '#334155' : '#cbd5e1'} />
-                              <Text style={[styles.btnRetakeOcrText, isLight && styles.btnRetakeOcrTextLight]}>
-                                Retake Photo
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      );
-                    }
-
-                    return (
-                      /* OCR Error Screen: Non-Receipt Rejected */
-                      <View style={[styles.ocrErrorCard, isLight && styles.ocrErrorCardLight]}>
-                        <View style={styles.ocrErrorHeader}>
-                          <View style={styles.ocrErrorIconBox}>
-                            <AlertTriangle size={24} color="#ef4444" />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={[styles.ocrErrorTitle, isLight && { color: '#b91c1c' }]}>
-                              Document Rejected: Not a Receipt
-                            </Text>
-                            <Text style={[styles.ocrErrorSubtitle, isLight && { color: '#64748b' }]}>
-                              The scanned photo could not be validated as an official receipt or invoice.
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Photo Thumbnail + Reason */}
-                        <View style={[styles.ocrErrorBody, isLight && { backgroundColor: '#fef2f2', borderColor: '#fecaca' }]}>
-                          {capturedReceiptPhoto && (
-                            <Image
-                              source={{ uri: capturedReceiptPhoto }}
-                              style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 2, borderColor: '#ef4444' }}
-                              resizeMode="cover"
-                            />
-                          )}
-                          <View style={{ flex: 1, gap: 4 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#991b1b' : '#f87171' }}>
-                              Validation Failure Reason:
-                            </Text>
-                            <Text style={{ fontSize: 12, color: isLight ? '#7f1d1d' : '#fca5a5', lineHeight: 16 }}>
-                              {ocrValidationError}
-                            </Text>
-                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginTop: 4 }}>
-                              Only valid receipts can be saved to this category.
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Action buttons to retake or pick file */}
-                        <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>
-                          <TouchableOpacity
-                            style={[styles.btnRetakeOcr, { flex: 1, backgroundColor: '#0284c7', borderColor: '#0284c7' }]}
-                            onPress={() => {
-                              setOcrValidationError('');
-                              setCapturedReceiptPhoto(null);
-                              startCamera();
-                            }}
-                          >
-                            <Camera size={16} color="#ffffff" />
-                            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 13 }}>
-                              Retake Photo with Camera
-                            </Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={[styles.btnRetakeOcr, isLight && styles.btnRetakeOcrLight, { flex: 1 }]}
-                            onPress={() => {
-                              setOcrValidationError('');
-                              setCapturedReceiptPhoto(null);
-                              document.getElementById('receiptPhotoUploadInput')?.click();
-                            }}
-                          >
-                            <UploadCloud size={16} color={isLight ? '#334155' : '#cbd5e1'} />
-                            <Text style={[styles.btnRetakeOcrText, isLight && styles.btnRetakeOcrTextLight]}>
-                              Upload Different File
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
+                  /* OCR Error Screen: Non-Receipt Rejected or Processing Error */
+                  <View style={[styles.ocrErrorCard, isLight && styles.ocrErrorCardLight]}>
+                    <View style={styles.ocrErrorHeader}>
+                      <View style={styles.ocrErrorIconBox}>
+                        <AlertTriangle size={24} color="#ef4444" />
                       </View>
-                    );
-                  })()
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.ocrErrorTitle, isLight && { color: '#b91c1c' }]}>
+                          Receipt Scan Error
+                        </Text>
+                        <Text style={[styles.ocrErrorSubtitle, isLight && { color: '#64748b' }]}>
+                          The scanned document could not be processed.
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Photo Thumbnail + Reason */}
+                    <View style={[styles.ocrErrorBody, isLight && { backgroundColor: '#fef2f2', borderColor: '#fecaca' }]}>
+                      {capturedReceiptPhoto && (
+                        <Image
+                          source={{ uri: capturedReceiptPhoto }}
+                          style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 2, borderColor: '#ef4444' }}
+                          resizeMode="cover"
+                        />
+                      )}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#991b1b' : '#f87171' }}>
+                          Reason:
+                        </Text>
+                        <Text style={{ fontSize: 12, color: isLight ? '#7f1d1d' : '#fca5a5', lineHeight: 16 }}>
+                          {ocrValidationError}
+                        </Text>
+                        <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginTop: 4 }}>
+                          Please ensure the document is a clearly lit and valid receipt.
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Action buttons to retake or pick file */}
+                    <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>
+                      <TouchableOpacity
+                        style={[styles.btnRetakeOcr, { flex: 1, backgroundColor: '#0284c7', borderColor: '#0284c7' }]}
+                        onPress={() => {
+                          setOcrValidationError('');
+                          setCapturedReceiptPhoto(null);
+                          startCamera();
+                        }}
+                      >
+                        <Camera size={16} color="#ffffff" />
+                        <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 13 }}>
+                          Retake Photo with Camera
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.btnRetakeOcr, isLight && styles.btnRetakeOcrLight, { flex: 1 }]}
+                        onPress={() => {
+                          setOcrValidationError('');
+                          setCapturedReceiptPhoto(null);
+                          document.getElementById('receiptPhotoUploadInput')?.click();
+                        }}
+                      >
+                        <UploadCloud size={16} color={isLight ? '#334155' : '#cbd5e1'} />
+                        <Text style={[styles.btnRetakeOcrText, isLight && styles.btnRetakeOcrTextLight]}>
+                          Upload Different File
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 ) : isOcrVerifiedView ? (
                   /* OCR Verification & Review Screen */
                   <View style={[styles.ocrVerificationContainer, isLight && styles.ocrVerificationContainerLight]}>
@@ -1296,137 +1101,6 @@ export default function AddDocumentModal({
                   imageRendering: 'auto'
                 }}
               />
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Standalone API Key Configuration Modal */}
-      {showApiKeyModal && (
-        <Modal visible={showApiKeyModal} transparent animationType="fade">
-          <View style={[styles.modalOverlay, { zIndex: 9999 }]}>
-            <View style={[styles.formModalContainer, isLight && styles.formModalContainerLight, { maxWidth: 500, padding: 20 }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Key size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }}>
-                    Gemini Vision AI Key
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowApiKeyModal(false)} style={styles.modalCloseBtn}>
-                  <X size={16} color={isLight ? '#475569' : '#94a3b8'} />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={{ fontSize: 12, color: isLight ? '#475569' : '#94a3b8', lineHeight: 18, marginBottom: 12 }}>
-                Google Gemini Vision AI reads physical receipts, handwritten order slips, amounts, and item lists. Enter your Gemini API key below to enable direct AI scanning.
-              </Text>
-
-              <View style={{ marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#334155' : '#cbd5e1' }}>
-                    API Key:
-                  </Text>
-                  <a
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', textDecoration: 'none', fontWeight: '600' }}
-                  >
-                    Get free key ↗
-                  </a>
-                </View>
-                <TextInput
-                  style={{
-                    backgroundColor: isLight ? '#f8fafc' : '#1e293b',
-                    borderColor: isLight ? '#cbd5e1' : '#475569',
-                    borderWidth: 1,
-                    borderRadius: 6,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: 12,
-                    color: isLight ? '#0f172a' : '#f8fafc',
-                    fontFamily: 'monospace'
-                  }}
-                  value={customKeyInput}
-                  onChangeText={(txt) => {
-                    setCustomKeyInput(txt);
-                    setKeyTestStatus(null);
-                  }}
-                  placeholder="Paste Gemini API key (AIzaSy...)"
-                  placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-
-              {keyTestStatus && (
-                <View style={{
-                  padding: 10,
-                  borderRadius: 6,
-                  marginBottom: 12,
-                  backgroundColor: keyTestStatus.ok ? (isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)') : (isLight ? '#fef2f2' : 'rgba(239, 68, 68, 0.15)'),
-                  borderColor: keyTestStatus.ok ? '#10b981' : '#ef4444',
-                  borderWidth: 1
-                }}>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: keyTestStatus.ok ? '#059669' : '#dc2626' }}>
-                    {keyTestStatus.msg}
-                  </Text>
-                </View>
-              )}
-
-              <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-                <TouchableOpacity
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 14,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isLight ? '#cbd5e1' : '#475569',
-                    backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
-                  }}
-                  onPress={() => {
-                    setCustomGeminiApiKey('');
-                    setCustomKeyInput(DEFAULT_EMBEDDED_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY || '');
-                    setKeyTestStatus({ ok: true, msg: 'Reset to default embedded key.' });
-                  }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: isLight ? '#475569' : '#cbd5e1' }}>
-                    Reset Default
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: '#0284c7',
-                    paddingVertical: 8,
-                    paddingHorizontal: 16,
-                    borderRadius: 6,
-                    alignItems: 'center',
-                    flexDirection: 'row',
-                    gap: 6
-                  }}
-                  disabled={isTestingKey}
-                  onPress={async () => {
-                    setIsTestingKey(true);
-                    setKeyTestStatus({ ok: true, msg: 'Verifying key connection...' });
-                    const res = await testGeminiApiKey(customKeyInput);
-                    setIsTestingKey(false);
-                    if (res.ok) {
-                      setCustomGeminiApiKey(customKeyInput);
-                      setKeyTestStatus({ ok: true, msg: 'Key verified and saved successfully!' });
-                      setTimeout(() => setShowApiKeyModal(false), 1200);
-                    } else {
-                      setKeyTestStatus({ ok: false, msg: `Key validation failed: ${res.error}` });
-                    }
-                  }}
-                >
-                  {isTestingKey ? <ActivityIndicator size="small" color="#fff" /> : <Check size={14} color="#fff" />}
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#fff' }}>
-                    {isTestingKey ? 'Verifying...' : 'Save & Verify'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
         </Modal>
