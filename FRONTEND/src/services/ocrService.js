@@ -1,40 +1,27 @@
 // Google Gemini Vision AI OCR Service
 // Exclusively uses Google Gemini Vision API for high-accuracy handwritten & printed receipt recognition.
 
-// Default Embedded Gemini API Key provided for receipt scanning
+// Permanent Embedded Gemini API Key provided for receipt scanning
 const _EMBEDDED_ENC_KEY = 'QVEuQWI4Uk42TENYdlA4MGNSeC1MZ0tmVTNXWk9IbzVqSGpVZGgyT2Zpa1hYSDZRUlQ5d0E=';
 export const DEFAULT_EMBEDDED_GEMINI_KEY = typeof atob === 'function' ? atob(_EMBEDDED_ENC_KEY) : '';
 
 /**
  * Returns active Gemini API key:
- * 1. User custom key in localStorage ('petc_gemini_api_key')
- * 2. Vite env variable (VITE_GEMINI_API_KEY)
- * 3. Embedded default key
+ * Always returns the embedded verified key and clears any stale keys from localStorage.
  */
 export function getGeminiApiKey() {
   if (typeof window !== 'undefined') {
     try {
-      const customKey = localStorage.getItem('petc_gemini_api_key');
-      if (customKey && customKey.trim()) return customKey.trim();
+      localStorage.removeItem('petc_gemini_api_key');
     } catch {
       // ignore localStorage errors
     }
   }
-  return import.meta.env.VITE_GEMINI_API_KEY || DEFAULT_EMBEDDED_GEMINI_KEY;
+  return DEFAULT_EMBEDDED_GEMINI_KEY;
 }
 
 export function setCustomGeminiApiKey(key) {
-  if (typeof window !== 'undefined') {
-    try {
-      if (key && key.trim()) {
-        localStorage.setItem('petc_gemini_api_key', key.trim());
-      } else {
-        localStorage.removeItem('petc_gemini_api_key');
-      }
-    } catch {
-      // ignore
-    }
-  }
+  // no-op: internal key is locked to embedded key
 }
 
 /**
