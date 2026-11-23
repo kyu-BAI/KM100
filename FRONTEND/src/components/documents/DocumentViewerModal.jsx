@@ -17,7 +17,10 @@ import {
   ZoomOut,
   RotateCw,
   RotateCcw,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ListFilter
 } from 'lucide-react';
 import { rotateImageDataUrl } from '../../services/imageService';
 
@@ -33,6 +36,7 @@ export default function DocumentViewerModal({
   styles
 }) {
   const [isImageMaximized, setIsImageMaximized] = useState(false);
+  const [isItemsExpanded, setIsItemsExpanded] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isSavingUpright, setIsSavingUpright] = useState(false);
@@ -289,6 +293,143 @@ export default function DocumentViewerModal({
                   </TouchableOpacity>
                 </View>
               )}
+
+              {/* ITEMIZED RECEIPT BREAKDOWN DROPDOWN ACCORDION */}
+              {(() => {
+                const lineItems = viewItem?.lineItems || viewItem?.previewData?.lineItems || [];
+                if (!lineItems || lineItems.length === 0) return null;
+                return (
+                  <View style={{
+                    marginTop: 14,
+                    marginBottom: 14,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: isLight ? '#cbd5e1' : '#334155',
+                    backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Accordion Header Toggle */}
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => setIsItemsExpanded(prev => !prev)}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
+                        backgroundColor: isLight ? '#f8fafc' : '#1e293b',
+                        borderBottomWidth: isItemsExpanded ? 1 : 0,
+                        borderBottomColor: isLight ? '#e2e8f0' : '#334155'
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Toggle listed items breakdown"
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                        <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                          LISTED ITEMS IN RECEIPT
+                        </Text>
+                        <View style={{
+                          backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                          paddingHorizontal: 7,
+                          paddingVertical: 2,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                        }}>
+                          <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                            {lineItems.length} {lineItems.length === 1 ? 'item' : 'items'}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }}>
+                          {isItemsExpanded ? 'Hide' : 'Show'}
+                        </Text>
+                        {isItemsExpanded ? (
+                          <ChevronUp size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                        ) : (
+                          <ChevronDown size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Expanded Table */}
+                    {isItemsExpanded && (
+                      <View style={{ padding: 10 }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%' }}>
+                          <View style={{ minWidth: isMobile ? 320 : '100%', width: '100%' }}>
+                            {/* Header */}
+                            <View style={{
+                              flexDirection: 'row',
+                              backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+                              paddingVertical: 6,
+                              paddingHorizontal: 8,
+                              borderRadius: 4,
+                              marginBottom: 4
+                            }}>
+                              <Text style={{ width: 65, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>QTY & UNIT</Text>
+                              <Text style={{ flex: 2.2, minWidth: 120, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>ARTICLE / ITEM</Text>
+                              <Text style={{ width: 75, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>UNIT PRICE</Text>
+                              <Text style={{ width: 85, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>AMOUNT</Text>
+                            </View>
+
+                            {/* Rows */}
+                            {lineItems.map((item, idx) => (
+                              <View
+                                key={idx}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  paddingVertical: 6,
+                                  paddingHorizontal: 8,
+                                  backgroundColor: idx % 2 === 1 ? (isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.4)') : 'transparent',
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: isLight ? '#f1f5f9' : '#1e293b'
+                                }}
+                              >
+                                <Text style={{ width: 65, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
+                                  {item.qty || '1'} {item.unit || ''}
+                                </Text>
+                                <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
+                                  {item.name}
+                                </Text>
+                                <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
+                                  {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                </Text>
+                                <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
+                                  ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </Text>
+                              </View>
+                            ))}
+
+                            {/* Subtotal / Footer Row */}
+                            <View style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingTop: 8,
+                              paddingHorizontal: 8,
+                              marginTop: 4,
+                              borderTopWidth: 1.5,
+                              borderTopColor: isLight ? '#cbd5e1' : '#334155'
+                            }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>
+                                Total ({lineItems.length} items):
+                              </Text>
+                              <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#059669' : '#34d399' }}>
+                                ₱{lineItems.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </Text>
+                            </View>
+                          </View>
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                );
+              })()}
 
               {viewItem?.previewData && (
                 <View style={styles.viewerSection}>

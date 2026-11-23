@@ -265,6 +265,7 @@ export default function App() {
   const [isOcrVerifiedView, setIsOcrVerifiedView] = useState(false);
   const [ocrValidationError, setOcrValidationError] = useState('');
   const [ocrReceiptName, setOcrReceiptName] = useState('');
+  const [ocrLineItems, setOcrLineItems] = useState([]);
 
   // Rename Saved Document State
   const [renameItem, setRenameItem] = useState(null);
@@ -1410,6 +1411,7 @@ export default function App() {
       const refCode = (parsedOr || `${Math.floor(1000 + Math.random() * 9000)}`).trim();
       const defaultName = `Scanned_${selectedReceiptType?.prefix || 'REC'}_${refCode}`;
       setOcrReceiptName(defaultName);
+      setOcrLineItems(Array.isArray(parsed?.lineItems) ? parsed.lineItems : []);
 
       setIsOcrProcessing(false);
       setIsOcrVerifiedView(true);
@@ -1534,7 +1536,8 @@ export default function App() {
         fileFormat: 'JPG',
         fileSize: `${Math.round(capturedReceiptPhoto.length * 0.75 / 1024)} KB`,
         filePath: capturedReceiptPhoto,
-        notes: `Establishment: ${establishment} | Scanned: ${scanDateToday} | Date: ${receiptDate} | Classification: ${selectedReceiptType.name} | Category: ${selectedReceiptType.category} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.`,
+        lineItems: ocrLineItems,
+        notes: `Establishment: ${establishment} | Scanned: ${scanDateToday} | Date: ${receiptDate} | Classification: ${selectedReceiptType.name} | Category: ${selectedReceiptType.category} | Description: ${description} | Amount: PHP ${amt.toLocaleString()} | Reference: ${refCode}.${ocrLineItems.length > 0 ? ` | Items (${ocrLineItems.length}): ${ocrLineItems.map(i => `${i.qty ? i.qty + ' ' : ''}${i.name}`).join(', ')}` : ''}`,
         tags: ['Scanned Receipt', establishment, selectedReceiptType.name, selectedReceiptType.entity, selectedReceiptType.category],
         previewData: {
           establishment,
@@ -1544,6 +1547,7 @@ export default function App() {
           or_number: refCode,
           category: selectedReceiptType.category,
           entity: selectedReceiptType.entity,
+          lineItems: ocrLineItems,
           columns: ['Receipt Field', 'Extracted Value'],
           rows: [
             ['Establishment', establishment],
@@ -1551,6 +1555,7 @@ export default function App() {
             ['Description', description],
             ['Total Amount', amt > 0 ? `PHP ${amt.toLocaleString()}` : 'Unspecified'],
             ['Official Ref / Invoice No.', refCode],
+            ...(ocrLineItems.length > 0 ? [['Itemized Entries', `${ocrLineItems.length} listed items verified`]] : []),
             ['Assigned Category', selectedReceiptType.category],
             ['Assigned Entity', selectedReceiptType.entity],
             ['Scan Timestamp', new Date().toLocaleString()]
@@ -1561,7 +1566,8 @@ export default function App() {
             'Category': selectedReceiptType.category,
             'Entity': selectedReceiptType.entity,
             'Total Amount': amt > 0 ? `PHP ${amt.toLocaleString()}` : 'N/A',
-            'Official Ref': refCode
+            'Official Ref': refCode,
+            ...(ocrLineItems.length > 0 ? { 'Listed Items': `${ocrLineItems.length} items` } : {})
           }
         }
       };
@@ -2196,6 +2202,8 @@ export default function App() {
         setOcrValidationError={setOcrValidationError}
         ocrReceiptName={ocrReceiptName}
         setOcrReceiptName={setOcrReceiptName}
+        ocrLineItems={ocrLineItems}
+        setOcrLineItems={setOcrLineItems}
         saveVerifiedReceiptToDatabase={saveVerifiedReceiptToDatabase}
         captureCameraSnapshotAndAutoSave={captureCameraSnapshotAndAutoSave}
         handleReceiptPhotoSelect={handleReceiptPhotoSelect}

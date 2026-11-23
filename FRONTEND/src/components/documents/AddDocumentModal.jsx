@@ -28,7 +28,10 @@ import {
   Building2,
   CreditCard,
   Smartphone,
-  Edit3
+  Edit3,
+  ChevronDown,
+  ChevronUp,
+  ListFilter
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
@@ -72,6 +75,8 @@ export default function AddDocumentModal({
   setOcrValidationError,
   ocrReceiptName,
   setOcrReceiptName,
+  ocrLineItems,
+  setOcrLineItems,
   saveVerifiedReceiptToDatabase,
   captureCameraSnapshotAndAutoSave,
   handleReceiptPhotoSelect,
@@ -90,6 +95,7 @@ export default function AddDocumentModal({
   const hasAllBranchesScope = userDept.includes('all');
   const [previewZoomed, setPreviewZoomed] = useState(false);
   const [isRotatingPhoto, setIsRotatingPhoto] = useState(false);
+  const [isLineItemsExpanded, setIsLineItemsExpanded] = useState(true);
 
   const handleRotateCapturedPhoto = async (deg) => {
     if (!capturedReceiptPhoto || isRotatingPhoto) return;
@@ -719,6 +725,145 @@ export default function AddDocumentModal({
                         />
                       </View>
                     </View>
+
+                    {/* Listed Items / Line Items Dropdown Accordion for Human Verification */}
+                    {ocrLineItems && ocrLineItems.length > 0 && (
+                      <View style={{
+                        marginTop: 12,
+                        marginBottom: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: isLight ? '#cbd5e1' : '#334155',
+                        backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Dropdown Header Toggle Button */}
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => setIsLineItemsExpanded(prev => !prev)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingVertical: 10,
+                            paddingHorizontal: 12,
+                            backgroundColor: isLight ? '#f8fafc' : '#1e293b',
+                            borderBottomWidth: isLineItemsExpanded ? 1 : 0,
+                            borderBottomColor: isLight ? '#e2e8f0' : '#334155'
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Toggle listed items in receipt"
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                            <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                              Listed Items in Receipt
+                            </Text>
+                            <View style={{
+                              backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                              paddingHorizontal: 7,
+                              paddingVertical: 2,
+                              borderRadius: 10,
+                              borderWidth: 1,
+                              borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                            }}>
+                              <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                                {ocrLineItems.length} {ocrLineItems.length === 1 ? 'item' : 'items'}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }}>
+                              {isLineItemsExpanded ? 'Hide' : 'Review'}
+                            </Text>
+                            {isLineItemsExpanded ? (
+                              <ChevronUp size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                            ) : (
+                              <ChevronDown size={16} color={isLight ? '#64748b' : '#94a3b8'} />
+                            )}
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Expanded Breakdown Table */}
+                        {isLineItemsExpanded && (
+                          <View style={{ padding: 10 }}>
+                            <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', marginBottom: 8 }}>
+                              Verify the detected entries before saving:
+                            </Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%' }}>
+                              <View style={{ minWidth: isMobile ? 320 : '100%', width: '100%' }}>
+                                {/* Table Columns Header */}
+                                <View style={{
+                                  flexDirection: 'row',
+                                  backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+                                  paddingVertical: 6,
+                                  paddingHorizontal: 8,
+                                  borderRadius: 4,
+                                  marginBottom: 4
+                                }}>
+                                  <Text style={{ width: 65, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>QTY & UNIT</Text>
+                                  <Text style={{ flex: 2.2, minWidth: 120, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>ARTICLES / ITEM</Text>
+                                  <Text style={{ width: 75, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>UNIT PRICE</Text>
+                                  <Text style={{ width: 85, fontSize: 10, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8', textAlign: 'right' }}>AMOUNT</Text>
+                                </View>
+
+                                {/* Item Rows */}
+                                {ocrLineItems.map((item, idx) => (
+                                  <View
+                                    key={idx}
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      paddingVertical: 6,
+                                      paddingHorizontal: 8,
+                                      backgroundColor: idx % 2 === 1 ? (isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.4)') : 'transparent',
+                                      borderBottomWidth: 1,
+                                      borderBottomColor: isLight ? '#f1f5f9' : '#1e293b'
+                                    }}
+                                  >
+                                    <Text style={{ width: 65, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
+                                      {item.qty || '1'} {item.unit || ''}
+                                    </Text>
+                                    <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
+                                      {item.name}
+                                    </Text>
+                                    <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
+                                      {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                    </Text>
+                                    <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
+                                      ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </Text>
+                                  </View>
+                                ))}
+
+                                {/* Total Verification Footer Row */}
+                                <View style={{
+                                  flexDirection: 'row',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  paddingTop: 8,
+                                  paddingHorizontal: 8,
+                                  marginTop: 4,
+                                  borderTopWidth: 1.5,
+                                  borderTopColor: isLight ? '#cbd5e1' : '#334155'
+                                }}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                    <CheckCircle2 size={13} color="#10b981" />
+                                    <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#475569' : '#94a3b8' }}>
+                                      Subtotal ({ocrLineItems.length} items):
+                                    </Text>
+                                  </View>
+                                  <Text style={{ fontSize: 12, fontWeight: '800', color: isLight ? '#059669' : '#34d399' }}>
+                                    ₱{ocrLineItems.reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </Text>
+                                </View>
+                              </View>
+                            </ScrollView>
+                          </View>
+                        )}
+                      </View>
+                    )}
 
                     {/* Actions */}
                     <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>

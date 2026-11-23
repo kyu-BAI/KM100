@@ -78,14 +78,25 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
                         '{\n' +
                         '  "isReceipt": true,\n' +
                         '  "rejectionReason": "",\n' +
-                        '  "establishment": "Name of the business, store, or vendor at the top",\n' +
-                        '  "receiptDate": "YYYY-MM-DD format (if handwritten e.g. 11-11-26, convert to 2026-11-11; if not found, use empty string)",\n' +
-                        '  "description": "Short description of items or service. If there are multiple entries/items, summarize them (e.g. Supplies, Gas & Oil, Multi-item purchase)",\n' +
-                        '  "amount": 0.00,\n' +
-                        '  "orNumber": "Official Receipt No., Sales Invoice No., or Reference Number"\n' +
+                        '  "establishment": "Name of the business, store, or vendor at the top (e.g. RED GOOSE, KM100, Petron)",\n' +
+                        '  "receiptDate": "YYYY-MM-DD format (if handwritten e.g. 10/6 2026, convert to 2026-10-06; if not found, use empty string)",\n' +
+                        '  "description": "Short description of items or service (e.g. Kitchen Supplies, Groceries, Fuel, Emission Testing)",\n' +
+                        '  "amount": 2795.00,\n' +
+                        '  "orNumber": "Official Receipt No., Order Slip No., Sales Invoice No., or Reference Number",\n' +
+                        '  "lineItems": [\n' +
+                        '    {\n' +
+                        '      "qty": "10",\n' +
+                        '      "unit": "PCS",\n' +
+                        '      "name": "ALASKA CREMA",\n' +
+                        '      "unitPrice": 75.00,\n' +
+                        '      "amount": 750.00\n' +
+                        '    }\n' +
+                        '  ]\n' +
                         '}\n' +
                         'Important Notes:\n' +
-                        '- For receipts with multiple line items/entries, extract the final TOTAL / GRAND TOTAL / TOTAL AMOUNT DUE / NET DUE as "amount" (sum of all entries), NOT an individual item row.\n' +
+                        '- For receipts or order slips with listed items/entries, extract EVERY single entry into "lineItems" with its qty, unit, article/item name, unit price, and total amount.\n' +
+                        '- Set "amount" to the final TOTAL / GRAND TOTAL amount (sum of all entries).\n' +
+                        '- If there is only one unitemized purchase, you may leave "lineItems" as an empty array [].\n' +
                         '- Do NOT hallucinate data. Read the actual text from the image accurately.'
                 },
                 {
@@ -153,6 +164,29 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
           const amount = typeof parsedJson.amount === 'number' ? parsedJson.amount : parseFloat(parsedJson.amount) || 0;
           const orNumber = String(parsedJson.orNumber || '').trim();
 
+          // Parse and normalize lineItems (if any)
+          let lineItems = [];
+          const rawItems = Array.isArray(parsedJson.lineItems)
+            ? parsedJson.lineItems
+            : Array.isArray(parsedJson.items)
+              ? parsedJson.items
+              : Array.isArray(parsedJson.articles)
+                ? parsedJson.articles
+                : [];
+
+          lineItems = rawItems.map(it => {
+            const qty = String(it.qty || it.quantity || '').trim();
+            const unit = String(it.unit || '').trim();
+            const name = String(it.name || it.item || it.description || it.article || '').trim();
+            const unitPrice = typeof it.unitPrice === 'number'
+              ? it.unitPrice
+              : parseFloat(String(it.unitPrice || it.price || 0).replace(/[^0-9.]/g, '')) || 0;
+            const amountVal = typeof it.amount === 'number'
+              ? it.amount
+              : parseFloat(String(it.amount || it.total || 0).replace(/[^0-9.]/g, '')) || 0;
+            return { qty, unit, name, unitPrice, amount: amountVal };
+          }).filter(it => it.name.length > 0 || it.amount > 0);
+
           // Sanity check: must have at least one meaningful receipt field
           const hasReceiptData = Boolean(
             (establishment && establishment.length >= 2) ||
@@ -183,6 +217,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
             description: (parsedJson.description || '').trim(),
             amount,
             orNumber,
+            lineItems,
             rawOcrText: candidateText
           };
         }
