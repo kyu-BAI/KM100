@@ -1360,12 +1360,16 @@ export default function App() {
 
     // Apply whatever details were ACTUALLY extracted from the scanned image (NO hardcoded data)
     const applyOcrResult = (parsed) => {
-      // 1. Strict Validation: Check if the image was identified as NOT a receipt
+      // 1. Strict Validation: Check if the image was identified as NOT a receipt or API key error
       if (parsed && parsed.isReceipt === false) {
         setIsOcrProcessing(false);
         setIsOcrVerifiedView(false);
         setOcrValidationError(parsed.rejectionReason || 'The scanned image is not a recognized official receipt, invoice, or voucher.');
-        showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.');
+        if (parsed.isApiKeyError) {
+          showNotice('Gemini Vision API key error: Service account inactive. Please update key.', 'error');
+        } else {
+          showNotice('Scan Rejected: The photo is not a receipt and cannot be saved.');
+        }
         return;
       }
 
@@ -2214,6 +2218,8 @@ export default function App() {
         isConsumablesEmployee={isConsumablesEmployee}
         isSalesIncomeEmployee={isSalesIncomeEmployee}
         currentUser={currentUser}
+        activeNav={activeNav}
+        handleProcessReceiptPhoto={handleProcessReceiptPhoto}
         isLight={isLight}
         isMobile={isMobile}
         styles={styles}

@@ -1,49 +1,87 @@
-import { createWorker } from 'tesseract.js';
-
-// Gemini API Key from Vite env
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// Google Gemini Vision AI OCR Service
+// Exclusively uses Google Gemini Vision API for high-accuracy handwritten & printed receipt recognition.
 
 /**
- * Singleton OCR Worker for local fallback (used only if offline or API unavailable)
+ * Returns active Gemini API key:
+ * 1. User custom key in localStorage ('petc_gemini_api_key')
+ * 2. Vite env variable (VITE_GEMINI_API_KEY)
  */
-let workerInstance = null;
-let workerInitPromise = null;
-
-async function getOcrWorker(onProgress) {
-  if (workerInstance) return workerInstance;
-  if (!workerInitPromise) {
-    workerInitPromise = (async () => {
-      try {
-        if (onProgress) onProgress(0.15, 'Initializing local OCR engine...');
-        const worker = await createWorker('eng', 1, {
-          logger: m => {
-            if (m && m.status && onProgress) {
-              if (m.status === 'recognizing text' && typeof m.progress === 'number') {
-                onProgress(0.3 + m.progress * 0.6, `Scanning text (${Math.round(m.progress * 100)}%)...`);
-              }
-            }
-          }
-        });
-        workerInstance = worker;
-        return worker;
-      } catch (err) {
-        workerInitPromise = null;
-        throw err;
-      }
-    })();
+export function getGeminiApiKey() {
+  if (typeof window !== 'undefined') {
+    try {
+      const customKey = localStorage.getItem('petc_gemini_api_key');
+      if (customKey && customKey.trim()) return customKey.trim();
+    } catch {
+      // ignore localStorage errors
+    }
   }
-  return workerInitPromise;
+  return import.meta.env.VITE_GEMINI_API_KEY || '';
+}
+
+export function setCustomGeminiApiKey(key) {
+  if (typeof window !== 'undefined') {
+    try {
+      if (key && key.trim()) {
+        localStorage.setItem('petc_gemini_api_key', key.trim());
+      } else {
+        localStorage.removeItem('petc_gemini_api_key');
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
+ * Tests whether a Gemini API key is valid by making a minimal request to the Google API.
+ */
+export async function testGeminiApiKey(candidateKey) {
+  const keyToTest = (candidateKey || getGeminiApiKey() || '').trim();
+  if (!keyToTest) {
+    return { ok: false, error: 'No API key provided.' };
+  }
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: 'Ping test. Reply with OK' }] }]
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error?.message || `HTTP ${res.status}`;
+      return { ok: false, error: msg };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message || 'Network connection error' };
+  }
 }
 
 /**
  * Uses Google Gemini Vision API to accurately read physical receipts (handwritten & printed).
- * High accuracy: extracts establishment, date, description, amount, and invoice/OR number.
+ * High accuracy: extracts establishment, date, description, amount, invoice/OR number, and lineItems.
  */
 async function extractWithGeminiVision(imageSource, onProgress, receiptType = null) {
-  if (!GEMINI_API_KEY) return null;
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    return {
+      isReceipt: false,
+      isApiKeyError: true,
+      rejectionReason: 'No Gemini Vision API key is configured. Please provide an active Gemini API key from Google AI Studio (aistudio.google.com/apikey).',
+      establishment: '',
+      receiptDate: '',
+      description: '',
+      amount: 0,
+      orNumber: '',
+      lineItems: [],
+      rawOcrText: ''
+    };
+  }
 
   try {
-    if (onProgress) onProgress(0.25, 'Scanning receipt text...');
+    if (onProgress) onProgress(0.25, 'Analyzing receipt with Gemini Vision AI...');
 
     let base64Data = imageSource;
     let mimeType = 'image/jpeg';
@@ -55,14 +93,14 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
 
     if (!base64Data) return null;
 
-    // High availability models
-    const modelsToTry = ['gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+    // High availability current vision models
+    const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
 
     const typeContext = receiptType?.name ? `The document is being filed as: "${receiptType.name}" (${receiptType.category || ''}). ` : '';
 
     for (const model of modelsToTry) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         
         const payload = {
           contents: [
@@ -115,9 +153,9 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
         };
 
         const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 7500);
+        const fetchTimeout = setTimeout(() => controller.abort(), 9000);
 
-        if (onProgress) onProgress(0.55, 'Verifying receipt details...');
+        if (onProgress) onProgress(0.55, 'Verifying receipt details with Gemini AI...');
 
         const res = await fetch(url, {
           method: 'POST',
@@ -128,7 +166,24 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
         clearTimeout(fetchTimeout);
 
         if (!res.ok) {
-          console.warn(`Gemini API model ${model} responded with status:`, res.status);
+          const errBody = await res.json().catch(() => ({}));
+          console.warn(`Gemini API model ${model} responded with status:`, res.status, errBody);
+          // If the key is invalid, disabled, or unauthenticated, report immediately instead of silent failure
+          if (res.status === 400 || res.status === 401 || res.status === 403) {
+            const apiMessage = errBody?.error?.message || `Authentication error (${res.status})`;
+            return {
+              isReceipt: false,
+              isApiKeyError: true,
+              rejectionReason: `Gemini API Authentication Error: ${apiMessage}. The bound service account is deleted or disabled. Please update your Gemini API Key in the settings below.`,
+              establishment: '',
+              receiptDate: '',
+              description: '',
+              amount: 0,
+              orNumber: '',
+              lineItems: [],
+              rawOcrText: JSON.stringify(errBody)
+            };
+          }
           continue; // Try next model
         }
 
@@ -156,6 +211,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
               description: '',
               amount: 0,
               orNumber: '',
+              lineItems: [],
               rawOcrText: candidateText
             };
           }
@@ -204,6 +260,7 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
               description: '',
               amount: 0,
               orNumber: '',
+              lineItems: [],
               rawOcrText: candidateText
             };
           }
@@ -233,204 +290,52 @@ async function extractWithGeminiVision(imageSource, onProgress, receiptType = nu
 }
 
 /**
- * Fallback receipt parsing that dynamically extracts details from the raw scanned text.
- * NEVER hardcodes any specific store, amount, or invoice number.
- */
-export function parseReceiptData(rawText = '', receiptType = null) {
-  const cleanText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const lines = cleanText
-    .split('\n')
-    .map(l => l.trim())
-    .filter(Boolean);
-
-  let establishment = '';
-  let receiptDate = '';
-  let description = '';
-  let amount = 0;
-  let orNumber = '';
-
-  // 1. EXTRACT ESTABLISHMENT (STORE NAME)
-  const skipHeaderKeywords = /^(ground\s+floor|pineda\s+bldg|sales\s+invoice|official\s+receipt|collection\s+receipt|cash\s+invoice|tin[\s:]|vat[\s:]|prop[\s:]|tel[\s:]|phone[\s:]|cell[\s:]|address[\s:]|terminal[\s:]|pos[\s:]|welcome\b|thank\s+you|printed\b|date\b|time\b|sold\s+to)/i;
-
-  for (let i = 0; i < Math.min(lines.length, 10); i++) {
-    const rawLine = lines[i];
-    const cleanLine = rawLine.replace(/^[^\w]+|[^\w]+$/g, '').trim();
-    if (cleanLine.length < 3) continue;
-    if (skipHeaderKeywords.test(cleanLine)) continue;
-    if (/^[0-9\s:.,\/-]+$/.test(cleanLine)) continue;
-
-    if (/[a-zA-Z]{3,}/.test(cleanLine)) {
-      establishment = cleanLine;
-      break;
-    }
-  }
-
-  // 2. EXTRACT DATE
-  const labeledDate = cleanText.match(/(?:date|dated|dt)\s*[:.\s-]?\s*([0-9IlOo]{1,4}[-\/.][0-9IlOo]{1,2}[-\/.][0-9IlOo]{1,4})/i);
-  let rawDateStr = labeledDate ? labeledDate[1] : '';
-
-  if (!rawDateStr) {
-    const generalDate = cleanText.match(/\b(202[0-9][-\/.](?:0?[1-9]|1[0-2])[-\/.](?:0?[1-9]|[12][0-9]|3[01]))\b/) ||
-      cleanText.match(/\b((?:0?[1-9]|1[0-2])[-\/.](?:0?[1-9]|[12][0-9]|3[01])[-\/.](?:202[0-9]|2[0-9]))\b/);
-    if (generalDate) rawDateStr = generalDate[1];
-  }
-
-  if (rawDateStr) {
-    let dClean = rawDateStr.replace(/[Il]/g, '1').replace(/[Oo]/g, '0');
-    const parts = dClean.split(/[-\/.]/);
-    if (parts.length === 3) {
-      let p0 = parseInt(parts[0], 10);
-      let p1 = parseInt(parts[1], 10);
-      let p2 = parseInt(parts[2], 10);
-
-      if (p0 > 2000) {
-        receiptDate = `${p0}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
-      } else {
-        let y = p2 < 100 ? 2000 + p2 : p2;
-        let m = p0 <= 12 ? p0 : p1;
-        let d = p0 <= 12 ? p1 : p0;
-        receiptDate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      }
-    }
-  }
-
-  if (!receiptDate) {
-    receiptDate = new Date().toISOString().split('T')[0];
-  }
-
-  // 3. EXTRACT OR / INVOICE NUMBER
-  const orMatch1 = cleanText.match(/(?:sales\s+invoice|official\s+receipt|collection\s+receipt|\binvoice\b|\breceipt\b|\bo\.?r\.?\b|\bsi\b|\binv\b|\border\b|\bref\b)(?:\s*(?:no\.?|number|#|№))?\s*[:.\s№#-]*([a-zA-Z0-9-]{2,16})/i);
-  const orMatch2 = cleanText.match(/(?:№|#|\bno\.?\b)\s*[:.\s№#-]*([a-zA-Z0-9-]{2,16})/i);
-  const matchedOr = orMatch1 || orMatch2;
-  if (matchedOr && matchedOr[1] && !/^(date|total|amount|cash)$/i.test(matchedOr[1])) {
-    orNumber = matchedOr[1].trim();
-  }
-
-  // 4. EXTRACT DESCRIPTION / ITEMS
-  if (/emission|inspection|mvir|smoke|testing\s+fee|vehicle/i.test(cleanText)) {
-    description = 'Vehicle Emission Testing Sales';
-  } else if (/insurance|ctpl|coci|premium|policy/i.test(cleanText)) {
-    description = 'PETC CTPL Insurance Payment';
-  } else if (/collection|remittance|revenue|sales|income/i.test(cleanText)) {
-    description = 'Daily Collection / Revenue';
-  } else if (/meal|food|dinner|lunch|breakfast|snack|sizzling|steak|restaurant|burger|chicken|beverage|drink|coffee/i.test(cleanText)) {
-    description = 'Meals & Refreshments';
-  } else if (/paper|ink|ribbon|filter|chemical|suppl|consumable/i.test(cleanText)) {
-    description = 'Office & Testing Supplies';
-  } else if (/fuel|gasoline|diesel|petron|shell|caltex|v-power|unleaded/i.test(cleanText)) {
-    description = 'Fuel & Transportation';
-  } else if (/rent|electric|vecor|utility|water|internet|pldt|meralco/i.test(cleanText)) {
-    description = 'Operational Utility / Rent';
-  } else if (/repair|maintenance|hardware|parts|tools|labor/i.test(cleanText)) {
-    description = 'Maintenance & Repairs';
-  } else if (receiptType) {
-    if (receiptType.id === 'petc-sales') description = 'Vehicle Emission Testing Sales';
-    else if (receiptType.id === 'petc-income') description = 'Daily Collection / Revenue';
-    else if (receiptType.id === 'petc-insurance') description = 'PETC CTPL Insurance Payment';
-    else if (receiptType.id === 'consumables-delivery') description = 'Office & Testing Supplies';
-    else if (receiptType.id === 'voucher-disbursement') description = 'Petty Cash Payment Voucher';
-    else if (receiptType.name) description = receiptType.name;
-  } else {
-    const descSection = cleanText.match(/(?:item\s+description|nature\s+of\s+service|particulars)[\s\S]{0,100}/i);
-    if (descSection) {
-      const subLines = descSection[0].split('\n').slice(1).map(l => l.trim()).filter(Boolean);
-      for (const sl of subLines) {
-        const c = sl.replace(/[^\w\s&.,'-]/g, '').trim();
-        if (c.length >= 3 && !/^(quantity|unit|price|amount|total|vat)$/i.test(c)) {
-          description = c;
-          break;
-        }
-      }
-    }
-  }
-
-  // 5. EXTRACT AMOUNT
-  const receiptBodyText = cleanText.split(/printer'?s\s+accreditation|bir\s+authority|date\s+issued|\bbklts\b|\bauthority\b/i)[0] || cleanText;
-
-  const totalKeywords = /(?:grand\s+total|total\s+(?:sales|amount|due)|amount\s+due|net\s+(?:due|amount|of\s+vat)|total\s+sales\s+\(vat\s+inclusive\)|total|amount|due|balance|paid|cash)[\s\S]{0,35}?(?:PHP|₱)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/i;
-  const totalMatch = receiptBodyText.match(totalKeywords);
-
-  if (totalMatch) {
-    const val = parseFloat(totalMatch[1].replace(/,/g, ''));
-    if (!isNaN(val) && val > 0 && val < 500000) {
-      amount = val;
-    }
-  }
-
-  if (!amount) {
-    const cleanedBody = receiptBodyText
-      .replace(/\d{4}\s*-\s*\d{4}/g, '')
-      .replace(/748-389-231/g, '')
-      .replace(/081[a-zA-Z0-9]+/g, '');
-
-    const numberMatches = cleanedBody.match(/(?:PHP|₱)?\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{1,2})?|[0-9]{2,6}(?:\.[0-9]{1,2})?)/g) || [];
-    const candidates = numberMatches
-      .map(n => parseFloat(n.replace(/[^0-9.]/g, '')))
-      .filter(n => !isNaN(n) && n >= 10 && n <= 100000 && n !== 2026 && n !== 2025 && n !== 2024);
-
-    if (candidates.length > 0) {
-      amount = candidates[candidates.length - 1];
-    }
-  }
-
-  // Receipt validity test for local OCR
-  const receiptKeywords = /(?:receipt|invoice|sales|official|voucher|total|amount|due|balance|paid|cash|php|₱|tin|bir|tax|vat|mvir|emission|subtotal|discount|qty|change|item|particulars|\bor\b|\bsi\b|\binv\b)/i;
-  const hasReceiptKeyword = receiptKeywords.test(cleanText);
-  const hasFinancialData = amount > 0 || (establishment && establishment.length >= 3) || (orNumber && orNumber.length >= 3);
-  const isReceipt = hasReceiptKeyword && hasFinancialData;
-
-  return {
-    isReceipt,
-    rejectionReason: isReceipt ? '' : 'No official receipt or financial transaction text was detected in this image.',
-    establishment: isReceipt ? establishment : '',
-    receiptDate: isReceipt ? receiptDate : '',
-    description: isReceipt ? description : '',
-    amount: isReceipt ? amount : 0,
-    orNumber: isReceipt ? orNumber : '',
-    rawOcrText: rawText
-  };
-}
-
-/**
  * Runs receipt recognition on an image:
- * 1. Uses Gemini Vision AI for high-accuracy handwritten & printed text recognition.
- * 2. Falls back to local Tesseract OCR if network is unavailable.
+ * Uses Google Gemini Vision AI exclusively for high-accuracy handwritten & printed text recognition.
+ * NEVER falls back to low-accuracy local OCR engines.
  */
 export async function runOcrOnImage(imageSource, onProgress, receiptType = null) {
   try {
-    if (onProgress) onProgress(0.1, 'Processing receipt image...');
+    if (onProgress) onProgress(0.1, 'Analyzing receipt image with Gemini Vision AI...');
 
-    // 1. Primary: Use Gemini Vision API
     const geminiResult = await extractWithGeminiVision(imageSource, onProgress, receiptType);
     if (geminiResult) {
+      if (geminiResult.isApiKeyError) {
+        if (onProgress) onProgress(1.0, 'Gemini API authentication failed.');
+        return geminiResult;
+      }
       if (geminiResult.isReceipt === false) {
-        if (onProgress) onProgress(1.0, 'Validation failed: Image is not a receipt.');
+        if (onProgress) onProgress(1.0, 'Validation: ' + (geminiResult.rejectionReason || 'Image is not a receipt.'));
         return geminiResult;
       }
       if (geminiResult.isReceipt === true) {
-        if (onProgress) onProgress(1.0, 'Receipt details extracted!');
+        if (onProgress) onProgress(1.0, 'Receipt details verified with Gemini AI!');
         return geminiResult;
       }
     }
 
-    // 2. Fallback: Local OCR
-    if (onProgress) onProgress(0.4, 'Running fallback local OCR engine...');
-    const worker = await getOcrWorker(onProgress);
-    const result = await worker.recognize(imageSource);
-    const rawText = result && result.data ? result.data.text : '';
-    const parsed = parseReceiptData(rawText, receiptType);
-    if (onProgress) onProgress(1.0, parsed.isReceipt ? 'Receipt details extracted!' : 'Validation failed: Not a receipt.');
-    return parsed;
-  } catch (err) {
-    console.warn('OCR processing error:', err);
     return {
       isReceipt: false,
-      rejectionReason: 'Unable to analyze image. Please ensure the image is a clear and valid receipt.',
+      rejectionReason: 'Gemini Vision AI was unable to parse this receipt. Please ensure your Gemini API key is valid and active, and upload a clear, well-lit photo.',
       establishment: '',
       receiptDate: '',
       description: '',
       amount: 0,
       orNumber: '',
+      lineItems: [],
+      rawOcrText: ''
+    };
+  } catch (err) {
+    console.warn('Gemini OCR processing error:', err);
+    return {
+      isReceipt: false,
+      rejectionReason: 'Receipt scanning failed: ' + (err.message || 'Unknown network error'),
+      establishment: '',
+      receiptDate: '',
+      description: '',
+      amount: 0,
+      orNumber: '',
+      lineItems: [],
       rawOcrText: ''
     };
   }
