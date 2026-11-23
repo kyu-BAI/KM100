@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-export function createStyles(isLight) {
+export function createStyles(isLight = true) {
   // 5-Tier Elevation & Depth System (UI/UX Pro Max + Impeccable)
   // Combines directional key light + ambient soft fill; eliminates colored halos
   const elev = {

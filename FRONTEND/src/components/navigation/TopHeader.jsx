@@ -9,8 +9,6 @@ import {
   X,
   Camera,
   FileSpreadsheet,
-  Sun,
-  Moon,
   RefreshCw
 } from 'lucide-react';
 
@@ -22,7 +20,6 @@ export default function TopHeader({
   openAddModal,
   exportFolderToExcel,
   activeNav,
-  toggleTheme,
   fetchData,
   isSyncing,
   currentUser,
@@ -148,18 +145,6 @@ export default function TopHeader({
             <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
               {width < 440 ? 'Scan' : 'Scan Receipt'}
             </Text>
-          </TouchableOpacity>
-
-          {/* Theme Toggle Button */}
-          <TouchableOpacity
-            style={[styles.headerIconBtn, isSmallMobile && { padding: 6 }, isLight && styles.headerIconBtnLight, { minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }]}
-            onPress={toggleTheme}
-            title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            accessibilityRole="button"
-            accessibilityLabel={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {isLight ? <Moon size={isSmallMobile ? 14 : 16} color="#6366f1" /> : <Sun size={isSmallMobile ? 14 : 16} color="#f59e0b" />}
           </TouchableOpacity>
 
           {/* Live Sync Pill (Desktop & Tablet only) */}

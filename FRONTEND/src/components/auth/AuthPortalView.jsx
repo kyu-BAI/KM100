@@ -11,8 +11,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  Sun,
-  Moon,
   AlertTriangle,
   CheckCircle2,
   User
@@ -37,7 +35,6 @@ export default function AuthPortalView({
   authError,
   setAuthError,
   handleAuthSubmit,
-  toggleTheme,
   isLight,
   notification,
   styles,
@@ -52,18 +49,6 @@ export default function AuthPortalView({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      {/* Quick Theme Toggle on Auth Screen */}
-      <TouchableOpacity
-        style={[{ position: 'absolute', top: 16, right: 16, zIndex: 10 }, styles.themeToggleBtn, isLight && styles.themeToggleBtnLight]}
-        onPress={toggleTheme}
-        accessibilityLabel={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
-      >
-        {isLight ? <Moon size={14} color="#6366f1" /> : <Sun size={14} color="#f59e0b" />}
-        <Text style={[styles.themeToggleBtnText, isLight && styles.themeToggleBtnTextLight]}>
-          {isLight ? 'Dark Mode' : 'Light Mode'}
-        </Text>
-      </TouchableOpacity>
-
       {notification && (
         <View style={[styles.toast, notification.type === 'error' ? styles.toastError : styles.toastSuccess]}>
           {notification.type === 'error' ? <AlertTriangle size={18} color="#fff" /> : <CheckCircle2 size={18} color="#fff" />}

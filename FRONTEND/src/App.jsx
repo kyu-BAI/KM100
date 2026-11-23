@@ -136,39 +136,19 @@ export default function App() {
     });
   };
 
-  // Theme State: 'dark' (default) | 'light'
-  const [theme, setTheme] = useState(() => {
-    try {
-      const saved = localStorage.getItem('petc_theme');
-      return saved === 'light' ? 'light' : 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-  const isLight = theme === 'light';
-  const styles = useMemo(() => createStyles(isLight), [isLight]);
-
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      try {
-        localStorage.setItem('petc_theme', next);
-      } catch { }
-      return next;
-    });
-  };
+  // Permanent Light Mode (Dark Mode removed per user request)
+  const isLight = true;
+  const styles = useMemo(() => createStyles(true), []);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      if (isLight) {
-        document.documentElement.classList.add('light-theme');
-        document.body.classList.add('light-theme');
-      } else {
-        document.documentElement.classList.remove('light-theme');
-        document.body.classList.remove('light-theme');
-      }
+      document.documentElement.classList.add('light-theme');
+      document.body.classList.add('light-theme');
+      try {
+        localStorage.setItem('petc_theme', 'light');
+      } catch { }
     }
-  }, [isLight]);
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -1873,7 +1853,6 @@ export default function App() {
         authError={authError}
         setAuthError={setAuthError}
         handleAuthSubmit={handleAuthSubmit}
-        toggleTheme={toggleTheme}
         isLight={isLight}
         notification={notification}
         styles={styles}
@@ -1900,7 +1879,6 @@ export default function App() {
         openAddModal={openAddModal}
         exportFolderToExcel={exportFolderToExcel}
         activeNav={activeNav}
-        toggleTheme={toggleTheme}
         fetchData={fetchData}
         isSyncing={isSyncing}
         currentUser={currentUser}
