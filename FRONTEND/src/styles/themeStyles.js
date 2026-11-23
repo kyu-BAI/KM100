@@ -426,17 +426,16 @@ export function createStyles(isLight) {
     sidebarToggleBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
+      justifyContent: 'center',
       backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
-      paddingHorizontal: 10,
-      paddingVertical: 7,
-      borderRadius: 8,
+      padding: 8,
+      borderRadius: 10,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#e2e8f0' : '#334155'
     },
     sidebarToggleBtnLight: {
       backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      borderColor: '#e2e8f0'
     },
     sidebarToggleBtnText: {
       fontSize: 12,
@@ -464,21 +463,22 @@ export function createStyles(isLight) {
       letterSpacing: 0.5
     },
     brandTitle: {
-      fontSize: 13,
+      fontSize: 17,
       fontWeight: '800',
       color: isLight ? '#0f172a' : '#ffffff',
-      letterSpacing: 0.5
+      letterSpacing: -0.2
     },
     brandTitleLight: {
       color: '#0f172a'
     },
     brandSub: {
-      fontSize: 10,
+      fontSize: 13,
       color: isLight ? '#64748b' : '#94a3b8',
-      fontWeight: '500'
+      fontWeight: '500',
+      letterSpacing: -0.1
     },
     brandSubLight: {
-      color: '#94a3b8'
+      color: '#64748b'
     },
     // Header Search Box
     headerSearchBox: {

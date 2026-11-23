@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
 import {
   Menu,
+  PanelLeftClose,
+  PanelLeft,
   Search,
   X,
   Camera,
@@ -45,11 +47,11 @@ export default function TopHeader({
         isSmallMobile && styles.topHeaderSmallMobile,
         isLight && styles.topHeaderLight
       ]}>
-        <View style={[styles.topHeaderLeft, isSmallMobile && { gap: 6 }]}>
+        <View style={[styles.topHeaderLeft, isSmallMobile && { gap: 8 }]}>
           <TouchableOpacity
             style={[
               styles.sidebarToggleBtn,
-              isSmallMobile && { paddingHorizontal: 7, paddingVertical: 6 },
+              isSmallMobile && { padding: 6 },
               isLight && styles.sidebarToggleBtnLight
             ]}
             onPress={() => setSidebarOpen(prev => !prev)}
@@ -57,26 +59,24 @@ export default function TopHeader({
             accessibilityRole="button"
             accessibilityLabel={sidebarOpen ? "Hide directory tree sidebar" : "Show directory tree sidebar"}
           >
-            <Menu size={isSmallMobile ? 16 : 18} color={isLight ? '#0284c7' : '#38bdf8'} />
-            {!isMobile && (
-              <Text style={[styles.sidebarToggleBtnText, isLight && styles.sidebarToggleBtnTextLight]}>
-                {sidebarOpen ? 'Hide' : 'Folders'}
-              </Text>
+            {sidebarOpen ? (
+              <PanelLeftClose size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
+            ) : (
+              <PanelLeft size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
             )}
           </TouchableOpacity>
 
           <View style={styles.brandContainer}>
             <View style={{
-              width: isSmallMobile ? 30 : 36,
-              height: isSmallMobile ? 30 : 36,
-              borderRadius: isSmallMobile ? 15 : 18,
+              width: isSmallMobile ? 32 : 38,
+              height: isSmallMobile ? 32 : 38,
+              borderRadius: isSmallMobile ? 16 : 19,
               backgroundColor: '#ffffff',
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 1.5,
               borderColor: '#f97316',
               overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)',
               flexShrink: 0
             }}>
               <Image
@@ -87,26 +87,24 @@ export default function TopHeader({
                 resizeMode="contain"
               />
             </View>
-            <View style={{ gap: 1, minWidth: 0 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text
-                  style={[styles.brandTitle, isLight && styles.brandTitleLight]}
-                  accessibilityRole="header"
-                  aria-level="1"
-                >
-                  KM100
+            <View style={{ gap: 2, minWidth: 0, justifyContent: 'center' }}>
+              <Text
+                style={[styles.brandTitle, isLight && styles.brandTitleLight, isMobile && { fontSize: 14 }]}
+                accessibilityRole="header"
+                aria-level="1"
+                numberOfLines={1}
+              >
+                <Text style={{ color: '#ea580c', fontWeight: '800' }}>KM</Text>
+                <Text style={{ color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '800' }}>
+                  {width < 640 ? '100 Skills & Training' : '100 Skills and Training Center, Inc.'}
                 </Text>
-                {width >= 620 && (
-                  <View style={styles.brandBadge}>
-                    <Text style={styles.brandBadgeText}>MONITORING SYSTEM</Text>
-                  </View>
-                )}
-              </View>
-              {isDesktop && (
-                <Text style={[styles.brandSub, isLight && styles.brandSubLight]} numberOfLines={1}>
-                  Skills & Training Center, Inc.
-                </Text>
-              )}
+              </Text>
+              <Text
+                style={[styles.brandSub, isLight && styles.brandSubLight, isMobile && { fontSize: 11 }]}
+                numberOfLines={1}
+              >
+                Inventory Management System
+              </Text>
             </View>
           </View>
         </View>
