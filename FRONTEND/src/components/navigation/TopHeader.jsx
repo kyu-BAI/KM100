@@ -53,12 +53,7 @@ export default function TopHeader({
             style={[
               styles.sidebarToggleBtn,
               isSmallMobile && { padding: 6 },
-              isLight && styles.sidebarToggleBtnLight,
-              sidebarOpen && {
-                backgroundColor: isLight ? '#fef3c7' : 'rgba(245, 158, 11, 0.16)',
-                borderColor: isLight ? '#fcd34d' : 'rgba(245, 158, 11, 0.45)',
-                borderWidth: 1.5
-              }
+              isLight && styles.sidebarToggleBtnLight
             ]}
             onPress={() => setSidebarOpen(prev => !prev)}
             title={sidebarOpen ? "Hide directory tree" : "Browse all folders & branches"}
@@ -66,7 +61,7 @@ export default function TopHeader({
             accessibilityLabel={sidebarOpen ? "Hide directory tree sidebar" : "Show directory tree sidebar"}
           >
             {sidebarOpen ? (
-              <PanelLeftOpen size={isSmallMobile ? 18 : 20} color={isLight ? '#78350f' : '#fbbf24'} />
+              <PanelLeftOpen size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
             ) : (
               <PanelLeftClose size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
             )}
