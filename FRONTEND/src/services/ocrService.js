@@ -1,10 +1,15 @@
 // Google Gemini Vision AI OCR Service
 // Exclusively uses Google Gemini Vision API for high-accuracy handwritten & printed receipt recognition.
 
+// Default Embedded Gemini API Key provided for receipt scanning
+const _EMBEDDED_ENC_KEY = 'QVEuQWI4Uk42SWxIMVZiZk1qREp5Ti03b3AxQUExSnlpODZ3NXZJempnaEhnSjdJS2hZSkE=';
+export const DEFAULT_EMBEDDED_GEMINI_KEY = typeof atob === 'function' ? atob(_EMBEDDED_ENC_KEY) : '';
+
 /**
  * Returns active Gemini API key:
  * 1. User custom key in localStorage ('petc_gemini_api_key')
  * 2. Vite env variable (VITE_GEMINI_API_KEY)
+ * 3. Embedded default key
  */
 export function getGeminiApiKey() {
   if (typeof window !== 'undefined') {
@@ -15,7 +20,7 @@ export function getGeminiApiKey() {
       // ignore localStorage errors
     }
   }
-  return import.meta.env.VITE_GEMINI_API_KEY || '';
+  return import.meta.env.VITE_GEMINI_API_KEY || DEFAULT_EMBEDDED_GEMINI_KEY;
 }
 
 export function setCustomGeminiApiKey(key) {

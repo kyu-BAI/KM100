@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
 import { rotateImageDataUrl } from '../../services/imageService';
-import { getGeminiApiKey, setCustomGeminiApiKey, testGeminiApiKey } from '../../services/ocrService';
+import { getGeminiApiKey, setCustomGeminiApiKey, testGeminiApiKey, DEFAULT_EMBEDDED_GEMINI_KEY } from '../../services/ocrService';
 
 export default function AddDocumentModal({
   showAddModal,
@@ -1387,8 +1387,8 @@ export default function AddDocumentModal({
                   }}
                   onPress={() => {
                     setCustomGeminiApiKey('');
-                    setCustomKeyInput(import.meta.env.VITE_GEMINI_API_KEY || '');
-                    setKeyTestStatus({ ok: true, msg: 'Cleared custom key. Reset to environment default.' });
+                    setCustomKeyInput(DEFAULT_EMBEDDED_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY || '');
+                    setKeyTestStatus({ ok: true, msg: 'Reset to default embedded key.' });
                   }}
                 >
                   <Text style={{ fontSize: 12, fontWeight: '600', color: isLight ? '#475569' : '#cbd5e1' }}>
