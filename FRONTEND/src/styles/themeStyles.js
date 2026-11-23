@@ -429,7 +429,7 @@ export function createStyles(isLight) {
       justifyContent: 'center',
       backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
       padding: 8,
-      borderRadius: 10,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#334155'
     },
