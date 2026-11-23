@@ -71,12 +71,8 @@ export default function TopHeader({
             <View style={{
               width: isSmallMobile ? 32 : 38,
               height: isSmallMobile ? 32 : 38,
-              borderRadius: isSmallMobile ? 16 : 19,
-              backgroundColor: '#ffffff',
               alignItems: 'center',
               justifyContent: 'center',
-              borderWidth: 1.5,
-              borderColor: '#f97316',
               overflow: 'hidden',
               flexShrink: 0
             }}>

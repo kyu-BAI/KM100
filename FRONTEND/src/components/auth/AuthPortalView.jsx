@@ -81,20 +81,15 @@ export default function AuthPortalView({
             <View style={{
               width: 76,
               height: 76,
-              borderRadius: 38,
-              backgroundColor: '#ffffff',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: isLight ? '0 8px 20px -4px rgba(0, 0, 0, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.05)' : '0 8px 20px -4px rgba(0, 0, 0, 0.4), 0 3px 6px -2px rgba(0, 0, 0, 0.25)',
-              borderWidth: 2.5,
-              borderColor: isEmployeePortal ? '#10b981' : '#f97316',
-              padding: 3
+              boxShadow: isLight ? '0 8px 20px -4px rgba(0, 0, 0, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.05)' : '0 8px 20px -4px rgba(0, 0, 0, 0.4), 0 3px 6px -2px rgba(0, 0, 0, 0.25)'
             }}>
               <Image
                 source={{ uri: '/km100-logo.png' }}
                 accessibilityLabel="KM100 Skills & Training Center Inc. Logo"
                 alt="KM100 Skills & Training Center Inc. Logo"
-                style={{ width: '100%', height: '100%', borderRadius: 34 }}
+                style={{ width: '100%', height: '100%' }}
                 resizeMode="contain"
               />
             </View>

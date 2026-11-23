@@ -968,14 +968,9 @@ export function createStyles(isLight) {
     sidebarLogoBox: {
       width: 38,
       height: 38,
-      borderRadius: 19,
-      backgroundColor: '#ffffff',
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1.5,
-      borderColor: '#f97316',
-      overflow: 'hidden',
-      boxShadow: elev.sm
+      overflow: 'hidden'
     },
     sidebarCompanyName: {
       fontSize: 12,

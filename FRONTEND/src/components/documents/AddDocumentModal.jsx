@@ -124,12 +124,8 @@ export default function AddDocumentModal({
                 <View style={{
                   width: 32,
                   height: 32,
-                  borderRadius: 16,
-                  backgroundColor: '#ffffff',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderWidth: 1.5,
-                  borderColor: '#f97316',
                   overflow: 'hidden'
                 }}>
                   <Image
