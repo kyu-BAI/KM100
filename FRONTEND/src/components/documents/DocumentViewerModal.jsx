@@ -17,8 +17,10 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  RotateCcw
+  RotateCcw,
+  Check
 } from 'lucide-react';
+import { rotateImageDataUrl } from '../../services/imageService';
 
 export default function DocumentViewerModal({
   viewItem,
@@ -26,6 +28,7 @@ export default function DocumentViewerModal({
   onPrint,
   onDownload,
   onRename,
+  onSaveUprightPhoto,
   isLight,
   isMobile,
   styles
@@ -33,6 +36,7 @@ export default function DocumentViewerModal({
   const [isImageMaximized, setIsImageMaximized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [isSavingUpright, setIsSavingUpright] = useState(false);
 
   const receiptImageUri = (viewItem?.filePath?.startsWith('data:image') || viewItem?.filePath?.startsWith('http') || viewItem?.filePath?.startsWith('blob:'))
     ? viewItem.filePath
@@ -214,6 +218,40 @@ export default function DocumentViewerModal({
                           Maximize Photo
                         </Text>
                       </TouchableOpacity>
+
+                      {onSaveUprightPhoto && (
+                        <TouchableOpacity
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 5,
+                            backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                            borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+                            borderWidth: 1,
+                            paddingHorizontal: 9,
+                            paddingVertical: 5,
+                            borderRadius: 6,
+                            cursor: isSavingUpright ? 'wait' : 'pointer'
+                          }}
+                          disabled={isSavingUpright}
+                          onPress={async () => {
+                            if (isSavingUpright || !receiptImageUri) return;
+                            setIsSavingUpright(true);
+                            try {
+                              const rotated = await rotateImageDataUrl(receiptImageUri, 90, 0.88);
+                              await onSaveUprightPhoto(viewItem, rotated);
+                            } finally {
+                              setIsSavingUpright(false);
+                            }
+                          }}
+                          title="Rotate receipt 90° clockwise and save permanently upright"
+                        >
+                          <RotateCw size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: isLight ? '#0284c7' : '#38bdf8' }}>
+                            {isSavingUpright ? 'Saving...' : 'Rotate Upright'}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
 
@@ -414,6 +452,42 @@ export default function DocumentViewerModal({
                   >
                     <RotateCw size={16} color="#f8fafc" />
                   </TouchableOpacity>
+
+                  {/* Save as Upright in Database */}
+                  {rotation !== 0 && onSaveUprightPhoto && (
+                    <TouchableOpacity
+                      onPress={async () => {
+                        if (isSavingUpright || !receiptImageUri) return;
+                        setIsSavingUpright(true);
+                        try {
+                          const rotated = await rotateImageDataUrl(receiptImageUri, rotation, 0.88);
+                          await onSaveUprightPhoto(viewItem, rotated);
+                          setRotation(0);
+                        } finally {
+                          setIsSavingUpright(false);
+                        }
+                      }}
+                      disabled={isSavingUpright}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
+                        paddingHorizontal: 10,
+                        paddingVertical: 7,
+                        borderRadius: 6,
+                        backgroundColor: 'rgba(52, 211, 153, 0.2)',
+                        borderWidth: 1,
+                        borderColor: 'rgba(52, 211, 153, 0.45)',
+                        cursor: isSavingUpright ? 'wait' : 'pointer'
+                      }}
+                      title="Save this orientation permanently to the database so it always stays upright"
+                    >
+                      <CheckCircle2 size={14} color="#34d399" />
+                      <Text style={{ color: '#34d399', fontSize: 11, fontWeight: '700' }}>
+                        {isSavingUpright ? 'Saving...' : 'Save as Upright'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
                   {/* Reset Zoom & Rotation */}
                   <TouchableOpacity

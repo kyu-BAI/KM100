@@ -1806,6 +1806,49 @@ export default function App() {
     }
   };
 
+  // Save Upright Photo Orientation for an existing document
+  const handleSaveUprightPhoto = async (item, newPhotoUrl) => {
+    if (!item?.id || !newPhotoUrl) return;
+    try {
+      showNotice('Saving upright photo orientation...');
+      const id = item.id;
+      // 1. Update master inventory_items
+      await supabase.from('inventory_items').update({
+        file_path: newPhotoUrl,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+
+      // 2. Update dedicated table if present
+      const targetTable = item.sourceTable || item.tableName;
+      if (targetTable && targetTable !== 'inventory_items') {
+        try {
+          await supabase.from(targetTable).update({
+            file_path: newPhotoUrl,
+            updated_at: new Date().toISOString()
+          }).eq('id', id);
+        } catch (tblErr) {
+          console.warn('Dedicated table upright update:', tblErr);
+        }
+      }
+
+      // 3. Update local state and cached items
+      setItems(prev => {
+        const next = prev.map(i => i.id === id ? { ...i, filePath: newPhotoUrl } : i);
+        saveCachedItems(next);
+        return next;
+      });
+
+      if (viewItem && viewItem.id === id) {
+        setViewItem(prev => ({ ...prev, filePath: newPhotoUrl }));
+      }
+
+      showNotice('Receipt photo saved upright successfully!');
+    } catch (err) {
+      console.error('Failed to save upright photo:', err);
+      showNotice('Failed to save upright photo: ' + (err.message || err), 'error');
+    }
+  };
+
 
   // ----------------------------------------------------
   // LOGIN / CREATE ADMIN ACCOUNT VIEW (If not logged in)
@@ -2115,6 +2158,7 @@ export default function App() {
           setRenameItem(item);
           setRenameNewName(item?.fileName || '');
         }}
+        onSaveUprightPhoto={handleSaveUprightPhoto}
         isLight={isLight}
         isMobile={isMobile}
         styles={styles}

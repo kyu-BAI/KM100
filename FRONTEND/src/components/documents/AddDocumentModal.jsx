@@ -22,9 +22,12 @@ import {
   Check,
   RefreshCw,
   Sparkles,
-  Maximize2
+  Maximize2,
+  RotateCw,
+  RotateCcw
 } from 'lucide-react';
 import { RECEIPT_TYPES } from '../../constants/receiptTypes';
+import { rotateImageDataUrl } from '../../services/imageService';
 
 export default function AddDocumentModal({
   showAddModal,
@@ -82,6 +85,22 @@ export default function AddDocumentModal({
   const userDept = (currentUser?.department || currentUser?.assignedBranch || '').toLowerCase();
   const hasAllBranchesScope = userDept.includes('all');
   const [previewZoomed, setPreviewZoomed] = useState(false);
+  const [isRotatingPhoto, setIsRotatingPhoto] = useState(false);
+
+  const handleRotateCapturedPhoto = async (deg) => {
+    if (!capturedReceiptPhoto || isRotatingPhoto) return;
+    setIsRotatingPhoto(true);
+    try {
+      const rotated = await rotateImageDataUrl(capturedReceiptPhoto, deg, 0.88);
+      if (rotated && setCapturedReceiptPhoto) {
+        setCapturedReceiptPhoto(rotated);
+      }
+    } catch (e) {
+      console.warn('Failed to rotate photo:', e);
+    } finally {
+      setIsRotatingPhoto(false);
+    }
+  };
   return (
     <Modal visible={showAddModal} transparent animationType="fade">
       <View style={[styles.modalOverlay, isMobile && styles.modalOverlayMobile]}>
@@ -458,7 +477,7 @@ export default function AddDocumentModal({
                       </View>
                     </View>
 
-                    {/* Receipt thumbnail + preview */}
+                    {/* Receipt thumbnail + preview & Upright Controls */}
                     <View style={[styles.ocrPreviewRow, isLight && styles.ocrPreviewRowLight]}>
                       {capturedReceiptPhoto && (
                         <TouchableOpacity
@@ -469,7 +488,7 @@ export default function AddDocumentModal({
                         >
                           <Image
                             source={{ uri: capturedReceiptPhoto }}
-                            style={{ width: 60, height: 75, borderRadius: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : '#334155' }}
+                            style={{ width: 68, height: 85, borderRadius: 6, borderWidth: 1, borderColor: isLight ? '#cbd5e1' : '#334155' }}
                             resizeMode="cover"
                           />
                           <View style={{
@@ -484,23 +503,107 @@ export default function AddDocumentModal({
                           </View>
                         </TouchableOpacity>
                       )}
-                      <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                      <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
                         <Text style={{ fontSize: 13, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
                           {ocrEstablishment || selectedReceiptType.name}
                         </Text>
                         <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }} numberOfLines={1}>
                           Classification: <Text style={{ color: isLight ? '#0f172a' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
                         </Text>
+
                         {capturedReceiptPhoto && (
-                          <TouchableOpacity
-                            onPress={() => setPreviewZoomed(true)}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, cursor: 'pointer' }}
-                          >
-                            <Maximize2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
-                            <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
-                              Maximize Photo
-                            </Text>
-                          </TouchableOpacity>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                            {/* Rotate Left Button */}
+                            <TouchableOpacity
+                              onPress={() => handleRotateCapturedPhoto(-90)}
+                              disabled={isRotatingPhoto}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                                borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+                                borderWidth: 1,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 5,
+                                cursor: isRotatingPhoto ? 'not-allowed' : 'pointer',
+                                opacity: isRotatingPhoto ? 0.6 : 1
+                              }}
+                              title="Rotate receipt 90° counter-clockwise to keep it upright"
+                            >
+                              <RotateCcw size={12} color={isLight ? '#0284c7' : '#38bdf8'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
+                                Rotate Left
+                              </Text>
+                            </TouchableOpacity>
+
+                            {/* Rotate Right Button */}
+                            <TouchableOpacity
+                              onPress={() => handleRotateCapturedPhoto(90)}
+                              disabled={isRotatingPhoto}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                                borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
+                                borderWidth: 1,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 5,
+                                cursor: isRotatingPhoto ? 'not-allowed' : 'pointer',
+                                opacity: isRotatingPhoto ? 0.6 : 1
+                              }}
+                              title="Rotate receipt 90° clockwise to keep it upright"
+                            >
+                              <RotateCw size={12} color={isLight ? '#0284c7' : '#38bdf8'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
+                                Rotate Right
+                              </Text>
+                            </TouchableOpacity>
+
+                            {/* Maximize Photo Pill */}
+                            <TouchableOpacity
+                              onPress={() => setPreviewZoomed(true)}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
+                                borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)',
+                                borderWidth: 1,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 5,
+                                cursor: 'pointer'
+                              }}
+                              title="Maximize photo in full screen"
+                            >
+                              <Maximize2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>
+                                Expand
+                              </Text>
+                            </TouchableOpacity>
+
+                            {/* Upright badge */}
+                            <View style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 3,
+                              backgroundColor: 'rgba(52, 211, 153, 0.1)',
+                              borderColor: 'rgba(52, 211, 153, 0.25)',
+                              borderWidth: 1,
+                              paddingHorizontal: 6,
+                              paddingVertical: 3,
+                              borderRadius: 5
+                            }}>
+                              <Check size={10} color="#34d399" />
+                              <Text style={{ fontSize: 10, color: '#34d399', fontWeight: '700' }}>
+                                Upright
+                              </Text>
+                            </View>
+                          </View>
                         )}
                       </View>
                     </View>
@@ -773,23 +876,64 @@ export default function AddDocumentModal({
               borderBottomWidth: 1,
               borderBottomColor: 'rgba(255, 255, 255, 0.1)'
             }}>
-              <Text style={{ color: '#f8fafc', fontSize: isMobile ? 13 : 15, fontWeight: '700' }} numberOfLines={1}>
-                {ocrEstablishment || selectedReceiptType.name} — Scanned Receipt Photo
-              </Text>
-              <TouchableOpacity
-                onPress={() => setPreviewZoomed(false)}
-                style={{
-                  padding: 8,
-                  borderRadius: 6,
-                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(239, 68, 68, 0.4)',
-                  cursor: 'pointer'
-                }}
-                title="Close"
-              >
-                <X size={18} color="#f87171" />
-              </TouchableOpacity>
+              <View style={{ flex: 1, minWidth: 160 }}>
+                <Text style={{ color: '#f8fafc', fontSize: isMobile ? 13 : 15, fontWeight: '700' }} numberOfLines={1}>
+                  {ocrEstablishment || selectedReceiptType.name} — Scanned Receipt Photo
+                </Text>
+                <Text style={{ color: '#94a3b8', fontSize: 11 }}>
+                  Orient Upright & Inspect Quality
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TouchableOpacity
+                  onPress={() => handleRotateCapturedPhoto(-90)}
+                  disabled={isRotatingPhoto}
+                  style={{
+                    padding: 8,
+                    borderRadius: 6,
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    cursor: isRotatingPhoto ? 'not-allowed' : 'pointer'
+                  }}
+                  title="Rotate Left 90°"
+                >
+                  <RotateCcw size={16} color="#f8fafc" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => handleRotateCapturedPhoto(90)}
+                  disabled={isRotatingPhoto}
+                  style={{
+                    padding: 8,
+                    borderRadius: 6,
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    cursor: isRotatingPhoto ? 'not-allowed' : 'pointer'
+                  }}
+                  title="Rotate Right 90°"
+                >
+                  <RotateCw size={16} color="#f8fafc" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => setPreviewZoomed(false)}
+                  style={{
+                    padding: 8,
+                    borderRadius: 6,
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(239, 68, 68, 0.4)',
+                    cursor: 'pointer',
+                    marginLeft: 4
+                  }}
+                  title="Close Full Screen"
+                >
+                  <X size={18} color="#f87171" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={{
