@@ -155,30 +155,14 @@ export default function TopHeader({
             accessibilityRole="button"
             accessibilityLabel="Sync data with database"
           >
-            <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+            <RefreshCw size={11} color={isSyncing ? '#f47721' : '#10b981'} />
             <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
               {isSyncing ? 'Syncing...' : 'Sync'}
             </Text>
           </TouchableOpacity>
         )}
 
-          {/* Live Sync Pill (Desktop & Tablet only) */}
-          {width >= 1280 && (
-            <TouchableOpacity
-              style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
-              onPress={() => fetchData(false)}
-              title="Click to sync with database"
-              accessibilityRole="button"
-              accessibilityLabel="Sync data with database"
-            >
-              <RefreshCw size={11} color={isSyncing ? '#f47721' : '#10b981'} />
-              <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
-                {isSyncing ? 'Syncing...' : 'Sync'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* User Profile / Admin & Employee Session Management */}
+        {/* User Profile / Admin & Employee Session Management */}
           {currentUser && (
             <TouchableOpacity
               style={[
