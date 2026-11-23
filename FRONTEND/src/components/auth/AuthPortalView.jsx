@@ -83,11 +83,14 @@ export default function AuthPortalView({
           {/* Portal Badge */}
           <View style={[
             styles.authBadgePill,
-            isEmployeePortal && { backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981' }
+            isEmployeePortal && {
+              backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.15)',
+              borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)'
+            }
           ]}>
             <Text style={[
               styles.authBadgePillText,
-              isEmployeePortal && { color: isLight ? '#047857' : '#34d399' }
+              isEmployeePortal && { color: '#f47721' }
             ]}>
               {isEmployeePortal ? 'STAFF & EMPLOYEE PORTAL' : 'OFFICIAL ADMINISTRATOR PORTAL'}
             </Text>
@@ -98,10 +101,12 @@ export default function AuthPortalView({
             accessibilityRole="header"
             aria-level="1"
           >
-            KM100 Skills & Training Center
+            <Text style={{ color: '#f47721', fontWeight: '800' }}>KM</Text>
+            <Text style={{ color: isLight ? '#252525' : '#f8fafc', fontWeight: '800' }}>100 </Text>
+            <Text style={{ color: isLight ? '#252525' : '#f8fafc', fontWeight: '700' }}>Skills & Training Center</Text>
           </Text>
 
-          <Text style={[styles.authSubtitle, isLight && { color: '#475569' }]}>
+          <Text style={[styles.authSubtitle, isLight && { color: '#666666' }]}>
             {isEmployeePortal
               ? 'Sign in with your employee account to view assigned branch records.'
               : authMode === 'login'
@@ -113,34 +118,36 @@ export default function AuthPortalView({
         {/* Portal Switcher Tabs: Admin Portal vs Employee Portal */}
         <View style={{
           flexDirection: 'row',
-          backgroundColor: isLight ? '#e2e8f0' : '#1e293b',
-          borderRadius: 10,
+          backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
+          borderRadius: 9999,
           padding: 4,
-          marginBottom: 16,
+          marginBottom: 18,
+          borderWidth: 1,
+          borderColor: isLight ? '#e5e2dc' : '#334155',
           gap: 4
         }}>
           <TouchableOpacity
             style={{
               flex: 1,
               paddingVertical: 9,
-              borderRadius: 8,
+              borderRadius: 9999,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: !isEmployeePortal ? (isLight ? '#ffffff' : '#252525') : 'transparent',
-              boxShadow: !isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
+              backgroundColor: !isEmployeePortal ? (isLight ? '#252525' : '#f47721') : 'transparent',
+              boxShadow: !isEmployeePortal ? (isLight ? '0 1px 4px rgba(0,0,0,0.12)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('admin')}
             accessibilityRole="tab"
             accessibilityLabel="Switch to Administrator Portal"
             accessibilityState={{ selected: !isEmployeePortal }}
           >
-            <ShieldCheck size={14} color={!isEmployeePortal ? (isLight ? '#f47721' : '#f47721') : '#94a3b8'} />
+            <ShieldCheck size={14} color={!isEmployeePortal ? '#ffffff' : (isLight ? '#666666' : '#94a3b8')} />
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !isEmployeePortal ? (isLight ? '#252525' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
+              color: !isEmployeePortal ? '#ffffff' : (isLight ? '#666666' : '#94a3b8')
             }}>
               Administrator
             </Text>
@@ -150,24 +157,24 @@ export default function AuthPortalView({
             style={{
               flex: 1,
               paddingVertical: 9,
-              borderRadius: 8,
+              borderRadius: 9999,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: isEmployeePortal ? (isLight ? '#ffffff' : '#252525') : 'transparent',
-              boxShadow: isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
+              backgroundColor: isEmployeePortal ? (isLight ? '#252525' : '#f47721') : 'transparent',
+              boxShadow: isEmployeePortal ? (isLight ? '0 1px 4px rgba(0,0,0,0.12)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('employee')}
             accessibilityRole="tab"
             accessibilityLabel="Switch to Employee Staff Portal"
             accessibilityState={{ selected: isEmployeePortal }}
           >
-            <UserCheck size={14} color={isEmployeePortal ? '#10b981' : '#94a3b8'} />
+            <UserCheck size={14} color={isEmployeePortal ? '#ffffff' : (isLight ? '#666666' : '#94a3b8')} />
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: isEmployeePortal ? (isLight ? '#252525' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
+              color: isEmployeePortal ? '#ffffff' : (isLight ? '#666666' : '#94a3b8')
             }}>
               Employee Staff
             </Text>
@@ -318,7 +325,6 @@ export default function AuthPortalView({
           <TouchableOpacity
             style={[
               styles.authSubmitBtn,
-              isEmployeePortal && { backgroundColor: '#10b981' },
               authLoading && { opacity: 0.7 }
             ]}
             onPress={handleAuthSubmit}

@@ -74,9 +74,9 @@ export default function SidebarDirectory({
             {/* Branch Scope Banner for Employees */}
             {isEmployee && (
               <View style={{
-                backgroundColor: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.12)',
+                backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)',
                 borderWidth: 1,
-                borderColor: '#10b981',
+                borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)',
                 borderRadius: 8,
                 padding: 10,
                 marginHorizontal: 12,
@@ -85,12 +85,12 @@ export default function SidebarDirectory({
                 gap: 3
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Building2 size={14} color="#10b981" />
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: isLight ? '#047857' : '#34d399' }}>
+                  <Building2 size={14} color="#f47721" />
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: isLight ? '#f47721' : '#ff9345' }}>
                     BRANCH: {(currentUser.department)}
                   </Text>
                 </View>
-                <Text style={{ fontSize: 10, color: isLight ? '#065f46' : '#a7f3d0' }}>
+                <Text style={{ fontSize: 10, color: isLight ? '#666666' : '#d8d4cb' }}>
                   Restricted to your assigned branch records.
                 </Text>
               </View>

@@ -2506,13 +2506,13 @@ export function createStyles(isLight = true) {
       marginBottom: 12
     },
     authBadgePill: {
-      backgroundColor: isLight ? 'rgba(2, 132, 199, 0.1)' : 'rgba(56, 189, 248, 0.12)',
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-      borderRadius: 20,
-      marginBottom: 8,
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 9999,
+      marginBottom: 10,
       borderWidth: 1,
-      borderColor: isLight ? 'rgba(2, 132, 199, 0.25)' : 'rgba(244, 119, 33, 0.35)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)'
     },
     authBadgePillText: {
       color: isLight ? '#f47721' : '#f47721',
@@ -2624,10 +2624,13 @@ export function createStyles(isLight = true) {
       justifyContent: 'center',
       gap: 8,
       backgroundColor: '#f47721',
-      paddingVertical: 12,
-      borderRadius: 8,
-      marginTop: 6,
-      cursor: 'pointer'
+      paddingVertical: 13,
+      borderRadius: 9999,
+      marginTop: 8,
+      cursor: 'pointer',
+      borderWidth: 1,
+      borderColor: '#e06412',
+      boxShadow: '0 4px 14px rgba(244, 119, 33, 0.28)'
     },
     authSubmitBtnText: {
       color: '#fff',

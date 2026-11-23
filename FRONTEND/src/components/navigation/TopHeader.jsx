@@ -96,11 +96,11 @@ export default function TopHeader({
               <Text
                 style={[styles.brandSub, isLight && styles.brandSubLight, isMobile && { fontSize: 11 }]}
                 numberOfLines={1}
-              >Receipt Management System    
+              >Receipt Management System
               </Text>
-            </View>
           </View>
         </View>
+      </View>
 
         {/* Center Search Bar on Desktop & Large Tablet */}
         {width >= 960 && (
@@ -130,21 +130,37 @@ export default function TopHeader({
           </View>
         )}
 
-        {/* Right Header Action Cluster */}
-        <View style={[styles.topHeaderRight, isSmallMobile && { gap: 5 }]}>
-          {/* PRIMARY HERO BUTTON: SCAN RECEIPT */}
+      {/* Right Header Action Cluster */}
+      <View style={[styles.topHeaderRight, isSmallMobile && { gap: 5 }]}>
+        {/* PRIMARY HERO BUTTON: SCAN RECEIPT */}
+        <TouchableOpacity
+          style={[styles.heroScanBtn, isSmallMobile && { paddingHorizontal: 9, paddingVertical: 7, gap: 5 }]}
+          onPress={openAddModal}
+          title="Scan physical receipt or upload document"
+          accessibilityRole="button"
+          accessibilityLabel="Scan receipt or upload document"
+        >
+          <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
+          <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
+            {width < 440 ? 'Scan' : 'Scan Receipt'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Live Sync Pill (Desktop & Tablet only) */}
+        {width >= 1280 && (
           <TouchableOpacity
-            style={[styles.heroScanBtn, isSmallMobile && { paddingHorizontal: 9, paddingVertical: 7, gap: 5 }]}
-            onPress={openAddModal}
-            title="Scan physical receipt or upload document"
+            style={[styles.headerSyncPill, isLight && styles.headerSyncPillLight]}
+            onPress={() => fetchData(false)}
+            title="Click to sync with database"
             accessibilityRole="button"
-            accessibilityLabel="Scan receipt or upload document"
+            accessibilityLabel="Sync data with database"
           >
-            <Camera size={isSmallMobile ? 14 : 16} color="#ffffff" />
-            <Text style={[styles.heroScanBtnText, isSmallMobile && { fontSize: 11 }]}>
-              {width < 440 ? 'Scan' : 'Scan Receipt'}
+            <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+            <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
+              {isSyncing ? 'Syncing...' : 'Sync'}
             </Text>
           </TouchableOpacity>
+        )}
 
           {/* Live Sync Pill (Desktop & Tablet only) */}
           {width >= 1280 && (
@@ -173,8 +189,8 @@ export default function TopHeader({
                   boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.06)' : '0 1px 4px rgba(0,0,0,0.3)'
                 },
                 isEmployee && {
-                  borderColor: isLight ? '#a7f3d0' : '#065f46',
-                  backgroundColor: isLight ? '#f0fdf4' : 'rgba(16, 185, 129, 0.12)'
+                  borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)',
+                  backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)'
                 },
                 isSmallMobile && { marginLeft: 0 }
               ]}
@@ -190,7 +206,7 @@ export default function TopHeader({
             >
               <View style={[
                 styles.headerUserAvatar,
-                isEmployee && { backgroundColor: '#10b981' },
+                isEmployee && { backgroundColor: '#f47721' },
                 isSmallMobile && { width: 26, height: 26 },
                 isLight && !isEmployee && styles.headerUserAvatarLight
               ]}>
@@ -205,16 +221,16 @@ export default function TopHeader({
                   </Text>
                   <Text style={[
                     styles.headerUserRole,
-                    isEmployee && { color: isLight ? '#047857' : '#34d399', fontWeight: '800' },
+                    isEmployee && { color: isLight ? '#f47721' : '#ff9345', fontWeight: '800' },
                     isLight && !isEmployee && styles.headerUserRoleLight
                   ]}>
                     {isEmployee ? (currentUser.department ? `${currentUser.department.toUpperCase()} • STAFF` : 'STAFF') : (currentUser.role ? currentUser.role.toUpperCase() : 'ADMIN')}
                   </Text>
                 </View>
               )}
-            </TouchableOpacity>
-          )}
-        </View>
+          </TouchableOpacity>
+        )}
       </View>
+    </View>
   );
 }

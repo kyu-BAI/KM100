@@ -49,11 +49,11 @@ export default function EmployeeSessionModal({
                 width: 32,
                 height: 32,
                 borderRadius: 16,
-                backgroundColor: isLight ? '#dcfce7' : 'rgba(16, 185, 129, 0.15)',
+                backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.15)',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                <UserCheck size={18} color="#10b981" />
+                <UserCheck size={18} color="#f47721" />
               </View>
               <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#252525' : '#f8fafc' }}>
                 Employee Staff Session
@@ -70,7 +70,7 @@ export default function EmployeeSessionModal({
                 backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
               }}
             >
-              <X size={16} color={isLight ? '#475569' : '#94a3b8'} />
+              <X size={16} color={isLight ? '#666666' : '#94a3b8'} />
             </TouchableOpacity>
           </View>
 
@@ -81,10 +81,10 @@ export default function EmployeeSessionModal({
                 width: 54,
                 height: 54,
                 borderRadius: 27,
-                backgroundColor: '#10b981',
+                backgroundColor: '#f47721',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                boxShadow: '0 4px 12px rgba(244, 119, 33, 0.25)',
                 flexShrink: 0
               }}>
                 <Text style={{ fontSize: 22, fontWeight: '800', color: '#ffffff' }}>
