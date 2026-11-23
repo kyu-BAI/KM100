@@ -127,7 +127,7 @@ export default function SidebarDirectory({
                     label: 'All Inventory Files'
                   })}
                 >
-                  <Layers size={17} color={activeNav.type === 'all' ? (isLight ? '#0284c7' : '#38bdf8') : (isLight ? '#64748b' : '#94a3b8')} />
+                  <Layers size={17} color={activeNav.type === 'all' ? (isLight ? '#f47721' : '#ff9345') : (isLight ? '#666666' : '#94a3b8')} />
                   <Text style={[styles.treeText, isLight && styles.treeTextLight, activeNav.type === 'all' && (isLight ? styles.treeTextActiveLight : styles.treeTextActive)]} numberOfLines={1}>
                     All Inventory Files ({isEmployee ? filteredItems.length : items.length})
                   </Text>
@@ -239,7 +239,7 @@ export default function SidebarDirectory({
                       <TouchableOpacity onPress={() => toggleNode('petc-sales-2026')} style={styles.iconToggle}>
                         {expandedNodes['petc-sales-2026'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
                       </TouchableOpacity>
-                      <Calendar size={14} color="#38bdf8" />
+                      <Calendar size={14} color="#f47721" />
                       <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2026' && styles.treeTextActive]} numberOfLines={1}>
                         2026
                       </Text>
@@ -285,7 +285,7 @@ export default function SidebarDirectory({
                       <TouchableOpacity onPress={() => toggleNode('petc-sales-2027')} style={styles.iconToggle}>
                         {expandedNodes['petc-sales-2027'] ? <ChevronDown size={13} color="#64748b" /> : <ChevronRight size={13} color="#64748b" />}
                       </TouchableOpacity>
-                      <Calendar size={14} color="#38bdf8" />
+                      <Calendar size={14} color="#f47721" />
                       <Text style={[styles.treeSubText, activeNav.type === 'petc-sales' && activeNav.year === '2027' && styles.treeTextActive]} numberOfLines={1}>
                         2027
                       </Text>

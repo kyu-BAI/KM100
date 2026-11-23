@@ -44,7 +44,7 @@ export default function AuthPortalView({
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: isLight ? '#f1f5f9' : '#0b1120' }}
+      style={{ flex: 1, backgroundColor: isLight ? '#f5f3ef' : '#0b1120' }}
       contentContainerStyle={[styles.authContainer, isMobile && { padding: 12 }, { flexGrow: 1, position: 'relative' }]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -128,7 +128,7 @@ export default function AuthPortalView({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: !isEmployeePortal ? (isLight ? '#ffffff' : '#0f172a') : 'transparent',
+              backgroundColor: !isEmployeePortal ? (isLight ? '#ffffff' : '#252525') : 'transparent',
               boxShadow: !isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('admin')}
@@ -136,11 +136,11 @@ export default function AuthPortalView({
             accessibilityLabel="Switch to Administrator Portal"
             accessibilityState={{ selected: !isEmployeePortal }}
           >
-            <ShieldCheck size={14} color={!isEmployeePortal ? (isLight ? '#0284c7' : '#38bdf8') : '#94a3b8'} />
+            <ShieldCheck size={14} color={!isEmployeePortal ? (isLight ? '#f47721' : '#f47721') : '#94a3b8'} />
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
+              color: !isEmployeePortal ? (isLight ? '#252525' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
             }}>
               Administrator
             </Text>
@@ -155,7 +155,7 @@ export default function AuthPortalView({
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              backgroundColor: isEmployeePortal ? (isLight ? '#ffffff' : '#0f172a') : 'transparent',
+              backgroundColor: isEmployeePortal ? (isLight ? '#ffffff' : '#252525') : 'transparent',
               boxShadow: isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('employee')}
@@ -167,7 +167,7 @@ export default function AuthPortalView({
             <Text style={{
               fontSize: 12,
               fontWeight: '700',
-              color: isEmployeePortal ? (isLight ? '#0f172a' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
+              color: isEmployeePortal ? (isLight ? '#252525' : '#f8fafc') : (isLight ? '#475569' : '#94a3b8')
             }}>
               Employee Staff
             </Text>
@@ -187,7 +187,7 @@ export default function AuthPortalView({
               accessibilityLabel="Admin Sign In Tab"
               accessibilityState={{ selected: authMode === 'login' }}
             >
-              <LogIn size={15} color={authMode === 'login' ? '#38bdf8' : (isLight ? '#475569' : '#94a3b8')} />
+              <LogIn size={15} color={authMode === 'login' ? '#f47721' : (isLight ? '#475569' : '#94a3b8')} />
               <Text style={[styles.authTabText, isLight && { color: '#475569' }, authMode === 'login' && styles.authTabTextActive]}>Admin Sign In</Text>
             </TouchableOpacity>
 
@@ -201,7 +201,7 @@ export default function AuthPortalView({
               accessibilityLabel="Create Admin Account Tab"
               accessibilityState={{ selected: authMode === 'register' }}
             >
-              <UserPlus size={15} color={authMode === 'register' ? '#38bdf8' : (isLight ? '#475569' : '#94a3b8')} />
+              <UserPlus size={15} color={authMode === 'register' ? '#f47721' : (isLight ? '#475569' : '#94a3b8')} />
               <Text style={[styles.authTabText, isLight && { color: '#475569' }, authMode === 'register' && styles.authTabTextActive]}>Create Admin</Text>
             </TouchableOpacity>
           </View>
@@ -357,7 +357,7 @@ export default function AuthPortalView({
               <Text style={{
                 fontSize: 12,
                 fontWeight: '600',
-                color: isLight ? '#0284c7' : '#38bdf8',
+                color: isLight ? '#f47721' : '#f47721',
                 textDecorationLine: 'underline'
               }}>
                 {isEmployeePortal

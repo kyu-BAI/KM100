@@ -58,9 +58,9 @@ export default function TopHeader({
             accessibilityLabel={sidebarOpen ? "Hide directory tree sidebar" : "Show directory tree sidebar"}
           >
             {sidebarOpen ? (
-              <PanelLeftOpen size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
+              <PanelLeftOpen size={isSmallMobile ? 18 : 20} color={isLight ? '#252525' : '#cbd5e1'} />
             ) : (
-              <PanelLeftClose size={isSmallMobile ? 18 : 20} color={isLight ? '#334155' : '#cbd5e1'} />
+              <PanelLeftClose size={isSmallMobile ? 18 : 20} color={isLight ? '#252525' : '#cbd5e1'} />
             )}
           </TouchableOpacity>
 
@@ -88,8 +88,8 @@ export default function TopHeader({
                 aria-level="1"
                 numberOfLines={1}
               >
-                <Text style={{ color: '#ea580c', fontWeight: '800' }}>KM</Text>
-                <Text style={{ color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '800' }}>
+                <Text style={{ color: '#f47721', fontWeight: '800' }}>KM</Text>
+                <Text style={{ color: isLight ? '#252525' : '#f8fafc', fontWeight: '800' }}>
                   {width < 640 ? '100 Skills & Training' : '100 Skills and Training Center, Inc.'}
                 </Text>
               </Text>
@@ -105,11 +105,11 @@ export default function TopHeader({
         {/* Center Search Bar on Desktop & Large Tablet */}
         {width >= 960 && (
           <View style={[styles.headerSearchBox, isLight && styles.headerSearchBoxLight]}>
-            <Search size={15} color={isLight ? '#64748b' : '#94a3b8'} />
+            <Search size={15} color={isLight ? '#888888' : '#94a3b8'} />
             <TextInput
               style={[styles.headerSearchInput, isLight && styles.headerSearchInputLight]}
               placeholder="Search store, receipt title, invoice #, amount..."
-              placeholderTextColor={isLight ? '#94a3b8' : '#64748b'}
+              placeholderTextColor={isLight ? '#888888' : '#64748b'}
               value={searchQuery}
               onChangeText={setSearchQuery}
               accessibilityLabel="Search inventory by store, receipt title, invoice number, or amount"
@@ -124,7 +124,7 @@ export default function TopHeader({
                 accessibilityLabel="Clear search input"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <X size={14} color={isLight ? '#64748b' : '#94a3b8'} />
+                <X size={14} color={isLight ? '#888888' : '#94a3b8'} />
               </TouchableOpacity>
             )}
           </View>
@@ -155,7 +155,7 @@ export default function TopHeader({
               accessibilityRole="button"
               accessibilityLabel="Sync data with database"
             >
-              <RefreshCw size={11} color={isSyncing ? (isLight ? '#0284c7' : '#38bdf8') : '#10b981'} />
+              <RefreshCw size={11} color={isSyncing ? '#f47721' : '#10b981'} />
               <Text style={[styles.headerSyncText, isLight && styles.headerSyncTextLight]}>
                 {isSyncing ? 'Syncing...' : 'Sync'}
               </Text>
@@ -168,8 +168,8 @@ export default function TopHeader({
               style={[
                 styles.headerUserBlock,
                 currentPage === 'admin' && {
-                  borderColor: '#38bdf8',
-                  backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                  borderColor: '#f47721',
+                  backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.15)',
                   boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.06)' : '0 1px 4px rgba(0,0,0,0.3)'
                 },
                 isEmployee && {

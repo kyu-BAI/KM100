@@ -71,7 +71,7 @@ export default function DocumentViewerModal({
                   {viewItem?.fileFormat === 'XLSX' ? (
                     <FileSpreadsheet size={isMobile ? 20 : 26} color="#34d399" />
                   ) : (
-                    <FileText size={isMobile ? 20 : 26} color={isLight ? '#0284c7' : '#38bdf8'} />
+                    <FileText size={isMobile ? 20 : 26} color={isLight ? '#f47721' : '#f47721'} />
                   )}
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -101,8 +101,8 @@ export default function DocumentViewerModal({
                   }}
                   title="Rename Document"
                 >
-                  <Edit3 size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
-                  {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#0284c7' }]}>Rename</Text>}
+                  <Edit3 size={16} color={isLight ? '#f47721' : '#f47721'} />
+                  {!isMobile && <Text style={[styles.btnOutlineText, isLight && { color: '#f47721' }]}>Rename</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -136,7 +136,7 @@ export default function DocumentViewerModal({
               <View style={styles.viewerStatsGrid}>
                 <View style={styles.viewerStatBox}>
                   <Text style={styles.viewerStatLabel}>ESTABLISHMENT</Text>
-                  <Text style={[styles.viewerStatValue, { color: '#38bdf8' }]} numberOfLines={1}>
+                  <Text style={[styles.viewerStatValue, { color: '#f47721' }]} numberOfLines={1}>
                     {viewItem?.establishment || viewItem?.previewData?.establishment || 'General'}
                   </Text>
                 </View>
@@ -201,8 +201,8 @@ export default function DocumentViewerModal({
                           flexDirection: 'row',
                           alignItems: 'center',
                           gap: 6,
-                          backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
-                          borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)',
+                          backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.12)',
+                          borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.3)',
                           borderWidth: 1,
                           paddingHorizontal: 10,
                           paddingVertical: 5,
@@ -216,8 +216,8 @@ export default function DocumentViewerModal({
                         }}
                         title="Maximize receipt image to inspect full quality"
                       >
-                        <Maximize2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>
+                        <Maximize2 size={13} color={isLight ? '#f47721' : '#f47721'} />
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#f47721' : '#f47721' }}>
                           Maximize Photo
                         </Text>
                       </TouchableOpacity>
@@ -228,7 +228,7 @@ export default function DocumentViewerModal({
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 5,
-                            backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                            backgroundColor: isLight ? '#f5f3ef' : 'rgba(255, 255, 255, 0.08)',
                             borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
                             borderWidth: 1,
                             paddingHorizontal: 9,
@@ -249,8 +249,8 @@ export default function DocumentViewerModal({
                           }}
                           title="Rotate receipt 90° clockwise and save permanently upright"
                         >
-                          <RotateCw size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: isLight ? '#0284c7' : '#38bdf8' }}>
+                          <RotateCw size={13} color={isLight ? '#f47721' : '#f47721'} />
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: isLight ? '#f47721' : '#f47721' }}>
                             {isSavingUpright ? 'Saving...' : 'Rotate Upright'}
                           </Text>
                         </TouchableOpacity>
@@ -287,7 +287,7 @@ export default function DocumentViewerModal({
                       alignItems: 'center',
                       gap: 6
                     }}>
-                      <Maximize2 size={12} color="#38bdf8" />
+                      <Maximize2 size={12} color="#f47721" />
                       <Text style={{ color: '#f8fafc', fontSize: 11, fontWeight: '600' }}>Click to Maximize</Text>
                     </View>
                   </TouchableOpacity>
@@ -305,7 +305,7 @@ export default function DocumentViewerModal({
                     borderRadius: 8,
                     borderWidth: 1,
                     borderColor: isLight ? '#cbd5e1' : '#334155',
-                    backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                    backgroundColor: isLight ? '#ffffff' : '#252525',
                     overflow: 'hidden'
                   }}>
                     {/* Accordion Header Toggle */}
@@ -327,19 +327,19 @@ export default function DocumentViewerModal({
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                        <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                        <ListFilter size={15} color={isLight ? '#f47721' : '#f47721'} />
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#252525' : '#f8fafc' }} numberOfLines={1}>
                           LISTED ITEMS IN RECEIPT
                         </Text>
                         <View style={{
-                          backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                          backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.15)',
                           paddingHorizontal: 7,
                           paddingVertical: 2,
                           borderRadius: 10,
                           borderWidth: 1,
-                          borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                          borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.3)'
                         }}>
-                          <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                          <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#e06412' : '#f47721' }}>
                             {lineItems.length} {lineItems.length === 1 ? 'item' : 'items'}
                           </Text>
                         </View>
@@ -364,7 +364,7 @@ export default function DocumentViewerModal({
                             {/* Header */}
                             <View style={{
                               flexDirection: 'row',
-                              backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+                              backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
                               paddingVertical: 6,
                               paddingHorizontal: 8,
                               borderRadius: 4,
@@ -387,19 +387,19 @@ export default function DocumentViewerModal({
                                   paddingHorizontal: 8,
                                   backgroundColor: idx % 2 === 1 ? (isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.4)') : 'transparent',
                                   borderBottomWidth: 1,
-                                  borderBottomColor: isLight ? '#f1f5f9' : '#1e293b'
+                                  borderBottomColor: isLight ? '#f5f3ef' : '#1e293b'
                                 }}
                               >
                                 <Text style={{ width: 65, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
                                   {item.qty || '1'} {item.unit || ''}
                                 </Text>
-                                <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
+                                <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#252525' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
                                   {item.name}
                                 </Text>
                                 <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
                                   {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
                                 </Text>
-                                <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
+                                <Text style={{ width: 85, fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '700', textAlign: 'right' }}>
                                   ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </Text>
                               </View>
@@ -556,7 +556,7 @@ export default function DocumentViewerModal({
                     minWidth: 54,
                     alignItems: 'center'
                   }}>
-                    <Text style={{ color: '#38bdf8', fontSize: 12, fontWeight: '700', fontFamily: 'monospace' }}>
+                    <Text style={{ color: '#f47721', fontSize: 12, fontWeight: '700', fontFamily: 'monospace' }}>
                       {Math.round(zoomLevel * 100)}%
                     </Text>
                   </View>
@@ -728,7 +728,7 @@ export default function DocumentViewerModal({
                 gap: 12
               }}>
                 <Text style={{ color: '#94a3b8', fontSize: 11, textAlign: 'center' }}>
-                  🔎 Use the <Text style={{ color: '#38bdf8', fontWeight: '700' }}>Zoom In (+)</Text> and <Text style={{ color: '#38bdf8', fontWeight: '700' }}>Rotate</Text> buttons to inspect serial numbers, line items, and store stamps in crisp original quality.
+                  🔎 Use the <Text style={{ color: '#f47721', fontWeight: '700' }}>Zoom In (+)</Text> and <Text style={{ color: '#f47721', fontWeight: '700' }}>Rotate</Text> buttons to inspect serial numbers, line items, and store stamps in crisp original quality.
                 </Text>
               </View>
             </View>

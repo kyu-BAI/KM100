@@ -43,8 +43,8 @@ export default function DocumentTableView({
             >
               <Text style={[styles.td, { width: 45, textAlign: 'center', color: '#64748b' }]}>{idx + 1}</Text>
               <View style={{ flex: 2.2, minWidth: 220, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 }}>
-                {item.fileFormat === 'XLSX' ? <FileSpreadsheet size={16} color="#34d399" /> : <FileText size={16} color={isLight ? '#0284c7' : '#38bdf8'} />}
-                <Text style={[styles.td, { fontWeight: '600', color: isLight ? '#0f172a' : '#f8fafc', flex: 1 }]} numberOfLines={1}>
+                {item.fileFormat === 'XLSX' ? <FileSpreadsheet size={16} color="#10b981" /> : <FileText size={16} color={isLight ? '#f47721' : '#ff9345'} />}
+                <Text style={[styles.td, { fontWeight: '600', color: isLight ? '#252525' : '#f8fafc', flex: 1 }]} numberOfLines={1}>
                   {item.fileName}
                 </Text>
               </View>
@@ -53,7 +53,7 @@ export default function DocumentTableView({
               <Text style={[styles.td, { width: 120 }, isLight && styles.tdLight]}>
                 {item.scannedDate || item.createdAt || (item.year ? `${item.year} ${item.month !== 'CURRENT' ? item.month : ''}`.trim() : item.receiptDate || '-')}
               </Text>
-              <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '700', color: item.amount > 0 ? (isLight ? '#0369a1' : '#38bdf8') : (isLight ? '#94a3b8' : '#64748b') }]}>
+              <Text style={[styles.td, { width: 130, textAlign: 'right', paddingRight: 16, fontWeight: '700', color: item.amount > 0 ? (isLight ? '#252525' : '#f47721') : (isLight ? '#888888' : '#64748b') }]}>
                 {item.amount > 0 ? `₱${parseFloat(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-'}
               </Text>
               <View style={[styles.td, { width: 130, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
@@ -74,7 +74,7 @@ export default function DocumentTableView({
                   accessibilityLabel={`View document details for ${item.fileName}`}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <FileText size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  <FileText size={15} color={isLight ? '#f47721' : '#ff9345'} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.btnActionIcon, isLight && styles.btnActionIconLight, { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' }]}
@@ -87,7 +87,7 @@ export default function DocumentTableView({
                   accessibilityLabel={`Rename document ${item.fileName}`}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Edit3 size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  <Edit3 size={15} color={isLight ? '#f47721' : '#ff9345'} />
                 </TouchableOpacity>
                 {isAdmin && (
                   <TouchableOpacity

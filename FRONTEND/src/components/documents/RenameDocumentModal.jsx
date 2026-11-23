@@ -19,7 +19,7 @@ export default function RenameDocumentModal({
           <View style={[styles.renameModalContainer, isMobile && { width: '92%', maxWidth: '100%' }, isLight && styles.renameModalContainerLight]}>
             <View style={styles.renameModalHeader}>
               <View style={styles.renameIconBox}>
-                <Edit3 size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <Edit3 size={20} color={isLight ? '#f47721' : '#f47721'} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.renameModalTitle, isLight && styles.renameModalTitleLight]}>Rename Document</Text>

@@ -28,11 +28,11 @@ export default function DocumentCardsView({
           <View style={styles.mobileCardHeader}>
             <View style={styles.mobileCardIcon}>
               {item.fileFormat === 'XLSX' ? (
-                <FileSpreadsheet size={20} color="#34d399" />
+                <FileSpreadsheet size={20} color="#10b981" />
               ) : item.fileFormat === 'JPG' || item.fileFormat === 'PNG' ? (
-                <ImageIcon size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <ImageIcon size={20} color={isLight ? '#f47721' : '#ff9345'} />
               ) : (
-                <FileText size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <FileText size={20} color={isLight ? '#f47721' : '#ff9345'} />
               )}
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
@@ -80,7 +80,7 @@ export default function DocumentCardsView({
                 accessibilityLabel={`Rename document ${item.fileName}`}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Edit3 size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                <Edit3 size={15} color={isLight ? '#f47721' : '#ff9345'} />
               </TouchableOpacity>
               {isAdmin && (
                 <TouchableOpacity

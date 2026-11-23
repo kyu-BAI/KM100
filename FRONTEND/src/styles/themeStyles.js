@@ -14,7 +14,7 @@ export function createStyles(isLight = true) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: isLight ? '#f1f5f9' : '#090d16',
+      backgroundColor: isLight ? '#f5f3ef' : '#090d16',
       flexDirection: 'column',
       height: '100%',
       width: '100%'
@@ -23,19 +23,19 @@ export function createStyles(isLight = true) {
     headerUserName: {
       fontSize: 12,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     headerUserNameLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     headerUserRole: {
       fontSize: 9,
       fontWeight: '800',
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       letterSpacing: 0.5
     },
     headerUserRoleLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
 
     // ADMIN PORTAL STYLES
@@ -47,19 +47,19 @@ export function createStyles(isLight = true) {
       gap: 12,
       paddingBottom: 16,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     adminPortalHeaderLight: {
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     adminPortalTitle: {
       fontSize: 22,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       letterSpacing: -0.4
     },
     adminPortalTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     adminPortalSub: {
       fontSize: 13,
@@ -75,23 +75,23 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 14,
       paddingVertical: 9,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       cursor: 'pointer',
       boxShadow: elev.sm
     },
     adminBackBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     adminBackBtnText: {
       fontSize: 13,
       fontWeight: '700',
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     adminBackBtnTextLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     adminGrid: {
       flexDirection: 'row',
@@ -100,23 +100,23 @@ export function createStyles(isLight = true) {
     adminProfileCard: {
       flex: 1,
       minWidth: 320,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       padding: 22,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 16,
       boxShadow: elev.md
     },
     adminProfileCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     adminLargeAvatarCircle: {
       width: 58,
       height: 58,
       borderRadius: 29,
-      backgroundColor: '#0284c7',
+      backgroundColor: '#f47721',
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 2,
@@ -131,10 +131,10 @@ export function createStyles(isLight = true) {
     adminProfileName: {
       fontSize: 16,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     adminProfileNameLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     adminProfileEmail: {
       fontSize: 12,
@@ -148,11 +148,11 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     adminPrivilegesBoxLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     adminPrivilegesHeading: {
       fontSize: 10,
@@ -165,7 +165,7 @@ export function createStyles(isLight = true) {
     },
     privilegeItemText: {
       fontSize: 12,
-      color: isLight ? '#334155' : '#cbd5e1',
+      color: isLight ? '#334155' : '#d8d4cb',
       fontWeight: '500'
     },
     privilegeItemTextLight: {
@@ -195,17 +195,17 @@ export function createStyles(isLight = true) {
     employeeFormCard: {
       flex: 1.6,
       minWidth: 320,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       padding: 22,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 14,
       boxShadow: elev.md
     },
     employeeFormCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     empIconBadge: {
       width: 36,
@@ -217,10 +217,10 @@ export function createStyles(isLight = true) {
     cardTitle: {
       fontSize: 16,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     cardTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     cardSubtitle: {
       fontSize: 12,
@@ -243,7 +243,7 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       borderRadius: 8,
       paddingHorizontal: 12,
       gap: 8,
@@ -251,17 +251,17 @@ export function createStyles(isLight = true) {
     },
     formInputWrapperLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     formFieldInput: {
       flex: 1,
       paddingVertical: 10,
       fontSize: 13,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       outlineStyle: 'none'
     },
     formFieldInputLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     passwordGridRow: {
       flexDirection: 'row',
@@ -271,18 +271,18 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 11,
       paddingVertical: 6,
       borderRadius: 7,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       cursor: 'pointer'
     },
     empRoleChipLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     empRoleChipActive: {
-      backgroundColor: '#0284c7',
-      borderColor: '#0284c7'
+      backgroundColor: '#f47721',
+      borderColor: '#f47721'
     },
     empRoleChipText: {
       fontSize: 11,
@@ -301,7 +301,7 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: '#059669',
+      backgroundColor: '#f47721',
       paddingVertical: 12,
       borderRadius: 8,
       cursor: 'pointer',
@@ -315,17 +315,17 @@ export function createStyles(isLight = true) {
     },
     accountsListCard: {
       width: '100%',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       padding: 22,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 14,
       boxShadow: elev.md
     },
     accountsListCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     employeeRowCard: {
       flexDirection: 'row',
@@ -335,19 +335,19 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 12,
       flexWrap: 'wrap'
     },
     employeeRowCardLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     empAvatarCircle: {
       width: 38,
       height: 38,
       borderRadius: 19,
-      backgroundColor: '#0284c7',
+      backgroundColor: '#f47721',
       alignItems: 'center',
       justifyContent: 'center'
     },
@@ -359,10 +359,10 @@ export function createStyles(isLight = true) {
     empNameText: {
       fontSize: 13,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     empNameTextLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     empEmailText: {
       fontSize: 11,
@@ -376,21 +376,21 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 6,
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)',
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)',
       borderWidth: 1,
-      borderColor: isLight ? '#bae6fd' : 'rgba(2, 132, 199, 0.3)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(2, 132, 199, 0.3)'
     },
     empRoleBadgeLight: {
-      backgroundColor: '#e0f2fe',
-      borderColor: '#bae6fd'
+      backgroundColor: '#fef3eb',
+      borderColor: '#fcd3b4'
     },
     empRoleBadgeText: {
       fontSize: 11,
       fontWeight: '700',
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     empRoleBadgeTextLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     empDeleteBtn: {
       padding: 7,
@@ -406,7 +406,7 @@ export function createStyles(isLight = true) {
       height: 64,
       backgroundColor: isLight ? '#ffffff' : '#0c1322',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -416,7 +416,7 @@ export function createStyles(isLight = true) {
     },
     topHeaderLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     topHeaderMobile: {
       height: 56,
@@ -437,23 +437,23 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       padding: 8,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#334155'
+      borderColor: isLight ? '#e5e2dc' : '#334155'
     },
     sidebarToggleBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#e2e8f0'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#e5e2dc'
     },
     sidebarToggleBtnText: {
       fontSize: 12,
       fontWeight: '600',
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     sidebarToggleBtnTextLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     brandContainer: {
       flexDirection: 'row',
@@ -461,7 +461,7 @@ export function createStyles(isLight = true) {
       gap: 10
     },
     brandBadge: {
-      backgroundColor: '#0284c7',
+      backgroundColor: '#f47721',
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 6
@@ -475,11 +475,11 @@ export function createStyles(isLight = true) {
     brandTitle: {
       fontSize: 17,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#ffffff',
+      color: isLight ? '#252525' : '#ffffff',
       letterSpacing: -0.2
     },
     brandTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     brandSub: {
       fontSize: 13,
@@ -499,23 +499,23 @@ export function createStyles(isLight = true) {
       gap: 8,
       backgroundColor: isLight ? '#f8fafc' : '#090d16',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b',
-      borderRadius: 8,
+      borderColor: isLight ? '#d8d4cb' : '#1e293b',
+      borderRadius: 9999,
       paddingHorizontal: 12,
       height: 38
     },
     headerSearchBoxLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     headerSearchInput: {
       flex: 1,
       fontSize: 12,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       outlineStyle: 'none'
     },
     headerSearchInputLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     // Header Actions
     topHeaderRight: {
@@ -527,12 +527,12 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 7,
-      backgroundColor: '#059669',
+      backgroundColor: '#f47721',
       paddingHorizontal: 14,
       paddingVertical: 8,
-      borderRadius: 8,
+      borderRadius: 9999,
       borderWidth: 1,
-      borderColor: '#10b981',
+      borderColor: '#e06412',
       boxShadow: elev.sm,
       transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease, filter 0.15s ease'
     },
@@ -545,16 +545,16 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 12,
       paddingVertical: 8,
-      borderRadius: 8,
+      borderRadius: 9999,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     heroExportBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     heroExportBtnText: {
       color: isLight ? '#059669' : '#10b981',
@@ -567,13 +567,13 @@ export function createStyles(isLight = true) {
     headerIconBtn: {
       padding: 8,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     headerIconBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     headerSyncPill: {
       flexDirection: 'row',
@@ -608,12 +608,12 @@ export function createStyles(isLight = true) {
       width: 28,
       height: 28,
       borderRadius: 14,
-      backgroundColor: isLight ? '#0284c7' : '#0284c7',
+      backgroundColor: isLight ? '#f47721' : '#f47721',
       alignItems: 'center',
       justifyContent: 'center'
     },
     headerUserAvatarLight: {
-      backgroundColor: '#0284c7'
+      backgroundColor: '#f47721'
     },
     headerUserInitial: {
       color: '#ffffff',
@@ -653,7 +653,7 @@ export function createStyles(isLight = true) {
       backgroundColor: isLight ? '#ffffff' : '#0c1322',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       padding: 14,
       gap: 4,
       boxShadow: elev.sm,
@@ -667,15 +667,15 @@ export function createStyles(isLight = true) {
     },
     statCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0',
+      borderColor: '#e5e2dc',
       boxShadow: elev.sm
     },
     statCardActive: {
-      borderColor: isLight ? '#38bdf8' : '#0284c7',
-      backgroundColor: isLight ? '#f0f9ff' : 'rgba(2, 132, 199, 0.15)'
+      borderColor: isLight ? '#f47721' : '#f47721',
+      backgroundColor: isLight ? '#f0f9ff' : 'rgba(244, 119, 33, 0.12)'
     },
     statCardActiveLight: {
-      borderColor: '#0284c7',
+      borderColor: '#f47721',
       backgroundColor: '#f0f9ff'
     },
     statCardHeader: {
@@ -720,11 +720,11 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
       backgroundColor: isLight ? '#f8fafc' : '#0c1322'
     },
     categoryNavBarLight: {
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     categoryNavScroll: {
       flexDirection: 'row',
@@ -738,22 +738,22 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 10,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     categoryTabLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     categoryTabActive: {
-      backgroundColor: isLight ? '#e0f2fe' : '#1e293b',
-      borderColor: isLight ? '#0284c7' : '#38bdf8'
+      backgroundColor: isLight ? '#fef3eb' : '#1e293b',
+      borderColor: isLight ? '#f47721' : '#f47721'
     },
     categoryTabActiveLight: {
-      backgroundColor: '#e0f2fe',
-      borderColor: '#0284c7'
+      backgroundColor: '#fef3eb',
+      borderColor: '#f47721'
     },
     categoryTabText: {
       fontSize: 12,
@@ -764,24 +764,24 @@ export function createStyles(isLight = true) {
       color: '#475569'
     },
     categoryTabTextActive: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontWeight: isLight ? '700' : '700'
     },
     categoryTabTextActiveLight: {
-      color: '#0284c7',
+      color: '#f47721',
       fontWeight: '700'
     },
     categoryTabBadge: {
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 10
     },
     categoryTabBadgeLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     categoryTabBadgeActive: {
-      backgroundColor: '#0284c7'
+      backgroundColor: '#f47721'
     },
     categoryTabBadgeText: {
       fontSize: 10,
@@ -803,12 +803,12 @@ export function createStyles(isLight = true) {
       paddingVertical: 8,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
       flexWrap: 'wrap'
     },
     subFilterRowLight: {
       backgroundColor: '#f8fafc',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     subFilterHeading: {
       fontSize: 11,
@@ -823,27 +823,27 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 11,
       paddingVertical: 5,
       borderRadius: 20,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     subFilterChipLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     subFilterChipActive: {
-      backgroundColor: isLight ? '#0284c7' : '#0284c7',
-      borderColor: isLight ? '#0284c7' : '#38bdf8'
+      backgroundColor: isLight ? '#f47721' : '#f47721',
+      borderColor: isLight ? '#f47721' : '#f47721'
     },
     subFilterChipActiveLight: {
-      backgroundColor: '#0284c7',
-      borderColor: '#0284c7'
+      backgroundColor: '#f47721',
+      borderColor: '#f47721'
     },
     subFilterChipText: {
       fontSize: 11,
       fontWeight: '600',
-      color: isLight ? '#475569' : '#cbd5e1'
+      color: isLight ? '#475569' : '#d8d4cb'
     },
     subFilterChipTextLight: {
       color: '#334155'
@@ -888,7 +888,7 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      backgroundColor: '#059669',
+      backgroundColor: '#f47721',
       paddingHorizontal: 18,
       paddingVertical: 14,
       borderRadius: 30,
@@ -921,8 +921,8 @@ export function createStyles(isLight = true) {
       transition: 'all 0.2s ease'
     },
     toastSuccess: {
-      backgroundColor: '#059669',
-      borderColor: '#10b981',
+      backgroundColor: '#f47721',
+      borderColor: '#e06412',
       borderWidth: 1
     },
     toastError: {
@@ -941,14 +941,14 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       overflow: 'hidden',
       position: 'relative',
-      backgroundColor: isLight ? '#f1f5f9' : undefined
+      backgroundColor: isLight ? '#f5f3ef' : undefined
     },
     // Sidebar Tree
     sidebar: {
       width: 290,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRightWidth: 1,
-      borderRightColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderRightColor: isLight ? '#e5e2dc' : '#1e293b',
       flexDirection: 'column'
     },
     sidebarCompanyHeader: {
@@ -958,12 +958,12 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 16,
       paddingVertical: 14,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
       backgroundColor: isLight ? '#f8fafc' : '#0c1322'
     },
     sidebarCompanyHeaderLight: {
       backgroundColor: '#f8fafc',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     sidebarLogoBox: {
       width: 38,
@@ -975,11 +975,11 @@ export function createStyles(isLight = true) {
     sidebarCompanyName: {
       fontSize: 12,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       letterSpacing: 0.3
     },
     sidebarCompanyNameLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     sidebarCompanySub: {
       fontSize: 10,
@@ -996,12 +996,12 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 16,
       paddingVertical: 16,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     sidebarCollapseBtn: {
       padding: 6,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       cursor: 'pointer',
       alignItems: 'center',
       justifyContent: 'center'
@@ -1019,7 +1019,7 @@ export function createStyles(isLight = true) {
     },
     separator: {
       height: 1,
-      backgroundColor: isLight ? '#e2e8f0' : '#1e293b',
+      backgroundColor: isLight ? '#e5e2dc' : '#1e293b',
       marginVertical: 10
     },
     categoryBlock: {
@@ -1034,8 +1034,8 @@ export function createStyles(isLight = true) {
       gap: 8
     },
     treeItemActive: {
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)',
-      borderColor: isLight ? '#bae6fd' : 'rgba(2, 132, 199, 0.4)'
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)',
+      borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)'
     },
     iconToggle: {
       padding: 2
@@ -1043,15 +1043,15 @@ export function createStyles(isLight = true) {
     treeCategoryTitle: {
       fontSize: 13,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#cbd5e1'
+      color: isLight ? '#252525' : '#d8d4cb'
     },
     treeText: {
       fontSize: 13,
-      color: isLight ? '#334155' : '#cbd5e1',
+      color: isLight ? '#334155' : '#d8d4cb',
       fontWeight: '500'
     },
     treeTextActive: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontWeight: '700'
     },
     treeChildren: {
@@ -1083,13 +1083,13 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 7,
       paddingVertical: 3,
       borderRadius: 4,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#334155'
+      borderColor: isLight ? '#e5e2dc' : '#334155'
     },
     monthMiniPillActive: {
-      backgroundColor: isLight ? '#0284c7' : '#0284c7',
-      borderColor: isLight ? '#0284c7' : '#38bdf8'
+      backgroundColor: isLight ? '#f47721' : '#f47721',
+      borderColor: isLight ? '#f47721' : '#f47721'
     },
     monthMiniPillText: {
       fontSize: 10,
@@ -1113,8 +1113,8 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 20,
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
+      backgroundColor: isLight ? '#ffffff' : '#252525'
     },
     controlBarLeft: {
       flexDirection: 'row',
@@ -1124,9 +1124,9 @@ export function createStyles(isLight = true) {
     burgerToggleBtn: {
       padding: 6,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       cursor: 'pointer',
       alignItems: 'center',
       justifyContent: 'center'
@@ -1142,7 +1142,7 @@ export function createStyles(isLight = true) {
     },
     breadcrumbActive: {
       fontSize: 14,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontWeight: '700'
     },
     controlBarRight: {
@@ -1160,27 +1160,27 @@ export function createStyles(isLight = true) {
       minHeight: 40,
       width: 260,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       gap: 10
     },
     searchInput: {
       flex: 1,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontSize: 13,
       paddingVertical: 0,
       outlineStyle: 'none'
     },
     countBadge: {
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 10,
       paddingVertical: 4,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     countBadgeText: {
       fontSize: 12,
-      color: isLight ? '#475569' : '#cbd5e1',
+      color: isLight ? '#475569' : '#d8d4cb',
       fontWeight: '600'
     },
     cachePill: {
@@ -1203,17 +1203,17 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       paddingVertical: 4,
       paddingHorizontal: 9,
       borderRadius: 8,
       cursor: 'pointer'
     },
     allFilesToggleBtnActive: {
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)',
-      borderColor: isLight ? '#38bdf8' : '#0284c7'
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(244, 119, 33, 0.12)',
+      borderColor: isLight ? '#f47721' : '#f47721'
     },
     allFilesToggleBtnText: {
       fontSize: 11,
@@ -1221,7 +1221,7 @@ export function createStyles(isLight = true) {
       color: isLight ? '#475569' : '#94a3b8'
     },
     allFilesToggleBtnTextActive: {
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     exportExcelBtn: {
       flexDirection: 'row',
@@ -1263,16 +1263,16 @@ export function createStyles(isLight = true) {
       width: 32,
       height: 18,
       borderRadius: 9,
-      backgroundColor: isLight ? '#e2e8f0' : '#1e293b',
+      backgroundColor: isLight ? '#e5e2dc' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       padding: 2,
       justifyContent: 'center',
       cursor: 'pointer'
     },
     sidebarToggleSwitchActive: {
-      backgroundColor: '#0369a1',
-      borderColor: '#38bdf8'
+      backgroundColor: '#e06412',
+      borderColor: '#f47721'
     },
     sidebarToggleThumb: {
       width: 12,
@@ -1289,7 +1289,7 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      backgroundColor: '#38bdf8',
+      backgroundColor: '#f47721',
       paddingVertical: 10,
       paddingHorizontal: 18,
       borderRadius: 8,
@@ -1298,7 +1298,7 @@ export function createStyles(isLight = true) {
     btnToggleEmptyOnText: {
       fontSize: 13,
       fontWeight: '700',
-      color: '#0f172a'
+      color: '#252525'
     },
     // Table View
     tableHorizontal: {
@@ -1319,12 +1319,12 @@ export function createStyles(isLight = true) {
       width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: isLight ? '#e2e8f0' : '#0c1322',
+      backgroundColor: isLight ? '#e5e2dc' : '#0c1322',
       paddingVertical: 10,
       paddingHorizontal: 12,
       borderRadius: 6,
       marginBottom: 4,
-      borderBottomColor: isLight ? '#cbd5e1' : '#1e293b'
+      borderBottomColor: isLight ? '#d8d4cb' : '#1e293b'
     },
     th: {
       fontSize: 11,
@@ -1339,8 +1339,8 @@ export function createStyles(isLight = true) {
       paddingVertical: 10,
       paddingHorizontal: 12,
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       transition: 'background-color 0.15s ease, transform 0.15s ease'
     },
     tableRowAlt: {
@@ -1348,14 +1348,14 @@ export function createStyles(isLight = true) {
     },
     td: {
       fontSize: 12,
-      color: isLight ? '#1e293b' : '#cbd5e1'
+      color: isLight ? '#1e293b' : '#d8d4cb'
     },
     btnTableAction: {
       padding: 6,
       borderRadius: 4,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: isLight ? 1 : 0,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     statusTag: {
       paddingHorizontal: 8,
@@ -1363,7 +1363,7 @@ export function createStyles(isLight = true) {
       borderRadius: 12,
       alignSelf: 'flex-start',
       borderColor: isLight ? 'transparent' : undefined,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
     },
     statusTagSuccess: {
       backgroundColor: isLight ? '#ecfdf5' : 'rgba(52, 211, 153, 0.15)',
@@ -1376,14 +1376,14 @@ export function createStyles(isLight = true) {
       borderColor: isLight ? '#fecaca' : 'rgba(239, 68, 68, 0.3)'
     },
     statusTagInfo: {
-      backgroundColor: isLight ? '#f0f9ff' : 'rgba(56, 189, 248, 0.15)',
+      backgroundColor: isLight ? '#f0f9ff' : 'rgba(244, 119, 33, 0.12)',
       borderWidth: 1,
-      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)'
     },
     statusTagText: {
       fontSize: 10,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#e2e8f0'
+      color: isLight ? '#252525' : '#e5e2dc'
     },
     // Loading & Empty states
     loadingContainer: {
@@ -1406,7 +1406,7 @@ export function createStyles(isLight = true) {
     emptyTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     emptySubtitle: {
       fontSize: 13,
@@ -1420,12 +1420,12 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      backgroundColor: '#0284c7',
+      backgroundColor: '#f47721',
       paddingHorizontal: 14,
       paddingVertical: 9,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: '#38bdf8'
+      borderColor: '#f47721'
     },
     btnPrimaryText: {
       color: '#ffffff',
@@ -1436,9 +1436,9 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 16,
       paddingVertical: 9,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     btnSecondaryText: {
       color: isLight ? '#475569' : '#94a3b8',
@@ -1453,26 +1453,26 @@ export function createStyles(isLight = true) {
       paddingVertical: 8,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+      borderColor: isLight ? '#d8d4cb' : '#334155',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
     },
     btnOutlineText: {
-      color: isLight ? '#334155' : '#cbd5e1',
+      color: isLight ? '#334155' : '#d8d4cb',
       fontSize: 12,
       fontWeight: '600'
     },
     // Viewer Modal
     modalCard: {
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       boxShadow: elev.modal,
       overflow: 'hidden'
     },
     modalCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0',
+      borderColor: '#e5e2dc',
       boxShadow: elev.modal
     },
     modalOverlay: {
@@ -1501,10 +1501,10 @@ export function createStyles(isLight = true) {
       width: '90%',
       maxWidth: 960,
       maxHeight: '90%',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b',
+      borderColor: isLight ? '#d8d4cb' : '#1e293b',
       flexDirection: 'column',
       overflow: 'hidden',
       animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -1517,7 +1517,7 @@ export function createStyles(isLight = true) {
       paddingVertical: 16,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     viewerHeaderLeft: {
       flexDirection: 'row',
@@ -1528,16 +1528,16 @@ export function createStyles(isLight = true) {
       width: 48,
       height: 48,
       borderRadius: 10,
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.1)',
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.1)',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(244, 119, 33, 0.35)'
     },
     viewerTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontFamily: 'JetBrains Mono, monospace'
     },
     viewerSubtitle: {
@@ -1553,14 +1553,14 @@ export function createStyles(isLight = true) {
     modalCloseBtn: {
       padding: 6,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
     },
     viewerBody: {
       flex: 1,
       flexGrow: 1,
       flexShrink: 1,
       padding: 24,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a'
+      backgroundColor: isLight ? '#ffffff' : '#252525'
     },
     viewerStatsGrid: {
       flexDirection: 'row',
@@ -1575,7 +1575,7 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     viewerStatLabel: {
       fontSize: 10,
@@ -1586,17 +1586,17 @@ export function createStyles(isLight = true) {
     viewerStatValue: {
       fontSize: 14,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     viewerSection: {
       marginBottom: 20,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      backgroundColor: isLight ? '#ffffff' : '#252525',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     viewerSectionTitle: {
       fontSize: 12,
       fontWeight: '800',
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       letterSpacing: 0.5,
       marginBottom: 10
     },
@@ -1605,7 +1605,7 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     notesText: {
       fontSize: 13,
@@ -1632,16 +1632,16 @@ export function createStyles(isLight = true) {
       backgroundColor: isLight ? '#ffffff' : '#131d31',
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       overflow: 'hidden'
     },
     previewTableRowHeader: {
       flexDirection: 'row',
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingVertical: 10,
       paddingHorizontal: 14,
       borderBottomWidth: isLight ? 1 : 0,
-      borderBottomColor: isLight ? '#e2e8f0' : 'transparent'
+      borderBottomColor: isLight ? '#e5e2dc' : 'transparent'
     },
     previewTh: {
       fontSize: 11,
@@ -1653,7 +1653,7 @@ export function createStyles(isLight = true) {
       paddingVertical: 9,
       paddingHorizontal: 14,
       borderTopWidth: 1,
-      borderTopColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderTopColor: isLight ? '#e5e2dc' : '#1e293b',
       backgroundColor: isLight ? '#ffffff' : 'transparent'
     },
     previewTableRowAlt: {
@@ -1661,14 +1661,14 @@ export function createStyles(isLight = true) {
     },
     previewTd: {
       fontSize: 12,
-      color: isLight ? '#1e293b' : '#cbd5e1'
+      color: isLight ? '#1e293b' : '#d8d4cb'
     },
     previewSummaryBox: {
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       padding: 12,
       borderRadius: 6,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       marginTop: 10
     },
     previewSummaryTitle: {
@@ -1694,17 +1694,17 @@ export function createStyles(isLight = true) {
     summaryItemVal: {
       fontSize: 12,
       fontWeight: '700',
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     // ADD DOCUMENT MODAL STYLES (TWO OPTIONS)
     formModalContainer: {
       width: '90%',
       maxWidth: 680,
       maxHeight: '90%',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b',
+      borderColor: isLight ? '#d8d4cb' : '#1e293b',
       flexDirection: 'column',
       overflow: 'hidden',
       animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -1717,20 +1717,20 @@ export function createStyles(isLight = true) {
       paddingVertical: 16,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     backModalBtn: {
       padding: 6,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: isLight ? 1 : 0,
-      borderColor: isLight ? '#cbd5e1' : 'transparent',
+      borderColor: isLight ? '#d8d4cb' : 'transparent',
       marginRight: 6
     },
     modalTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     modalHeaderSub: {
       fontSize: 12,
@@ -1742,7 +1742,7 @@ export function createStyles(isLight = true) {
       flexGrow: 1,
       flexShrink: 1,
       padding: 20,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a'
+      backgroundColor: isLight ? '#ffffff' : '#252525'
     },
     modalFooter: {
       flexDirection: 'row',
@@ -1753,7 +1753,7 @@ export function createStyles(isLight = true) {
       paddingVertical: 14,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       borderTopWidth: 1,
-      borderTopColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderTopColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     // Options Screen (The Two Cards)
     optionsBody: {
@@ -1774,7 +1774,7 @@ export function createStyles(isLight = true) {
       borderRadius: 14,
       padding: 20,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 12
     },
     optionCardMobile: {
@@ -1800,7 +1800,7 @@ export function createStyles(isLight = true) {
       borderRadius: 10,
       backgroundColor: 'rgba(56, 189, 248, 0.1)',
       borderWidth: 1,
-      borderColor: 'rgba(56, 189, 248, 0.3)',
+      borderColor: 'rgba(244, 119, 33, 0.35)',
       justifyContent: 'center',
       alignItems: 'center'
     },
@@ -1814,7 +1814,7 @@ export function createStyles(isLight = true) {
     optionTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       marginBottom: 2
     },
     optionSubtitle: {
@@ -1824,7 +1824,7 @@ export function createStyles(isLight = true) {
     },
     optionDescription: {
       fontSize: 12,
-      color: isLight ? '#475569' : '#cbd5e1',
+      color: isLight ? '#475569' : '#d8d4cb',
       lineHeight: 18
     },
     optionActionBadge: {
@@ -1834,21 +1834,21 @@ export function createStyles(isLight = true) {
       paddingVertical: 10,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: 'rgba(56, 189, 248, 0.3)'
+      borderColor: 'rgba(244, 119, 33, 0.35)'
     },
     optionActionBadgeScan: {
       backgroundColor: 'rgba(52, 211, 153, 0.12)',
       borderColor: 'rgba(52, 211, 153, 0.3)'
     },
     optionActionText: {
-      color: '#38bdf8',
+      color: '#f47721',
       fontSize: 12,
       fontWeight: '700'
     },
     // Insert Document View
     dropzone: {
       borderWidth: 2,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       borderStyle: 'dashed',
       borderRadius: 12,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
@@ -1868,7 +1868,7 @@ export function createStyles(isLight = true) {
     dropzoneTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     dropzoneSub: {
       fontSize: 13,
@@ -1876,7 +1876,7 @@ export function createStyles(isLight = true) {
       textAlign: 'center'
     },
     supportedFormatsPill: {
-      backgroundColor: isLight ? '#e2e8f0' : '#1e293b',
+      backgroundColor: isLight ? '#e5e2dc' : '#1e293b',
       paddingHorizontal: 12,
       paddingVertical: 4,
       borderRadius: 12,
@@ -1894,7 +1894,7 @@ export function createStyles(isLight = true) {
       borderRadius: 10,
       padding: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b'
+      borderColor: isLight ? '#d8d4cb' : '#1e293b'
     },
     selectedFileHeader: {
       flexDirection: 'row',
@@ -1913,7 +1913,7 @@ export function createStyles(isLight = true) {
     selectedFileName: {
       fontSize: 14,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontFamily: 'JetBrains Mono, monospace'
     },
     selectedFileSize: {
@@ -1931,7 +1931,7 @@ export function createStyles(isLight = true) {
       padding: 12,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     insertMetaLabel: {
       fontSize: 10,
@@ -1942,7 +1942,7 @@ export function createStyles(isLight = true) {
     insertMetaValue: {
       fontSize: 13,
       fontWeight: '600',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     // Scan Document View
     scanSectionHeading: {
@@ -1963,11 +1963,11 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     receiptTypeCardActive: {
-      borderColor: isLight ? '#0284c7' : '#38bdf8',
-      backgroundColor: isLight ? '#f0f9ff' : 'rgba(2, 132, 199, 0.15)'
+      borderColor: isLight ? '#f47721' : '#f47721',
+      backgroundColor: isLight ? '#f0f9ff' : 'rgba(244, 119, 33, 0.12)'
     },
     receiptTypeHeader: {
       flexDirection: 'row',
@@ -1978,10 +1978,10 @@ export function createStyles(isLight = true) {
     receiptTypeName: {
       fontSize: 13,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#cbd5e1'
+      color: isLight ? '#252525' : '#d8d4cb'
     },
     receiptTypeNameActive: {
-      color: '#38bdf8'
+      color: '#f47721'
     },
     receiptTypeDesc: {
       fontSize: 11,
@@ -1990,7 +1990,7 @@ export function createStyles(isLight = true) {
       marginBottom: 8
     },
     receiptEntityBadge: {
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 6,
@@ -1998,7 +1998,7 @@ export function createStyles(isLight = true) {
     },
     receiptEntityBadgeText: {
       fontSize: 10,
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontWeight: '600'
     },
     scanMetaInputsCard: {
@@ -2006,7 +2006,7 @@ export function createStyles(isLight = true) {
       borderRadius: 10,
       padding: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 10,
       marginBottom: 16
     },
@@ -2026,12 +2026,12 @@ export function createStyles(isLight = true) {
       borderRadius: 10,
       padding: 20,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b',
+      borderColor: isLight ? '#d8d4cb' : '#1e293b',
       alignItems: 'center',
       gap: 8
     },
     scanOptionBtnNative: {
-      borderColor: 'rgba(56, 189, 248, 0.3)'
+      borderColor: 'rgba(244, 119, 33, 0.35)'
     },
     scanOptionBtnUpload: {
       borderColor: 'rgba(148, 163, 184, 0.2)'
@@ -2049,7 +2049,7 @@ export function createStyles(isLight = true) {
     scanOptionTitle: {
       fontSize: 14,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     scanOptionSub: {
       fontSize: 11,
@@ -2144,7 +2144,7 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: '#059669',
+      backgroundColor: '#f47721',
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 22,
@@ -2159,28 +2159,28 @@ export function createStyles(isLight = true) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 12,
       paddingVertical: 9,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     btnFlipCameraText: {
-      color: isLight ? '#334155' : '#cbd5e1',
+      color: isLight ? '#334155' : '#d8d4cb',
       fontSize: 12,
       fontWeight: '600'
     },
     btnCancelCamera: {
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       paddingHorizontal: 14,
       paddingVertical: 9,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155'
+      borderColor: isLight ? '#d8d4cb' : '#334155'
     },
     btnCancelCameraText: {
-      color: isLight ? '#334155' : '#cbd5e1',
+      color: isLight ? '#334155' : '#d8d4cb',
       fontSize: 12
     },
     scanSavingCard: {
@@ -2213,11 +2213,11 @@ export function createStyles(isLight = true) {
       justifyContent: 'center',
       gap: 14,
       borderWidth: 1,
-      borderColor: '#38bdf8',
+      borderColor: '#f47721',
       marginVertical: 12
     },
     ocrScanningTitle: {
-      color: '#38bdf8',
+      color: '#f47721',
       fontSize: 16,
       fontWeight: '700'
     },
@@ -2230,19 +2230,19 @@ export function createStyles(isLight = true) {
       width: '100%',
       maxWidth: 320,
       height: 6,
-      backgroundColor: isLight ? '#e2e8f0' : '#1e293b',
+      backgroundColor: isLight ? '#e5e2dc' : '#1e293b',
       borderRadius: 3,
       overflow: 'hidden',
       marginTop: 6
     },
     ocrProgressBarFill: {
       height: '100%',
-      backgroundColor: '#38bdf8',
+      backgroundColor: '#f47721',
       borderRadius: 3,
       transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     ocrErrorCard: {
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       padding: 16,
       borderWidth: 1.5,
@@ -2290,7 +2290,7 @@ export function createStyles(isLight = true) {
       borderRadius: 12,
       padding: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#1e293b',
+      borderColor: isLight ? '#d8d4cb' : '#1e293b',
       gap: 14,
       marginVertical: 8
     },
@@ -2310,17 +2310,17 @@ export function createStyles(isLight = true) {
     ocrVerificationTitle: {
       fontSize: 15,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     ocrPreviewRow: {
       flexDirection: 'row',
       gap: 14,
       alignItems: 'center',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       padding: 10,
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     ocrThumb: {
       width: 60,
@@ -2342,16 +2342,16 @@ export function createStyles(isLight = true) {
     ocrFieldLabel: {
       fontSize: 12,
       fontWeight: '600',
-      color: isLight ? '#475569' : '#cbd5e1'
+      color: isLight ? '#475569' : '#d8d4cb'
     },
     ocrFieldInput: {
       backgroundColor: isLight ? '#ffffff' : '#0c1322',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       borderRadius: 8,
       paddingHorizontal: 12,
       paddingVertical: 9,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontSize: 13
     },
     ocrActionsRow: {
@@ -2365,7 +2365,7 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: '#059669',
+      backgroundColor: '#f47721',
       paddingVertical: 12,
       borderRadius: 8
     },
@@ -2379,9 +2379,9 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       paddingHorizontal: 14,
       paddingVertical: 12,
       borderRadius: 8
@@ -2396,7 +2396,7 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: 16
@@ -2406,10 +2406,10 @@ export function createStyles(isLight = true) {
       borderRadius: 10,
       padding: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     capturedImageWrapper: {
-      backgroundColor: isLight ? '#f1f5f9' : '#0c1322',
+      backgroundColor: isLight ? '#f5f3ef' : '#0c1322',
       borderRadius: 8,
       overflow: 'hidden',
       alignItems: 'center',
@@ -2421,7 +2421,7 @@ export function createStyles(isLight = true) {
       borderRadius: 8,
       padding: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       gap: 10
     },
     scannedSuccessText: {
@@ -2442,7 +2442,7 @@ export function createStyles(isLight = true) {
       width: 140,
       fontSize: 12,
       fontWeight: '600',
-      color: isLight ? '#475569' : '#cbd5e1'
+      color: isLight ? '#475569' : '#d8d4cb'
     },
     scannedInput: {
       flex: 1,
@@ -2450,10 +2450,10 @@ export function createStyles(isLight = true) {
       borderRadius: 6,
       paddingHorizontal: 10,
       paddingVertical: 6,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontSize: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       outlineStyle: 'none'
     },
     retakeBtn: {
@@ -2463,7 +2463,7 @@ export function createStyles(isLight = true) {
       gap: 6,
       paddingVertical: 8,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       marginTop: 4
     },
     retakeBtnText: {
@@ -2475,7 +2475,7 @@ export function createStyles(isLight = true) {
     authContainer: {
       flex: 1,
       minHeight: '100vh',
-      backgroundColor: isLight ? '#f1f5f9' : '#0b1120',
+      backgroundColor: isLight ? '#f5f3ef' : '#0b1120',
       alignItems: 'center',
       justifyContent: 'center',
       padding: 20
@@ -2483,10 +2483,10 @@ export function createStyles(isLight = true) {
     authCard: {
       width: 440,
       maxWidth: '100%',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       padding: 30,
       boxShadow: elev.xl
     },
@@ -2512,10 +2512,10 @@ export function createStyles(isLight = true) {
       borderRadius: 20,
       marginBottom: 8,
       borderWidth: 1,
-      borderColor: isLight ? 'rgba(2, 132, 199, 0.25)' : 'rgba(56, 189, 248, 0.3)'
+      borderColor: isLight ? 'rgba(2, 132, 199, 0.25)' : 'rgba(244, 119, 33, 0.35)'
     },
     authBadgePillText: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontSize: 10,
       fontWeight: '800',
       letterSpacing: 0.8
@@ -2523,7 +2523,7 @@ export function createStyles(isLight = true) {
     authTitle: {
       fontSize: 22,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       marginBottom: 6,
       textAlign: 'center'
     },
@@ -2535,12 +2535,12 @@ export function createStyles(isLight = true) {
     },
     authTabs: {
       flexDirection: 'row',
-      backgroundColor: isLight ? '#f1f5f9' : '#0b1120',
+      backgroundColor: isLight ? '#f5f3ef' : '#0b1120',
       borderRadius: 8,
       padding: 4,
       marginBottom: 16,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     authTab: {
       flex: 1,
@@ -2560,7 +2560,7 @@ export function createStyles(isLight = true) {
       color: isLight ? '#64748b' : '#94a3b8'
     },
     authTabTextActive: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontWeight: '700'
     },
     authErrorBox: {
@@ -2598,7 +2598,7 @@ export function createStyles(isLight = true) {
       backgroundColor: isLight ? '#ffffff' : '#0b1120',
       borderRadius: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       paddingHorizontal: 12,
       gap: 8,
       position: 'relative'
@@ -2609,7 +2609,7 @@ export function createStyles(isLight = true) {
     authInput: {
       flex: 1,
       paddingVertical: 10,
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontSize: 13,
       outlineStyle: 'none'
     },
@@ -2623,7 +2623,7 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: '#0284c7',
+      backgroundColor: '#f47721',
       paddingVertical: 12,
       borderRadius: 8,
       marginTop: 6,
@@ -2657,7 +2657,7 @@ export function createStyles(isLight = true) {
     // Sidebar Admin User Styles
     sidebarAdminBox: {
       borderTopWidth: 1,
-      borderTopColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderTopColor: isLight ? '#e5e2dc' : '#1e293b',
       padding: 12,
       backgroundColor: isLight ? '#f8fafc' : '#0c1322',
       gap: 8
@@ -2671,19 +2671,19 @@ export function createStyles(isLight = true) {
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: isLight ? '#e0f2fe' : '#1e293b',
+      backgroundColor: isLight ? '#fef3eb' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#0284c7' : '#38bdf8',
+      borderColor: isLight ? '#f47721' : '#f47721',
       alignItems: 'center',
       justifyContent: 'center'
     },
     adminAvatarInitials: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontSize: 13,
       fontWeight: '800'
     },
     adminNameText: {
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       fontSize: 12,
       fontWeight: '700'
     },
@@ -2692,15 +2692,15 @@ export function createStyles(isLight = true) {
       fontSize: 10
     },
     adminBadgePill: {
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.12)',
       borderWidth: 1,
-      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)',
+      borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.25)',
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 4
     },
     adminBadgePillText: {
-      color: isLight ? '#0284c7' : '#38bdf8',
+      color: isLight ? '#f47721' : '#f47721',
       fontSize: 9,
       fontWeight: '800'
     },
@@ -2730,13 +2730,13 @@ export function createStyles(isLight = true) {
       paddingVertical: 10,
       backgroundColor: isLight ? '#ffffff' : '#0c1322',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b',
       zIndex: 100
     },
     mobileMenuBtn: {
       padding: 8,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
     },
     mobileTitleBlock: {
       alignItems: 'center',
@@ -2746,7 +2746,7 @@ export function createStyles(isLight = true) {
     mobileAppTitle: {
       fontSize: 13,
       fontWeight: '800',
-      color: isLight ? '#0f172a' : '#f8fafc',
+      color: isLight ? '#252525' : '#f8fafc',
       letterSpacing: 0.5
     },
     mobileAppSub: {
@@ -2778,9 +2778,9 @@ export function createStyles(isLight = true) {
       width: '85%',
       maxWidth: 320,
       height: '100%',
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRightWidth: 1,
-      borderRightColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderRightColor: isLight ? '#e5e2dc' : '#1e293b',
       zIndex: 999,
       boxShadow: isLight ? '4px 0 24px rgba(0, 0, 0, 0.08)' : '6px 0 28px rgba(0, 0, 0, 0.5)',
       animation: 'slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
@@ -2788,7 +2788,7 @@ export function createStyles(isLight = true) {
     mobileCloseDrawerBtn: {
       padding: 6,
       borderRadius: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
     },
     controlBarMobile: {
       flexDirection: 'column',
@@ -2801,10 +2801,10 @@ export function createStyles(isLight = true) {
       padding: 12
     },
     mobileCard: {
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b',
+      borderColor: isLight ? '#e5e2dc' : '#1e293b',
       padding: 14,
       marginBottom: 10,
       gap: 10,
@@ -2819,14 +2819,14 @@ export function createStyles(isLight = true) {
       width: 38,
       height: 38,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       alignItems: 'center',
       justifyContent: 'center'
     },
     mobileCardTitle: {
       fontSize: 13,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     mobileCardCategory: {
       fontSize: 11,
@@ -2840,7 +2840,7 @@ export function createStyles(isLight = true) {
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderWidth: 1,
-      borderColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     mobileMetaItem: {
       alignItems: 'center'
@@ -2855,7 +2855,7 @@ export function createStyles(isLight = true) {
     mobileMetaVal: {
       fontSize: 12,
       fontWeight: '600',
-      color: isLight ? '#0f172a' : '#e2e8f0'
+      color: isLight ? '#252525' : '#e5e2dc'
     },
     mobileCardActions: {
       flexDirection: 'row',
@@ -2869,15 +2869,15 @@ export function createStyles(isLight = true) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.1)',
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.1)',
       paddingVertical: 8,
       borderRadius: 6,
-      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.25)'
     },
     mobileBtnViewText: {
       fontSize: 12,
       fontWeight: '700',
-      color: isLight ? '#0284c7' : '#38bdf8'
+      color: isLight ? '#f47721' : '#f47721'
     },
     mobileBtnDelete: {
       width: 36,
@@ -2891,134 +2891,134 @@ export function createStyles(isLight = true) {
     },
     // --- SYSTEM LIGHT MODE STYLES ---
     containerLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     mainContentLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     contentAreaLight: {
       backgroundColor: '#f8fafc'
     },
     sidebarLight: {
       backgroundColor: '#ffffff',
-      borderRightColor: '#e2e8f0'
+      borderRightColor: '#e5e2dc'
     },
     sidebarTitleRowLight: {
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     sidebarSectionTitleLight: {
       color: '#64748b'
     },
     sidebarCollapseBtnLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     treeItemActiveLight: {
-      backgroundColor: '#e0f2fe'
+      backgroundColor: '#fef3eb'
     },
     treeCategoryTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     treeTextLight: {
       color: '#334155'
     },
     treeTextActiveLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     sidebarAdminBoxLight: {
       backgroundColor: '#f8fafc',
-      borderTopColor: '#e2e8f0'
+      borderTopColor: '#e5e2dc'
     },
     adminNameTextLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     adminEmailTextLight: {
       color: '#64748b'
     },
     adminBadgePillLight: {
-      backgroundColor: '#e0f2fe',
-      borderColor: '#bae6fd'
+      backgroundColor: '#fef3eb',
+      borderColor: '#fcd3b4'
     },
     adminBadgePillTextLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     controlBarLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     breadcrumbItemLight: {
       color: '#64748b'
     },
     breadcrumbActiveLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     searchBoxLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     searchInputLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     themeToggleBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       paddingVertical: 5,
       paddingHorizontal: 10,
       borderRadius: 8,
       cursor: 'pointer'
     },
     themeToggleBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     themeToggleBtnText: {
       fontSize: 11,
       fontWeight: '700',
-      color: isLight ? '#475569' : '#cbd5e1'
+      color: isLight ? '#475569' : '#d8d4cb'
     },
     themeToggleBtnTextLight: {
       color: '#6366f1'
     },
     allFilesToggleBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     allFilesToggleBtnTextLight: {
       color: '#475569'
     },
     allFilesToggleBtnActiveLight: {
       backgroundColor: 'rgba(2, 132, 199, 0.1)',
-      borderColor: 'rgba(2, 132, 199, 0.4)'
+      borderColor: 'rgba(244, 119, 33, 0.35)'
     },
     allFilesToggleBtnTextActiveLight: {
-      color: '#0284c7'
+      color: '#f47721'
     },
     cachePillLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     cachePillTextLight: {
       color: '#475569'
     },
     countBadgeLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     countBadgeTextLight: {
       color: '#475569'
     },
     tableRowHeaderLight: {
-      backgroundColor: '#e2e8f0'
+      backgroundColor: '#e5e2dc'
     },
     thLight: {
       color: '#475569'
     },
     tableRowLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     tableRowAltLight: {
       backgroundColor: '#f8fafc'
@@ -3027,23 +3027,23 @@ export function createStyles(isLight = true) {
       color: '#1e293b'
     },
     burgerToggleBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     btnTableActionLight: {
-      backgroundColor: '#f1f5f9',
+      backgroundColor: '#f5f3ef',
       borderWidth: 1,
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     statusTagLight: {
       borderColor: 'transparent'
     },
     mobileTopBarLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     mobileAppTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     mobileAppSubLight: {
       color: '#64748b'
@@ -3051,82 +3051,82 @@ export function createStyles(isLight = true) {
     mobileThemeBtn: {
       padding: 7,
       borderRadius: 8,
-      backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+      backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       alignItems: 'center',
       justifyContent: 'center',
       cursor: 'pointer'
     },
     mobileThemeBtnLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     mobileSidebarDrawerLight: {
       backgroundColor: '#ffffff',
-      borderRightColor: '#e2e8f0'
+      borderRightColor: '#e5e2dc'
     },
     mobileCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     mobileCardTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     mobileCardCategoryLight: {
       color: '#64748b'
     },
     mobileCardMetaLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     mobileMetaLabelLight: {
       color: '#64748b'
     },
     mobileMetaValLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     mobileBtnViewLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     modalDialogLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     modalHeaderLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     viewerHeaderLight: {
       backgroundColor: '#ffffff',
-      borderBottomColor: '#e2e8f0'
+      borderBottomColor: '#e5e2dc'
     },
     modalTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     modalCloseBtnLight: {
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f5f3ef'
     },
     modalBodyLight: {
       backgroundColor: '#ffffff'
     },
     modalFooterLight: {
-      borderTopColor: '#e2e8f0',
+      borderTopColor: '#e5e2dc',
       backgroundColor: '#f8fafc'
     },
     viewerCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     viewerTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     viewerSubtitleLight: {
       color: '#64748b'
     },
     viewerSectionLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     viewerSectionTitleLight: {
       color: '#334155'
@@ -3135,47 +3135,47 @@ export function createStyles(isLight = true) {
       color: '#64748b'
     },
     viewerFieldValueLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     notesBoxLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#e2e8f0'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#e5e2dc'
     },
     notesTextLight: {
       color: '#334155'
     },
     formInputLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1',
-      color: '#0f172a'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb',
+      color: '#252525'
     },
     formLabelLight: {
       color: '#334155'
     },
     authCardLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     authTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     authSubtitleLight: {
       color: '#64748b'
     },
     formModalContainerLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     viewerModalContainerLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     optionCardLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     optionTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     optionSubtitleLight: {
       color: '#64748b'
@@ -3185,50 +3185,50 @@ export function createStyles(isLight = true) {
     },
     receiptTypeCardLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     receiptTypeCardActiveLight: {
       backgroundColor: '#f0fdf4',
-      borderColor: '#10b981'
+      borderColor: '#e06412'
     },
     receiptTypeNameLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     receiptTypeDescLight: {
       color: '#64748b'
     },
     receiptEntityBadgeLight: {
-      backgroundColor: '#e2e8f0'
+      backgroundColor: '#e5e2dc'
     },
     receiptEntityBadgeTextLight: {
       color: '#334155'
     },
     ocrVerificationContainerLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     ocrPreviewRowLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#e2e8f0'
+      borderColor: '#e5e2dc'
     },
     ocrFieldInputLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1',
-      color: '#0f172a'
+      borderColor: '#d8d4cb',
+      color: '#252525'
     },
     ocrFieldLabelLight: {
       color: '#334155'
     },
     ocrVerificationTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     ocrErrorCardLight: {
       backgroundColor: '#fef2f2',
       borderColor: '#fca5a5'
     },
     btnRetakeOcrLight: {
-      backgroundColor: '#f1f5f9',
-      borderColor: '#cbd5e1'
+      backgroundColor: '#f5f3ef',
+      borderColor: '#d8d4cb'
     },
     btnRetakeOcrTextLight: {
       color: '#334155'
@@ -3237,10 +3237,10 @@ export function createStyles(isLight = true) {
     renameModalContainer: {
       width: '90%',
       maxWidth: 480,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+      backgroundColor: isLight ? '#ffffff' : '#252525',
       borderRadius: 14,
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       flexDirection: 'column',
       overflow: 'hidden',
       boxShadow: elev.modal,
@@ -3248,7 +3248,7 @@ export function createStyles(isLight = true) {
     },
     renameModalContainerLight: {
       backgroundColor: '#ffffff',
-      borderColor: '#cbd5e1'
+      borderColor: '#d8d4cb'
     },
     renameModalHeader: {
       flexDirection: 'row',
@@ -3258,25 +3258,25 @@ export function createStyles(isLight = true) {
       paddingVertical: 16,
       backgroundColor: isLight ? '#ffffff' : '#131d31',
       borderBottomWidth: 1,
-      borderBottomColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderBottomColor: isLight ? '#e5e2dc' : '#1e293b'
     },
     renameIconBox: {
       width: 38,
       height: 38,
       borderRadius: 8,
-      backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
+      backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.12)',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)'
+      borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.25)'
     },
     renameModalTitle: {
       fontSize: 16,
       fontWeight: '700',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     renameModalTitleLight: {
-      color: '#0f172a'
+      color: '#252525'
     },
     renameModalSubtitle: {
       fontSize: 12,
@@ -3285,7 +3285,7 @@ export function createStyles(isLight = true) {
     },
     renameModalBody: {
       padding: 20,
-      backgroundColor: isLight ? '#ffffff' : '#0f172a'
+      backgroundColor: isLight ? '#ffffff' : '#252525'
     },
     renameFieldLabel: {
       fontSize: 11,
@@ -3300,18 +3300,18 @@ export function createStyles(isLight = true) {
     renameInput: {
       backgroundColor: isLight ? '#f8fafc' : '#1e293b',
       borderWidth: 1,
-      borderColor: isLight ? '#cbd5e1' : '#334155',
+      borderColor: isLight ? '#d8d4cb' : '#334155',
       borderRadius: 8,
       paddingHorizontal: 14,
       paddingVertical: 10,
       fontSize: 14,
       fontWeight: '600',
-      color: isLight ? '#0f172a' : '#f8fafc'
+      color: isLight ? '#252525' : '#f8fafc'
     },
     renameInputLight: {
       backgroundColor: '#f8fafc',
-      borderColor: '#cbd5e1',
-      color: '#0f172a'
+      borderColor: '#d8d4cb',
+      color: '#252525'
     },
     renameHint: {
       fontSize: 11,
@@ -3327,7 +3327,7 @@ export function createStyles(isLight = true) {
       paddingVertical: 14,
       backgroundColor: isLight ? '#f8fafc' : '#131d31',
       borderTopWidth: 1,
-      borderTopColor: isLight ? '#e2e8f0' : '#1e293b'
+      borderTopColor: isLight ? '#e5e2dc' : '#1e293b'
     }
   });
 }

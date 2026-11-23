@@ -51,7 +51,7 @@ class ErrorBoundary extends React.Component {
           <div style={{
             maxWidth: 480,
             width: '100%',
-            backgroundColor: '#0f172a',
+            backgroundColor: '#252525',
             padding: 24,
             borderRadius: 14,
             border: '1px solid #1e293b',
@@ -69,7 +69,7 @@ class ErrorBoundary extends React.Component {
               <button
                 onClick={this.handleHardReset}
                 style={{
-                  backgroundColor: '#0284c7',
+                  backgroundColor: '#f47721',
                   color: '#fff',
                   border: 'none',
                   padding: '12px 22px',
@@ -102,7 +102,7 @@ class ErrorBoundary extends React.Component {
 
             {this.state.error?.stack && (
               <details style={{ marginTop: 18, textAlign: 'left', backgroundColor: '#020617', padding: 10, borderRadius: 8, border: '1px solid #1e293b' }}>
-                <summary style={{ cursor: 'pointer', color: '#38bdf8', fontSize: 11, fontWeight: 600 }}>
+                <summary style={{ cursor: 'pointer', color: '#f47721', fontSize: 11, fontWeight: 600 }}>
                   Technical Diagnostics
                 </summary>
                 <pre style={{ fontSize: 10, color: '#fca5a5', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginTop: 8, fontFamily: 'monospace' }}>

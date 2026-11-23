@@ -55,7 +55,7 @@ export default function AdminPortalPage({
       <View style={[styles.adminPortalHeader, isLight && styles.adminPortalHeaderLight]}>
         <View style={{ gap: 4, flex: 1, minWidth: 260 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <ShieldCheck size={24} color={isLight ? '#0284c7' : '#38bdf8'} />
+            <ShieldCheck size={24} color={isLight ? '#f47721' : '#f47721'} />
             <Text style={[styles.adminPortalTitle, isLight && styles.adminPortalTitleLight]}>
               Administrator & Staff Management
             </Text>
@@ -70,7 +70,7 @@ export default function AdminPortalPage({
           onPress={onBackToInventory}
           title="Return to documents inventory"
         >
-          <ArrowLeft size={16} color={isLight ? '#0284c7' : '#38bdf8'} />
+          <ArrowLeft size={16} color={isLight ? '#f47721' : '#f47721'} />
           <Text style={[styles.adminBackBtnText, isLight && styles.adminBackBtnTextLight]}>
             Back to Inventory Records
           </Text>
@@ -160,8 +160,8 @@ export default function AdminPortalPage({
         {/* Card 2: Employee Account Creation System */}
         <View style={[styles.employeeFormCard, isLight && styles.employeeFormCardLight]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 4 }}>
-            <View style={[styles.empIconBadge, { backgroundColor: isLight ? '#e0f2fe' : 'rgba(2, 132, 199, 0.15)' }]}>
-              <UserPlus size={20} color={isLight ? '#0284c7' : '#38bdf8'} />
+            <View style={[styles.empIconBadge, { backgroundColor: isLight ? '#fef3eb' : 'rgba(2, 132, 199, 0.15)' }]}>
+              <UserPlus size={20} color={isLight ? '#f47721' : '#f47721'} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.cardTitle, isLight && styles.cardTitleLight]}>

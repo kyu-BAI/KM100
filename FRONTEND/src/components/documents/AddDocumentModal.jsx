@@ -177,7 +177,7 @@ export default function AddDocumentModal({
                   }}
                   style={styles.backModalBtn}
                 >
-                  <ArrowLeft size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
+                  <ArrowLeft size={18} color={isLight ? '#f47721' : '#f47721'} />
                 </TouchableOpacity>
               ) : (
                 <View style={{
@@ -229,7 +229,7 @@ export default function AddDocumentModal({
               >
                 <View style={styles.optionCardTopRow}>
                   <View style={styles.optionIconBox}>
-                    <UploadCloud size={24} color="#38bdf8" />
+                    <UploadCloud size={24} color="#f47721" />
                   </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={[styles.optionTitle, isLight && styles.optionTitleLight]}>Insert Document</Text>
@@ -288,7 +288,7 @@ export default function AddDocumentModal({
                     onPress={() => document.getElementById('deviceFileInput')?.click()}
                   >
                     <View style={styles.dropzoneIconBox}>
-                      <UploadCloud size={40} color="#38bdf8" />
+                      <UploadCloud size={40} color="#f47721" />
                     </View>
                     <Text style={styles.dropzoneTitle}>Choose a file from your device</Text>
                     <Text style={styles.dropzoneSub}>
@@ -305,7 +305,7 @@ export default function AddDocumentModal({
                         {insertedFile.name.endsWith('.xlsx') ? (
                           <FileSpreadsheet size={26} color="#34d399" />
                         ) : (
-                          <FileText size={26} color="#38bdf8" />
+                          <FileText size={26} color="#f47721" />
                         )}
                       </View>
                       <View style={{ flex: 1 }}>
@@ -409,7 +409,7 @@ export default function AddDocumentModal({
 
                 {/* Step B: Intelligent Camera & OCR Capture Triggers */}
                 <View style={{ marginTop: 18, marginBottom: 8 }}>
-                  <Text style={[styles.scanSectionHeading, isLight && { color: '#0284c7' }]}>
+                  <Text style={[styles.scanSectionHeading, isLight && { color: '#f47721' }]}>
                     Capture Receipt
                   </Text>
                 </View>
@@ -435,10 +435,10 @@ export default function AddDocumentModal({
 
                 {isOcrProcessing ? (
                   /* OCR Processing Screen */
-                  <View style={[styles.ocrScanningCard, isLight && { backgroundColor: '#f8fafc', borderColor: '#38bdf8' }]}>
-                    <ActivityIndicator size="large" color="#38bdf8" />
+                  <View style={[styles.ocrScanningCard, isLight && { backgroundColor: '#f8fafc', borderColor: '#f47721' }]}>
+                    <ActivityIndicator size="large" color="#f47721" />
                     <View style={{ alignItems: 'center', gap: 4 }}>
-                      <Text style={[styles.ocrScanningTitle, isLight && { color: '#0284c7' }]}>Scanning receipt...</Text>
+                      <Text style={[styles.ocrScanningTitle, isLight && { color: '#f47721' }]}>Scanning receipt...</Text>
                       <Text style={[styles.ocrScanningSub, isLight && { color: '#64748b' }]}>{ocrStatusText || 'Extracting receipt details...'}</Text>
                     </View>
                     <View style={styles.ocrProgressBarBg}>
@@ -487,7 +487,7 @@ export default function AddDocumentModal({
                     {/* Action buttons to retake or pick file */}
                     <View style={[styles.ocrActionsRow, isMobile && { flexDirection: 'column' }]}>
                       <TouchableOpacity
-                        style={[styles.btnRetakeOcr, { flex: 1, backgroundColor: '#0284c7', borderColor: '#0284c7' }]}
+                        style={[styles.btnRetakeOcr, { flex: 1, backgroundColor: '#f47721', borderColor: '#f47721' }]}
                         onPress={() => {
                           setOcrValidationError('');
                           setCapturedReceiptPhoto(null);
@@ -520,7 +520,7 @@ export default function AddDocumentModal({
                   <View style={[styles.ocrVerificationContainer, isLight && styles.ocrVerificationContainerLight]}>
                     <View style={[styles.ocrVerificationHeader, isLight && { borderBottomColor: '#e2e8f0' }]}>
                       <View style={styles.ocrVerificationTitleRow}>
-                        <Receipt size={18} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <Receipt size={18} color={isLight ? '#f47721' : '#f47721'} />
                         <Text style={[styles.ocrVerificationTitle, isLight && styles.ocrVerificationTitleLight]}>Receipt Details</Text>
                       </View>
                       <View style={[styles.receiptEntityBadge, { backgroundColor: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(52, 211, 153, 0.15)', borderColor: isLight ? 'rgba(16, 185, 129, 0.3)' : 'rgba(52, 211, 153, 0.3)', borderWidth: 1 }]}>
@@ -550,16 +550,16 @@ export default function AddDocumentModal({
                             borderRadius: 3,
                             padding: 2
                           }}>
-                            <Maximize2 size={10} color="#38bdf8" />
+                            <Maximize2 size={10} color="#f47721" />
                           </View>
                         </TouchableOpacity>
                       )}
                       <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-                        <Text style={{ fontSize: 13, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
+                        <Text style={{ fontSize: 13, color: isLight ? '#252525' : '#f8fafc', fontWeight: '700' }} numberOfLines={1}>
                           {ocrEstablishment || selectedReceiptType.name}
                         </Text>
                         <Text style={{ fontSize: 11, color: isLight ? '#64748b' : '#94a3b8' }} numberOfLines={1}>
-                          Classification: <Text style={{ color: isLight ? '#0f172a' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
+                          Classification: <Text style={{ color: isLight ? '#252525' : '#cbd5e1', fontWeight: '600' }}>{selectedReceiptType.name}</Text>
                         </Text>
 
                         {capturedReceiptPhoto && (
@@ -572,7 +572,7 @@ export default function AddDocumentModal({
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 gap: 4,
-                                backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                                backgroundColor: isLight ? '#f5f3ef' : 'rgba(255, 255, 255, 0.08)',
                                 borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
                                 borderWidth: 1,
                                 paddingHorizontal: 8,
@@ -583,8 +583,8 @@ export default function AddDocumentModal({
                               }}
                               title="Rotate receipt 90° counter-clockwise to keep it upright"
                             >
-                              <RotateCcw size={12} color={isLight ? '#0284c7' : '#38bdf8'} />
-                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
+                              <RotateCcw size={12} color={isLight ? '#f47721' : '#f47721'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '600' }}>
                                 Rotate Left
                               </Text>
                             </TouchableOpacity>
@@ -597,7 +597,7 @@ export default function AddDocumentModal({
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 gap: 4,
-                                backgroundColor: isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)',
+                                backgroundColor: isLight ? '#f5f3ef' : 'rgba(255, 255, 255, 0.08)',
                                 borderColor: isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)',
                                 borderWidth: 1,
                                 paddingHorizontal: 8,
@@ -608,8 +608,8 @@ export default function AddDocumentModal({
                               }}
                               title="Rotate receipt 90° clockwise to keep it upright"
                             >
-                              <RotateCw size={12} color={isLight ? '#0284c7' : '#38bdf8'} />
-                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '600' }}>
+                              <RotateCw size={12} color={isLight ? '#f47721' : '#f47721'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '600' }}>
                                 Rotate Right
                               </Text>
                             </TouchableOpacity>
@@ -621,8 +621,8 @@ export default function AddDocumentModal({
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 gap: 4,
-                                backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.12)',
-                                borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.25)',
+                                backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.12)',
+                                borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.25)',
                                 borderWidth: 1,
                                 paddingHorizontal: 8,
                                 paddingVertical: 4,
@@ -631,8 +631,8 @@ export default function AddDocumentModal({
                               }}
                               title="Maximize photo in full screen"
                             >
-                              <Maximize2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
-                              <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>
+                              <Maximize2 size={11} color={isLight ? '#f47721' : '#f47721'} />
+                              <Text style={{ fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '700' }}>
                                 Expand
                               </Text>
                             </TouchableOpacity>
@@ -664,7 +664,7 @@ export default function AddDocumentModal({
                       {/* Document Name */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <Edit3 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Edit3 size={13} color={isLight ? '#f47721' : '#f47721'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Document Name:</Text>
                         </View>
                         <TextInput
@@ -683,7 +683,7 @@ export default function AddDocumentModal({
                       {/* Establishment */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <Building2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Building2 size={13} color={isLight ? '#f47721' : '#f47721'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Establishment:</Text>
                         </View>
                         <TextInput
@@ -702,7 +702,7 @@ export default function AddDocumentModal({
                       {/* Receipt Date */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <Calendar size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <Calendar size={13} color={isLight ? '#f47721' : '#f47721'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Receipt Date:</Text>
                         </View>
                         <TextInput
@@ -721,7 +721,7 @@ export default function AddDocumentModal({
                       {/* Description */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <FileText size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <FileText size={13} color={isLight ? '#f47721' : '#f47721'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Description:</Text>
                         </View>
                         <TextInput
@@ -760,7 +760,7 @@ export default function AddDocumentModal({
                       {/* Invoice / OR Number */}
                       <View style={styles.ocrFieldItem}>
                         <View style={styles.ocrFieldLabelRow}>
-                          <CheckCircle2 size={13} color={isLight ? '#0284c7' : '#38bdf8'} />
+                          <CheckCircle2 size={13} color={isLight ? '#f47721' : '#f47721'} />
                           <Text style={[styles.ocrFieldLabel, isLight && styles.ocrFieldLabelLight]}>Invoice / OR Number:</Text>
                         </View>
                         <TextInput
@@ -784,7 +784,7 @@ export default function AddDocumentModal({
                       borderRadius: 8,
                       borderWidth: 1,
                       borderColor: isLight ? '#cbd5e1' : '#334155',
-                      backgroundColor: isLight ? '#ffffff' : '#0f172a',
+                      backgroundColor: isLight ? '#ffffff' : '#252525',
                       overflow: 'hidden'
                     }}>
                       {/* Dropdown Header Toggle Button */}
@@ -806,19 +806,19 @@ export default function AddDocumentModal({
                         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                          <ListFilter size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                          <ListFilter size={15} color={isLight ? '#f47721' : '#f47721'} />
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: isLight ? '#252525' : '#f8fafc' }} numberOfLines={1}>
                             Listed Items in Receipt
                           </Text>
                           <View style={{
-                            backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                            backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.15)',
                             paddingHorizontal: 7,
                             paddingVertical: 2,
                             borderRadius: 10,
                             borderWidth: 1,
-                            borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                            borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.3)'
                           }}>
-                            <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                            <Text style={{ fontSize: 10, fontWeight: '800', color: isLight ? '#e06412' : '#f47721' }}>
                               {(ocrLineItems || []).length} {(ocrLineItems || []).length === 1 ? 'item' : 'items'}
                             </Text>
                           </View>
@@ -839,8 +839,8 @@ export default function AddDocumentModal({
                               paddingHorizontal: 8,
                               paddingVertical: 4,
                               borderRadius: 5,
-                              backgroundColor: isEditingLineItems ? '#0284c7' : (isLight ? '#f1f5f9' : 'rgba(255, 255, 255, 0.08)'),
-                              borderColor: isEditingLineItems ? '#0284c7' : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)'),
+                              backgroundColor: isEditingLineItems ? '#f47721' : (isLight ? '#f5f3ef' : 'rgba(255, 255, 255, 0.08)'),
+                              borderColor: isEditingLineItems ? '#f47721' : (isLight ? '#cbd5e1' : 'rgba(255, 255, 255, 0.15)'),
                               borderWidth: 1
                             }}
                             title={isEditingLineItems ? 'Done editing items' : 'Edit item names, quantities, and prices'}
@@ -852,8 +852,8 @@ export default function AddDocumentModal({
                               </>
                             ) : (
                               <>
-                                <Edit2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
-                                <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>Edit</Text>
+                                <Edit2 size={11} color={isLight ? '#f47721' : '#f47721'} />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#f47721' : '#f47721' }}>Edit</Text>
                               </>
                             )}
                           </TouchableOpacity>
@@ -883,8 +883,8 @@ export default function AddDocumentModal({
                                 onPress={() => setIsEditingLineItems(true)}
                                 style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}
                               >
-                                <Edit2 size={11} color={isLight ? '#0284c7' : '#38bdf8'} />
-                                <Text style={{ fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700' }}>
+                                <Edit2 size={11} color={isLight ? '#f47721' : '#f47721'} />
+                                <Text style={{ fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '700' }}>
                                   Edit Items
                                 </Text>
                               </TouchableOpacity>
@@ -912,7 +912,7 @@ export default function AddDocumentModal({
                                   flexDirection: 'row',
                                   alignItems: 'center',
                                   gap: 5,
-                                  backgroundColor: '#0284c7',
+                                  backgroundColor: '#f47721',
                                   paddingHorizontal: 10,
                                   paddingVertical: 5,
                                   borderRadius: 5
@@ -931,7 +931,7 @@ export default function AddDocumentModal({
                                 <View style={{
                                   flexDirection: 'row',
                                   alignItems: 'center',
-                                  backgroundColor: isLight ? '#f1f5f9' : '#1e293b',
+                                  backgroundColor: isLight ? '#f5f3ef' : '#1e293b',
                                   paddingVertical: 6,
                                   paddingHorizontal: 8,
                                   borderRadius: 4,
@@ -957,7 +957,7 @@ export default function AddDocumentModal({
                                       paddingHorizontal: 8,
                                       backgroundColor: idx % 2 === 1 ? (isLight ? '#f8fafc' : 'rgba(30, 41, 59, 0.4)') : 'transparent',
                                       borderBottomWidth: 1,
-                                      borderBottomColor: isLight ? '#f1f5f9' : '#1e293b',
+                                      borderBottomColor: isLight ? '#f5f3ef' : '#1e293b',
                                       gap: 4
                                     }}
                                   >
@@ -975,7 +975,7 @@ export default function AddDocumentModal({
                                               paddingHorizontal: 4,
                                               paddingVertical: 3,
                                               fontSize: 11,
-                                              color: isLight ? '#0f172a' : '#f8fafc',
+                                              color: isLight ? '#252525' : '#f8fafc',
                                               textAlign: 'center'
                                             }}
                                             value={String(item.qty || '')}
@@ -993,7 +993,7 @@ export default function AddDocumentModal({
                                               paddingHorizontal: 4,
                                               paddingVertical: 3,
                                               fontSize: 11,
-                                              color: isLight ? '#0f172a' : '#f8fafc',
+                                              color: isLight ? '#252525' : '#f8fafc',
                                               textAlign: 'center'
                                             }}
                                             value={String(item.unit || '')}
@@ -1016,7 +1016,7 @@ export default function AddDocumentModal({
                                             paddingVertical: 3,
                                             fontSize: 11,
                                             fontWeight: '600',
-                                            color: isLight ? '#0f172a' : '#f8fafc'
+                                            color: isLight ? '#252525' : '#f8fafc'
                                           }}
                                           value={item.name}
                                           onChangeText={(val) => handleUpdateLineItem(idx, 'name', val)}
@@ -1035,7 +1035,7 @@ export default function AddDocumentModal({
                                             paddingHorizontal: 4,
                                             paddingVertical: 3,
                                             fontSize: 11,
-                                            color: isLight ? '#0f172a' : '#f8fafc',
+                                            color: isLight ? '#252525' : '#f8fafc',
                                             textAlign: 'right'
                                           }}
                                           value={item.unitPrice !== undefined && item.unitPrice !== null ? String(item.unitPrice) : ''}
@@ -1057,7 +1057,7 @@ export default function AddDocumentModal({
                                             paddingVertical: 3,
                                             fontSize: 11,
                                             fontWeight: '700',
-                                            color: isLight ? '#0284c7' : '#38bdf8',
+                                            color: isLight ? '#f47721' : '#f47721',
                                             textAlign: 'right'
                                           }}
                                           value={item.amount !== undefined && item.amount !== null ? String(item.amount) : ''}
@@ -1082,13 +1082,13 @@ export default function AddDocumentModal({
                                         <Text style={{ width: 85, fontSize: 11, color: isLight ? '#334155' : '#cbd5e1', fontWeight: '600' }}>
                                           {item.qty || '1'} {item.unit || ''}
                                         </Text>
-                                        <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#0f172a' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
+                                        <Text style={{ flex: 2.2, minWidth: 120, fontSize: 11, color: isLight ? '#252525' : '#f8fafc', fontWeight: '600' }} numberOfLines={1}>
                                           {item.name}
                                         </Text>
                                         <Text style={{ width: 75, fontSize: 11, color: isLight ? '#64748b' : '#94a3b8', textAlign: 'right' }}>
                                           {item.unitPrice > 0 ? `₱${parseFloat(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
                                         </Text>
-                                        <Text style={{ width: 85, fontSize: 11, color: isLight ? '#0284c7' : '#38bdf8', fontWeight: '700', textAlign: 'right' }}>
+                                        <Text style={{ width: 85, fontSize: 11, color: isLight ? '#f47721' : '#f47721', fontWeight: '700', textAlign: 'right' }}>
                                           ₱{parseFloat(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                         </Text>
                                       </>
@@ -1130,7 +1130,7 @@ export default function AddDocumentModal({
                               marginTop: 10,
                               paddingTop: 8,
                               borderTopWidth: 1,
-                              borderTopColor: isLight ? '#f1f5f9' : '#1e293b',
+                              borderTopColor: isLight ? '#f5f3ef' : '#1e293b',
                               flexWrap: 'wrap',
                               gap: 8
                             }}>
@@ -1165,13 +1165,13 @@ export default function AddDocumentModal({
                                     paddingVertical: 5,
                                     borderRadius: 5,
                                     backgroundColor: isLight ? '#f0f9ff' : 'rgba(56, 189, 248, 0.15)',
-                                    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)',
+                                    borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.3)',
                                     borderWidth: 1
                                   }}
                                   title="Sync calculated items sum with Total Amount field"
                                 >
-                                  <RefreshCw size={11} color="#0284c7" />
-                                  <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0369a1' : '#38bdf8' }}>
+                                  <RefreshCw size={11} color="#f47721" />
+                                  <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#e06412' : '#f47721' }}>
                                     Sync Total Amount
                                   </Text>
                                 </TouchableOpacity>
@@ -1185,7 +1185,7 @@ export default function AddDocumentModal({
                                     paddingHorizontal: 10,
                                     paddingVertical: 5,
                                     borderRadius: 5,
-                                    backgroundColor: '#0284c7'
+                                    backgroundColor: '#f47721'
                                   }}
                                 >
                                   <Check size={12} color="#ffffff" />
@@ -1287,7 +1287,7 @@ export default function AddDocumentModal({
                       onPress={() => document.getElementById('mobileCameraInput')?.click()}
                     >
                       <View style={[styles.scanOptionIconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)', borderColor: 'rgba(56, 189, 248, 0.3)' }]}>
-                        <Smartphone size={26} color="#38bdf8" />
+                        <Smartphone size={26} color="#f47721" />
                       </View>
                       <Text style={styles.scanOptionTitle}>Take Photo with Phone Camera</Text>
                       <Text style={styles.scanOptionSub}>Take clear photo, auto-read establishment, date & amount</Text>

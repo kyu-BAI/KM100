@@ -2053,7 +2053,7 @@ export default function App() {
             {/* ITEM DISPLAY */}
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#38bdf8" />
+                <ActivityIndicator size="large" color="#f47721" />
                 <Text style={styles.loadingText}>Loading inventory records</Text>
               </View>
             ) : filteredItems.length === 0 ? (
@@ -2068,7 +2068,7 @@ export default function App() {
                     style={styles.btnToggleEmptyOn}
                     onPress={handleToggleShowAll}
                   >
-                    <Eye size={15} color="#0f172a" />
+                    <Eye size={15} color="#252525" />
                     <Text style={styles.btnToggleEmptyOnText}>Show All Files ({items.length})</Text>
                   </TouchableOpacity>
                 </View>
@@ -2091,7 +2091,7 @@ export default function App() {
                         style={[styles.heroExportBtn, isLight && styles.heroExportBtnLight]}
                         onPress={() => setSearchQuery('')}
                       >
-                        <X size={15} color={isLight ? '#0284c7' : '#38bdf8'} />
+                        <X size={15} color={isLight ? '#f47721' : '#f47721'} />
                         <Text style={[styles.heroExportBtnText, isLight && styles.heroExportBtnTextLight]}>Clear Search</Text>
                       </TouchableOpacity>
                     ) : null}

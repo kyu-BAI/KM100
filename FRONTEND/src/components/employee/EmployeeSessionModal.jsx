@@ -26,7 +26,7 @@ export default function EmployeeSessionModal({
             width: '92%',
             padding: 24,
             borderRadius: 18,
-            backgroundColor: isLight ? '#ffffff' : '#0f172a',
+            backgroundColor: isLight ? '#ffffff' : '#252525',
             borderColor: isLight ? '#e2e8f0' : '#1e293b',
             borderWidth: 1,
             boxShadow: isLight
@@ -55,7 +55,7 @@ export default function EmployeeSessionModal({
               }}>
                 <UserCheck size={18} color="#10b981" />
               </View>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: isLight ? '#252525' : '#f8fafc' }}>
                 Employee Staff Session
               </Text>
             </View>
@@ -67,7 +67,7 @@ export default function EmployeeSessionModal({
                 borderRadius: 15,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: isLight ? '#f1f5f9' : '#1e293b'
+                backgroundColor: isLight ? '#f5f3ef' : '#1e293b'
               }}
             >
               <X size={16} color={isLight ? '#475569' : '#94a3b8'} />
@@ -92,7 +92,7 @@ export default function EmployeeSessionModal({
                 </Text>
               </View>
               <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: isLight ? '#0f172a' : '#f8fafc' }} numberOfLines={1}>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: isLight ? '#252525' : '#f8fafc' }} numberOfLines={1}>
                   {currentUser?.fullName}
                 </Text>
                 <Text style={{ fontSize: 13, color: isLight ? '#475569' : '#94a3b8', fontWeight: '500' }} numberOfLines={1}>
@@ -103,11 +103,11 @@ export default function EmployeeSessionModal({
                     paddingHorizontal: 8,
                     paddingVertical: 3,
                     borderRadius: 6,
-                    backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
+                    backgroundColor: isLight ? '#fef3eb' : 'rgba(56, 189, 248, 0.15)',
                     borderWidth: 1,
-                    borderColor: isLight ? '#bae6fd' : 'rgba(56, 189, 248, 0.3)'
+                    borderColor: isLight ? '#fcd3b4' : 'rgba(56, 189, 248, 0.3)'
                   }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#0284c7' : '#38bdf8' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: isLight ? '#f47721' : '#f47721' }}>
                       {currentUser?.employeeRole || 'STAFF'}
                     </Text>
                   </View>
