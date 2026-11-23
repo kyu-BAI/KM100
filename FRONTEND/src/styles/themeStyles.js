@@ -1,6 +1,16 @@
 import { StyleSheet } from 'react-native';
 
 export function createStyles(isLight) {
+  // 5-Tier Elevation & Depth System (UI/UX Pro Max + Impeccable)
+  // Combines directional key light + ambient soft fill; eliminates colored halos
+  const elev = {
+    sm: isLight ? '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04)' : '0 1px 3px rgba(0, 0, 0, 0.3)',
+    md: isLight ? '0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.04)' : '0 4px 10px -2px rgba(0, 0, 0, 0.35)',
+    lg: isLight ? '0 10px 18px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)' : '0 10px 20px -4px rgba(0, 0, 0, 0.45)',
+    xl: isLight ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04)' : '0 20px 30px -5px rgba(0, 0, 0, 0.6)',
+    modal: isLight ? '0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06)' : '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08)'
+  };
+
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -69,7 +79,7 @@ export function createStyles(isLight) {
       borderWidth: 1,
       borderColor: isLight ? '#cbd5e1' : '#334155',
       cursor: 'pointer',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      boxShadow: elev.sm
     },
     adminBackBtnLight: {
       backgroundColor: '#f1f5f9',
@@ -96,7 +106,7 @@ export function createStyles(isLight) {
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
       gap: 16,
-      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+      boxShadow: elev.md
     },
     adminProfileCardLight: {
       backgroundColor: '#ffffff',
@@ -111,7 +121,7 @@ export function createStyles(isLight) {
       justifyContent: 'center',
       borderWidth: 2,
       borderColor: '#f97316',
-      boxShadow: '0 3px 10px rgba(249, 115, 22, 0.3)'
+      boxShadow: elev.md
     },
     adminLargeAvatarInitials: {
       color: '#ffffff',
@@ -191,7 +201,7 @@ export function createStyles(isLight) {
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
       gap: 14,
-      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+      boxShadow: elev.md
     },
     employeeFormCardLight: {
       backgroundColor: '#ffffff',
@@ -296,7 +306,7 @@ export function createStyles(isLight) {
       borderRadius: 8,
       cursor: 'pointer',
       marginTop: 4,
-      boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)'
+      boxShadow: elev.sm
     },
     btnCreateEmployeeText: {
       color: '#ffffff',
@@ -311,7 +321,7 @@ export function createStyles(isLight) {
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
       gap: 14,
-      boxShadow: isLight ? '0 2px 10px rgba(0,0,0,0.04)' : undefined
+      boxShadow: elev.md
     },
     accountsListCardLight: {
       backgroundColor: '#ffffff',
@@ -523,7 +533,7 @@ export function createStyles(isLight) {
       borderRadius: 8,
       borderWidth: 1,
       borderColor: '#10b981',
-      boxShadow: '0 2px 10px rgba(5, 150, 105, 0.35)',
+      boxShadow: elev.sm,
       transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s ease, filter 0.15s ease'
     },
     heroScanBtnText: {
@@ -646,7 +656,7 @@ export function createStyles(isLight) {
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
       padding: 14,
       gap: 4,
-      boxShadow: isLight ? '0 2px 8px rgba(0, 0, 0, 0.04)' : '0 2px 8px rgba(0, 0, 0, 0.2)',
+      boxShadow: elev.sm,
       transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease'
     },
     statCardMobile: {
@@ -658,7 +668,7 @@ export function createStyles(isLight) {
     statCardLight: {
       backgroundColor: '#ffffff',
       borderColor: '#e2e8f0',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+      boxShadow: elev.sm
     },
     statCardActive: {
       borderColor: isLight ? '#38bdf8' : '#0284c7',
@@ -882,7 +892,7 @@ export function createStyles(isLight) {
       paddingHorizontal: 18,
       paddingVertical: 14,
       borderRadius: 30,
-      boxShadow: '0 8px 24px rgba(5, 150, 105, 0.5)',
+      boxShadow: elev.lg,
       borderWidth: 1,
       borderColor: '#34d399',
       animation: 'pulseGlow 2.8s infinite',
@@ -906,7 +916,7 @@ export function createStyles(isLight) {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 8,
-      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+      boxShadow: elev.lg,
       animation: 'toastSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
       transition: 'all 0.2s ease'
     },
@@ -965,7 +975,7 @@ export function createStyles(isLight) {
       borderWidth: 1.5,
       borderColor: '#f97316',
       overflow: 'hidden',
-      boxShadow: '0 2px 8px rgba(249, 115, 22, 0.25)'
+      boxShadow: elev.sm
     },
     sidebarCompanyName: {
       fontSize: 12,
@@ -1462,13 +1472,13 @@ export function createStyles(isLight) {
       borderRadius: 16,
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
-      boxShadow: isLight ? '0 25px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08)' : '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+      boxShadow: elev.modal,
       overflow: 'hidden'
     },
     modalCardLight: {
       backgroundColor: '#ffffff',
       borderColor: '#e2e8f0',
-      boxShadow: '0 25px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08)'
+      boxShadow: elev.modal
     },
     modalOverlay: {
       flex: 1,
@@ -2143,7 +2153,7 @@ export function createStyles(isLight) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 22,
-      boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)'
+      boxShadow: elev.md
     },
     btnCaptureShutterText: {
       color: '#fff',
@@ -2483,7 +2493,7 @@ export function createStyles(isLight) {
       borderWidth: 1,
       borderColor: isLight ? '#e2e8f0' : '#1e293b',
       padding: 30,
-      boxShadow: isLight ? '0 20px 40px rgba(0, 0, 0, 0.08)' : '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
+      boxShadow: elev.xl
     },
     authHeader: {
       alignItems: 'center',
@@ -2777,7 +2787,7 @@ export function createStyles(isLight) {
       borderRightWidth: 1,
       borderRightColor: isLight ? '#e2e8f0' : '#1e293b',
       zIndex: 999,
-      boxShadow: '10px 0 30px rgba(0, 0, 0, 0.8)',
+      boxShadow: isLight ? '4px 0 24px rgba(0, 0, 0, 0.08)' : '6px 0 28px rgba(0, 0, 0, 0.5)',
       animation: 'slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1)'
     },
     mobileCloseDrawerBtn: {
@@ -3238,7 +3248,7 @@ export function createStyles(isLight) {
       borderColor: isLight ? '#cbd5e1' : '#334155',
       flexDirection: 'column',
       overflow: 'hidden',
-      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+      boxShadow: elev.modal,
       animation: 'modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
     },
     renameModalContainerLight: {

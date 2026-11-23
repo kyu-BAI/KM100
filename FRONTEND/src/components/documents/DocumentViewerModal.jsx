@@ -567,7 +567,7 @@ export default function DocumentViewerModal({
                       maxHeight: zoomLevel <= 1 ? (isMobile ? '76vh' : '82vh') : 'none',
                       objectFit: 'contain',
                       borderRadius: 6,
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08)',
                       imageRendering: 'auto'
                     }}
                   />

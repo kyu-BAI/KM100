@@ -85,7 +85,7 @@ export default function AuthPortalView({
               backgroundColor: '#ffffff',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: isEmployeePortal ? '0 8px 24px rgba(16, 185, 129, 0.28)' : '0 8px 24px rgba(249, 115, 22, 0.28)',
+              boxShadow: isLight ? '0 8px 20px -4px rgba(0, 0, 0, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.05)' : '0 8px 20px -4px rgba(0, 0, 0, 0.4), 0 3px 6px -2px rgba(0, 0, 0, 0.25)',
               borderWidth: 2.5,
               borderColor: isEmployeePortal ? '#10b981' : '#f97316',
               padding: 3
@@ -149,7 +149,7 @@ export default function AuthPortalView({
               justifyContent: 'center',
               gap: 6,
               backgroundColor: !isEmployeePortal ? (isLight ? '#ffffff' : '#0f172a') : 'transparent',
-              boxShadow: !isEmployeePortal ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+              boxShadow: !isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('admin')}
             accessibilityRole="tab"
@@ -176,7 +176,7 @@ export default function AuthPortalView({
               justifyContent: 'center',
               gap: 6,
               backgroundColor: isEmployeePortal ? (isLight ? '#ffffff' : '#0f172a') : 'transparent',
-              boxShadow: isEmployeePortal ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+              boxShadow: isEmployeePortal ? (isLight ? '0 1px 3px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.3)') : 'none'
             }}
             onPress={() => switchAuthPortal('employee')}
             accessibilityRole="tab"

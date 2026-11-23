@@ -190,7 +190,7 @@ export default function TopHeader({
                 currentPage === 'admin' && {
                   borderColor: '#38bdf8',
                   backgroundColor: isLight ? '#e0f2fe' : 'rgba(56, 189, 248, 0.15)',
-                  boxShadow: '0 0 10px rgba(56, 189, 248, 0.35)'
+                  boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.06)' : '0 1px 4px rgba(0,0,0,0.3)'
                 },
                 isEmployee && {
                   borderColor: isLight ? '#a7f3d0' : '#065f46',

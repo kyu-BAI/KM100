@@ -30,8 +30,8 @@ export default function EmployeeSessionModal({
             borderColor: isLight ? '#e2e8f0' : '#1e293b',
             borderWidth: 1,
             boxShadow: isLight
-              ? '0 25px 60px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.08)'
-              : '0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+              ? '0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.06)'
+              : '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08)'
           },
           isLight && styles.modalCardLight
         ]}>
@@ -84,7 +84,7 @@ export default function EmployeeSessionModal({
                 backgroundColor: '#10b981',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 flexShrink: 0
               }}>
                 <Text style={{ fontSize: 22, fontWeight: '800', color: '#ffffff' }}>
